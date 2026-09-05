@@ -5,6 +5,10 @@
   "type": "module",
   "description": "PCMS backend — Node.js + Express REST API",
   "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -14,6 +18,13 @@
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.6",
+    "supertest": "^7.2.2",
+    "vitest": "^5.0.0"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "mongoose": "^9.9.5",
+    "zod": "^4.5.4"
   }
 }

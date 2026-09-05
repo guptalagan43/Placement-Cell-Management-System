@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-05 — Phase 1 (Repository & Tooling Setup) complete |
+| **Last Updated** | 2026-09-05 — Phase 2 (Backend Skeleton) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M0 — Foundation & Tooling |
-| **Current Phase** | Phase 2 — Backend Skeleton (Not Started; next up) |
-| **Phases Complete** | 1 / 67 |
-| **Overall Completion** | ~1.5% |
+| **Current Phase** | Phase 3 — Frontend Skeleton (Not Started; next up) |
+| **Phases Complete** | 2 / 67 |
+| **Overall Completion** | ~3% |
 | **Blockers** | None |
 
 ---
@@ -38,7 +38,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 1 | Repository & Tooling Setup | Complete | 2026-09-05 | client/ + server/ npm projects (ESLint 10 flat config + Prettier 3), root README linking all governance docs, .gitignore/.gitattributes/.editorconfig/.nvmrc. Lint + format:check pass in both packages. |
-| 2 | Backend Skeleton | Not Started | — | — |
+| 2 | Backend Skeleton | Complete | 2026-09-05 | Express 5 app factory (`createApp`) + fail-fast bootstrap; Zod env loader; Mongoose 9 connect helper; `GET /health` (200, reports DB state); centralized error contract (`ApiError` + not-found + error-handler, rules.md §6). Vitest+Supertest: 10 tests pass. Lint/format clean. |
 | 3 | Frontend Skeleton | Not Started | — | — |
 | 4 | Design System Foundation | Not Started | — | — |
 | 5 | CI Baseline | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 1 complete and merged. Phase 2 (Backend Skeleton) is next.
-**File(s) touched in Phase 1:** `README.md`, `.gitignore`, `.gitattributes`, `.editorconfig`, `.nvmrc`, `.prettierrc.json`, `.prettierignore`, `client/{package.json,eslint.config.js,.prettierignore}`, `server/{package.json,eslint.config.js,.prettierignore}`, plus `Docs/rules.md` (recorded tooling deps per §8.6). Governance docs brought under version control.
-**Next action:** Begin Phase 2 — Express app bootstrap, env config loader, MongoDB (Atlas) connection, single `/health` route (Traces to architecture.md §1).
+**Active phase:** None active — Phase 2 complete and merged. Phase 3 (Frontend Skeleton) is next.
+**File(s) touched in Phase 2:** `server/src/{app.js,server.js}`, `server/src/config/env.js`, `server/src/db/connect.js`, `server/src/middleware/{not-found.js,error-handler.js}`, `server/src/routes/health.routes.js`, `server/src/utils/api-error.js`, co-located `*.test.js` for env/connect/health/error-handler, `server/.env.example`, `server/package.json` (+lockfile). No `rules.md` change needed — all deps (express, mongoose, zod, vitest, supertest) already listed in §2.
+**Next action:** Begin Phase 3 — Frontend Skeleton (Vite + React under `client/src/`). Traces to architecture.md §2 / design.md. Check phases.md Phase 3 for exact Objective/Tasks/Acceptance before starting.
 
 ---
 
@@ -174,6 +174,12 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-05 (Ph.1) | ESLint 10 requires Node `^20.19.0 || ^22.13.0 || >=24`; `.nvmrc` pins `20`. | `20` resolves to latest 20.x (≥20.19), which satisfies the engine range. **Phase 5 CI must use a Node version in this range** (e.g. `node-version-file: .nvmrc`, or `22.x`/`20.x` latest) — not a bare `20.9`. |
 | 2026-09-05 (Ph.1) | `client/` and `server/` are independent npm projects (no root package.json / no workspaces). | They deploy to separate hosts (Vercel + Render, `architecture.md` §8); a monorepo tool is unjustified overhead at this scale. CI (Phase 5) runs lint/build per-package. |
 | 2026-09-05 (Ph.1) | Added `.gitattributes` (`* text=auto eol=lf`) as part of repo setup, beyond the `.gitignore` named in the phase. | Prevents CRLF/LF diff churn on Windows and keeps line endings deterministic across platforms and CI, aligned with `.editorconfig` and Prettier's `endOfLine: lf`. In-scope "repository setup." |
+| 2026-09-05 (Ph.2) | Env files loaded via Node's built-in `process.loadEnvFile()` (guarded; missing `.env` ignored) — **no `dotenv` dependency**. | `rules.md` §3 is native-first; `.nvmrc` pins Node ≥20.19 which has `loadEnvFile`. Avoids a dependency and a `rules.md` §2 addition. Production injects real env vars (no file), so ENOENT is expected and swallowed intentionally (not a silent catch — non-ENOENT rethrows). |
+| 2026-09-05 (Ph.2) | Backend layout: `app.js` is a pure `createApp()` factory (no DB, no `listen`); `server.js` is the runtime bootstrap (env → DB → listen). | Lets Supertest import the app with no live DB or open port. Establishes the routes→middleware structure from `architecture.md` §2.2 for all later phases. |
+| 2026-09-05 (Ph.2) | Centralized error contract (`utils/api-error.js`, `middleware/not-found.js`, `middleware/error-handler.js`) built in the skeleton. `asyncHandler` **deferred** to the first phase with an async route. | `rules.md` §6 mandates a single centralized handler + the `{success,message,code}` contract; it is foundational infra (not later-phase feature work) and is exercised now by `/health` + the 404 path. `asyncHandler` would be dead code until an async DB route exists, so it waits (Phase 6/7). |
+| 2026-09-05 (Ph.2) | Backend file-naming: kebab-case base, dotted type-suffix for layered files (`*.routes.js`, later `*.controller.js`/`*.service.js`/`*.model.js`); tests co-located as `*.test.js` under `src/`. | Satisfies `rules.md` §5 (kebab-case) and the Phase 1 `src/`-lint-scope decision. Test files use explicit `vitest` imports (no globals) so `eslint src` stays clean without extra globals config. |
+| 2026-09-05 (Ph.2) | Installed latest majors: **Express 5, Mongoose 9, Zod 4** (+ Vitest 5, Supertest). Code verified against them (10 tests green; both fail-fast paths exit 1). | All are already sanctioned in `rules.md` §2, so no §8.6 update. Note for later phases: this is Express **5** (not 4) — path-matching, `req.body` defaults, and middleware error semantics follow v5. Zod **4** uses the unified `{ error }` customization API (used in `env.js`). |
+| 2026-09-05 (Ph.2) | `GET /health` always returns 200 (liveness) and reports `mongoose.connection.readyState` as an informational `database` field. | Health/liveness must respond even when the DB is down (for load balancers / uptime checks); readiness vs. liveness distinction. Acceptance only requires 200. |
 
 ---
 
