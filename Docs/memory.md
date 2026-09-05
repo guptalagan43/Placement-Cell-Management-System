@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-05 — Phase 2 (Backend Skeleton) complete |
+| **Last Updated** | 2026-09-05 — Phase 3 (Frontend Skeleton) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M0 — Foundation & Tooling |
-| **Current Phase** | Phase 3 — Frontend Skeleton (Not Started; next up) |
-| **Phases Complete** | 2 / 67 |
-| **Overall Completion** | ~3% |
+| **Current Phase** | Phase 4 — Design System Foundation (Not Started; next up) |
+| **Phases Complete** | 3 / 67 |
+| **Overall Completion** | ~4.5% |
 | **Blockers** | None |
 
 ---
@@ -39,7 +39,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 |---|---|---|---|---|
 | 1 | Repository & Tooling Setup | Complete | 2026-09-05 | client/ + server/ npm projects (ESLint 10 flat config + Prettier 3), root README linking all governance docs, .gitignore/.gitattributes/.editorconfig/.nvmrc. Lint + format:check pass in both packages. |
 | 2 | Backend Skeleton | Complete | 2026-09-05 | Express 5 app factory (`createApp`) + fail-fast bootstrap; Zod env loader; Mongoose 9 connect helper; `GET /health` (200, reports DB state); centralized error contract (`ApiError` + not-found + error-handler, rules.md §6). Vitest+Supertest: 10 tests pass. Lint/format clean. |
-| 3 | Frontend Skeleton | Not Started | — | — |
+| 3 | Frontend Skeleton | Complete | 2026-09-05 | Vite 8 + React 18 SPA under `client/src/`; React Router v7 with placeholder routes (`/`, `/drives`, `/about`, `*`); `AppLayout` shell (header nav + empty sidebar container + `<Outlet/>`); minimal neutral CSS (NOT the design system — that's Phase 4). Vitest+RTL(jsdom): 6 tests pass (routes render + nav works). Build succeeds. Lint/format clean. |
 | 4 | Design System Foundation | Not Started | — | — |
 | 5 | CI Baseline | Not Started | — | — |
 
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 2 complete and merged. Phase 3 (Frontend Skeleton) is next.
-**File(s) touched in Phase 2:** `server/src/{app.js,server.js}`, `server/src/config/env.js`, `server/src/db/connect.js`, `server/src/middleware/{not-found.js,error-handler.js}`, `server/src/routes/health.routes.js`, `server/src/utils/api-error.js`, co-located `*.test.js` for env/connect/health/error-handler, `server/.env.example`, `server/package.json` (+lockfile). No `rules.md` change needed — all deps (express, mongoose, zod, vitest, supertest) already listed in §2.
-**Next action:** Begin Phase 3 — Frontend Skeleton (Vite + React under `client/src/`). Traces to architecture.md §2 / design.md. Check phases.md Phase 3 for exact Objective/Tasks/Acceptance before starting.
+**Active phase:** None active — Phase 3 complete and merged. Phase 4 (Design System Foundation) is next.
+**File(s) touched in Phase 3:** `client/index.html`, `client/vite.config.js`, `client/src/{main.jsx,App.jsx,index.css,App.test.jsx}`, `client/src/layouts/AppLayout.jsx`, `client/src/pages/{HomePage,DrivesPage,AboutPage,NotFoundPage}.jsx`, `client/src/test/setup.js`, `client/package.json` (+lockfile), `Docs/rules.md` (§2 testing row: recorded `jsdom` + `@testing-library/jest-dom` per §8.6).
+**Next action:** Begin Phase 4 — Design System Foundation. Traces to `design.md` §3–6. Key Tasks: extend **Tailwind** config with color/typography/radius tokens (`design.md` §12); build base components (Button primary/outline/danger, Badge, Card, Input); a component-preview route rendering every variant/state (`design.md` §6). This phase **replaces** the minimal Phase 3 CSS with the Tailwind design system. Read `design.md` §3–6 and §10/§12 in full before starting.
 
 ---
 
@@ -180,6 +180,13 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-05 (Ph.2) | Backend file-naming: kebab-case base, dotted type-suffix for layered files (`*.routes.js`, later `*.controller.js`/`*.service.js`/`*.model.js`); tests co-located as `*.test.js` under `src/`. | Satisfies `rules.md` §5 (kebab-case) and the Phase 1 `src/`-lint-scope decision. Test files use explicit `vitest` imports (no globals) so `eslint src` stays clean without extra globals config. |
 | 2026-09-05 (Ph.2) | Installed latest majors: **Express 5, Mongoose 9, Zod 4** (+ Vitest 5, Supertest). Code verified against them (10 tests green; both fail-fast paths exit 1). | All are already sanctioned in `rules.md` §2, so no §8.6 update. Note for later phases: this is Express **5** (not 4) — path-matching, `req.body` defaults, and middleware error semantics follow v5. Zod **4** uses the unified `{ error }` customization API (used in `env.js`). |
 | 2026-09-05 (Ph.2) | `GET /health` always returns 200 (liveness) and reports `mongoose.connection.readyState` as an informational `database` field. | Health/liveness must respond even when the DB is down (for load balancers / uptime checks); readiness vs. liveness distinction. Acceptance only requires 200. |
+| 2026-09-05 (Ph.3) | React pinned to **18** (`^18.3.1`), not latest 19, honoring `rules.md` §2 ("React 18"). `react-router-dom` is **v7** (rules.md doesn't pin it; v7 supports React 18 and its declarative `<Routes>/<Route>/<NavLink>/<Outlet>` API is stable). | `rules.md` §2 is binding. If a later phase needs React 19, update `rules.md` §2 first (§8.6). |
+| 2026-09-05 (Ph.3) | Tailwind + design tokens + base components deliberately **excluded** from Phase 3; the shell uses minimal neutral plain CSS (`index.css`). | Those are Phase 4 (Key Tasks: "Tailwind config extended with tokens; base components"). Phase 3 acceptance is only "app runs + navigation works." **Phase 4 replaces `client/src/index.css` with the Tailwind design system.** |
+| 2026-09-05 (Ph.3) | Router provider (`<BrowserRouter>`) lives in `main.jsx`; `App` exports only `<Routes>`. | Lets tests wrap `<App/>` in `<MemoryRouter initialEntries=[...]>` to assert per-route rendering + navigation without a browser. |
+| 2026-09-05 (Ph.3) | Minimal nav placed in the **header**; the **sidebar** is left as an empty `<aside>` container. | Phase 3 says "header/sidebar containers, empty," but the acceptance also requires demonstrable navigation — the smallest nav that satisfies it goes in the header; the sidebar stays a structural placeholder for later phases. |
+| 2026-09-05 (Ph.3) | Client Vitest uses `pool: 'threads'` (set in `vite.config.js`). | The default `forks` pool's child-process worker fails to start ("Timeout waiting for worker to respond") when the project path contains spaces on Windows — the repo path is `D:\Projects\MERN Lab Project`. Threads are unaffected and also work on Linux CI. Server tests are unaffected (no Vite). |
+| 2026-09-05 (Ph.3) | Vitest `globals: false`: tests import `describe/it/expect` from `vitest`; `src/test/setup.js` registers manual RTL `cleanup()` + `@testing-library/jest-dom/vitest`. | Keeps `eslint src` clean without configuring test globals (mirrors the server test convention). |
+| 2026-09-05 (Ph.3) | Reuse finding (Home/Drives/About placeholder pages are near-identical) resolved as **no change**. | They are placeholders for genuinely distinct future pages that diverge in dedicated later phases; the file-per-page layout mirrors the intended `pages/` structure. Consolidating into one parametrized component now would just be reversed later (create→merge→re-split churn). |
 
 ---
 

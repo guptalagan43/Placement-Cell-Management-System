@@ -34,7 +34,7 @@ This file exists so that an AI coding agent (or any new contributor) makes the *
 | File storage | Cloudinary SDK | — |
 | Email | Nodemailer | — |
 | Scheduled jobs | node-cron | — |
-| Testing | Vitest/Jest + Supertest (API), React Testing Library (frontend) | — |
+| Testing | Vitest/Jest + Supertest (API), React Testing Library (frontend); client test env uses `jsdom` + `@testing-library/jest-dom` | — |
 | Linting / formatting (dev-only) | ESLint 10 (flat config) + Prettier 3; `eslint-config-prettier` to defer style rules to Prettier; client adds `eslint-plugin-react-hooks` + `eslint-plugin-react-refresh` | — |
 
 Introducing any library **not** on this list requires adding it here first, with a one-line rationale — never add a dependency silently mid-task.
