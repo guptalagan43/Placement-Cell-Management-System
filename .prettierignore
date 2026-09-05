@@ -1,0 +1,11 @@
+# Dependencies & build output
+node_modules/
+dist/
+build/
+coverage/
+
+# Lockfiles (managed by npm, not Prettier)
+package-lock.json
+
+# Governance docs are authored/maintained by hand — do not reformat
+Docs/

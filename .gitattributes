@@ -1,0 +1,14 @@
+# Normalize line endings to LF in the repository for cross-platform consistency.
+# Aligns with .editorconfig (end_of_line = lf) and Prettier (endOfLine: lf),
+# preventing noisy CRLF/LF diffs and keeping CI deterministic across platforms.
+* text=auto eol=lf
+
+# Explicitly treat common binary assets as binary (no EOL conversion, no diff).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
