@@ -1,0 +1,62 @@
+name: CI
+
+# Phase 5 (CI Baseline): every push and pull request is automatically checked
+# before it can be merged. `client/` and `server/` are independent npm projects
+# (no root package.json / workspaces), so each is verified in its own matrix
+# leg: install from the lockfile, lint, check formatting, build, and test.
+# The server has no build step (a Node service isn't compiled), so `build` runs
+# with `--if-present` and is simply skipped there.
+on:
+  push:
+  pull_request:
+
+# Least privilege: CI only reads the repository; it never writes back.
+permissions:
+  contents: read
+
+# Superseded runs on the same ref are cancelled to avoid wasted minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: "${{ matrix.package }}: lint, build & test"
+    runs-on: ubuntu-latest
+    strategy:
+      # Report both packages even if one fails, rather than cancelling the peer.
+      fail-fast: false
+      matrix:
+        package: [client, server]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Pin to the repo's .nvmrc (Node 20.x), which satisfies ESLint 10's
+          # engine range (^20.19 || ^22.13 || >=24).
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ${{ matrix.package }}
+
+      - name: Lint
+        run: npm run lint
+        working-directory: ${{ matrix.package }}
+
+      - name: Check formatting
+        run: npm run format:check
+        working-directory: ${{ matrix.package }}
+
+      - name: Build
+        run: npm run build --if-present
+        working-directory: ${{ matrix.package }}
+
+      - name: Test
+        run: npm test
+        working-directory: ${{ matrix.package }}

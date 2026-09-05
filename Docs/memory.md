@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-05 — Phase 4 (Design System Foundation) complete |
+| **Last Updated** | 2026-09-05 — Phase 5 (CI Baseline) complete |
 
 ---
 
@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M0 — Foundation & Tooling |
-| **Current Phase** | Phase 5 — CI Baseline (Not Started; next up) |
-| **Phases Complete** | 4 / 67 |
-| **Overall Completion** | ~6% |
+| **Current Milestone** | M1 — Authentication & Access Control |
+| **Current Phase** | Phase 6 — User Model & Password Hashing (Not Started; next up) |
+| **Phases Complete** | 5 / 67 |
+| **Overall Completion** | ~7% |
 | **Blockers** | None |
 
 ---
@@ -41,7 +41,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 2 | Backend Skeleton | Complete | 2026-09-05 | Express 5 app factory (`createApp`) + fail-fast bootstrap; Zod env loader; Mongoose 9 connect helper; `GET /health` (200, reports DB state); centralized error contract (`ApiError` + not-found + error-handler, rules.md §6). Vitest+Supertest: 10 tests pass. Lint/format clean. |
 | 3 | Frontend Skeleton | Complete | 2026-09-05 | Vite 8 + React 18 SPA under `client/src/`; React Router v7 with placeholder routes (`/`, `/drives`, `/about`, `*`); `AppLayout` shell (header nav + empty sidebar container + `<Outlet/>`); minimal neutral CSS (NOT the design system — that's Phase 4). Vitest+RTL(jsdom): 6 tests pass (routes render + nav works). Build succeeds. Lint/format clean. |
 | 4 | Design System Foundation | Complete | 2026-09-05 | Tailwind **v3** + PostCSS/autoprefixer configured with `design.md` §12 tokens (primary/ink/canvas/surface/border + 5 semantic color pairs, `heading`/`body` fonts, pill/md/lg/xl radii) plus §5 elevation shadows. Reusable base components under `src/components/ui/`: Button (primary/outline/danger + disabled-muted, `fullWidth`, ref-forwarding), Badge (5 semantic tones), Card (resting/raised), Input (label/error/disabled/search-icon/`pill`, ref-forwarding, a11y `aria-invalid`/`aria-describedby`). `/preview` route (`ComponentPreviewPage`) renders every §6 variant/state (acceptance met). `index.css` replaced with Tailwind base layer (§4 heading scale); `AppLayout` restyled to tokens; Inter + Plus Jakarta Sans via Google Fonts. Vitest+RTL: **24** tests pass (13 component + 5 preview + 6 prior). Build compiles all tokens (verified in dist CSS); lint/format clean. |
-| 5 | CI Baseline | Not Started | — | — |
+| 5 | CI Baseline | Complete | 2026-09-05 | GitHub Actions workflow `.github/workflows/ci.yml`: matrix over `client`/`server`, each leg runs `npm ci → lint → format:check → build --if-present → test` on Node 20 (`node-version-file: .nvmrc`, in ESLint 10's engine range). Triggers on all pushes + PRs; `permissions: contents: read`; concurrency cancels superseded runs. `--if-present` cleanly skips the (nonexistent) server build. Validated locally: both legs green (client 24 tests + build; server 10 tests) and a deliberately broken file makes `npm run lint` exit 1 → job would fail. Remote Actions run not observable in this environment; acceptance validated by command-level parity (see Decisions Log Ph.5). |
 
 ### Milestone 1 — Authentication & Access Control
 | # | Phase | Status | Completed | Notes |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 4 complete and merged. Phase 5 (CI Baseline) is next.
-**File(s) touched in Phase 4:** _New_ — `client/tailwind.config.js`, `client/postcss.config.js`, `client/src/lib/cn.js`, `client/src/components/ui/{Button,Badge,Card,Input}.jsx`, `client/src/components/ui/components.test.jsx`, `client/src/pages/ComponentPreviewPage.jsx`, `client/src/pages/ComponentPreviewPage.test.jsx`. _Modified_ — `client/index.html` (Google Fonts links), `client/src/index.css` (replaced with Tailwind base layer), `client/src/App.jsx` (`/preview` route), `client/src/layouts/AppLayout.jsx` (restyled to tokens + `Components` nav item), `client/package.json` (+lockfile: `tailwindcss`/`postcss`/`autoprefixer` dev, `lucide-react` runtime), `Docs/rules.md` (§2 Styling row: recorded Tailwind v3 + PostCSS + autoprefixer per §8.6).
-**Next action:** Begin Phase 5 — CI Baseline (M0). Cross-check `phases.md` Phase 5 for Objective/Key Tasks/Acceptance. Note the Ph.1 decision: **CI must use Node in ESLint 10's engine range** (`^20.19 || ^22.13 || >=24`) via `node-version-file: .nvmrc` (or `20.x`/`22.x` latest) — not a bare `20.9`. CI should run lint + build (+ tests) per-package (`client/` and `server/` are independent projects). Client Vitest already uses `pool: 'threads'`; on Linux CI the path has no spaces so `forks` would also work, but keep threads for parity.
+**Active phase:** None active — Phase 5 complete and merged; **Milestone 0 (Foundation & Tooling) is fully done**. Phase 6 (User Model & Password Hashing, M1) is next.
+**File(s) touched in Phase 5:** _New_ — `.github/workflows/ci.yml`. No application files changed (CI is repo-level config only).
+**Next action:** Begin Phase 6 — User Model & Password Hashing (M1, first auth phase). Traces to **DR-01, NFR-SEC-01**. Key tasks: Mongoose `User` schema (email, hashed password, role, department, active flag) + bcrypt hashing on save; a seed script can create a User; password is never stored or returned in plaintext. Enforce `rules.md` §7.1 (bcrypt-hash, never log, never return the password) — hash in a pre-save hook or service, and exclude the hash from serialized output (`select: false` / `toJSON` transform). Introduces **bcrypt** (already sanctioned in `rules.md` §2 Auth row — no §8.6 update needed). The `asyncHandler` deferred in Phase 2 can keep waiting until the first async route (Phase 7). Unit-test the hashing (hash differs from plaintext, `comparePassword` works) and the no-plaintext-in-output guarantee per `rules.md` §9.
 
 ---
 
@@ -192,6 +192,10 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-05 (Ph.4) | Fonts (Inter + Plus Jakarta Sans) loaded via a Google Fonts `<link>` in `index.html`, **not** self-hosted / `@fontsource`. | Avoids a new npm dependency (`rules.md` §8.6); `design.md` §4 notes self-hosting is a *performance* option, not a requirement. Offline/CSP-blocked → `sans-serif` fallback. Revisit as a perf optimization (Phase 65 polish) if needed. |
 | 2026-09-05 (Ph.4) | `AppLayout` restyled to Tailwind tokens and `index.css` replaced with the Tailwind base layer (rather than leaving the Phase 3 plain-CSS `.app-*` island). Added a `Components` nav item → `/preview` route. | Establishing the design foundation means the shell should consume the tokens too; a parallel plain-CSS system would violate `rules.md` §3 ("Tailwind utility classes only"). Landmark roles/`aria-label`s were preserved, so Phase 3 tests stay green. The preview link is for design-time access; later phases rebuild the nav/auth shell. Box-sizing/margin/full-height are re-established by Tailwind Preflight + `min-h-screen`. |
 | 2026-09-05 (Ph.4) | Introduced a local 5-line `cn()` joiner (`src/lib/cn.js`) instead of `clsx`/`tailwind-merge`. | Covers the components' conditional-class needs without a dependency. Limitation logged in §5 (no conflicting-utility resolution). |
+| 2026-09-05 (Ph.5) | CI runs `lint` + `format:check` + `build --if-present` + `test` per package — extending the literal "lint + build" in `phases.md` Phase 5 to also run the formatter check and the test suites. | Phase 5's Objective ("every push/PR automatically checked before merge") is broader than its Key-Tasks shorthand, and `rules.md` §9 makes the test suites the regression gate — a CI baseline that skipped them would not actually gate regressions. `format:check` belongs to the same lint/format quality gate (`rules.md` §2 groups them) and already runs locally each phase. |
+| 2026-09-05 (Ph.5) | Workflow triggers on **all** pushes and all pull requests (`on: {push, pull_request}`, no branch filter). | Most literal reading of "every push/PR." In this repo's actual process (local squash-merge, no PRs opened), an unfiltered `push` is what produces a pre-merge check on the feature-branch push and a post-merge check on `main`. If a human later opens a PR, both events fire (two runs) — an accepted minor cost, bounded by `concurrency`. Revisit to `push: {branches: [main]}` + `pull_request` if PR-based contribution begins. |
+| 2026-09-05 (Ph.5) | Server "build" realized via `npm run build --if-present`, not a no-op build script. | The server is a Node service with no compile step; `--if-present` makes the shared matrix step a clean no-op there (verified exit 0) without polluting `server/package.json` with a fake script. `phases.md` says "lint + build for both"; build is genuinely absent for the server, so skipping is the correct realization, not an omission. |
+| 2026-09-05 (Ph.5) | Acceptance ("broken PR fails, clean PR passes") validated by **command-level parity**, not an observed GitHub Actions run. | `gh` is unavailable and remote Actions results aren't observable from this environment (same constraint that makes merges local). Validated instead by running the exact CI sequence locally in both packages on the clean tree (all steps exit 0) and confirming a deliberately broken file makes `npm run lint` exit 1 (→ job red). The pushed workflow runs on GitHub for the user to observe. |
 
 ---
 
