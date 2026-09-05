@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-05 — Phase 3 (Frontend Skeleton) complete |
+| **Last Updated** | 2026-09-05 — Phase 4 (Design System Foundation) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M0 — Foundation & Tooling |
-| **Current Phase** | Phase 4 — Design System Foundation (Not Started; next up) |
-| **Phases Complete** | 3 / 67 |
-| **Overall Completion** | ~4.5% |
+| **Current Phase** | Phase 5 — CI Baseline (Not Started; next up) |
+| **Phases Complete** | 4 / 67 |
+| **Overall Completion** | ~6% |
 | **Blockers** | None |
 
 ---
@@ -40,7 +40,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 1 | Repository & Tooling Setup | Complete | 2026-09-05 | client/ + server/ npm projects (ESLint 10 flat config + Prettier 3), root README linking all governance docs, .gitignore/.gitattributes/.editorconfig/.nvmrc. Lint + format:check pass in both packages. |
 | 2 | Backend Skeleton | Complete | 2026-09-05 | Express 5 app factory (`createApp`) + fail-fast bootstrap; Zod env loader; Mongoose 9 connect helper; `GET /health` (200, reports DB state); centralized error contract (`ApiError` + not-found + error-handler, rules.md §6). Vitest+Supertest: 10 tests pass. Lint/format clean. |
 | 3 | Frontend Skeleton | Complete | 2026-09-05 | Vite 8 + React 18 SPA under `client/src/`; React Router v7 with placeholder routes (`/`, `/drives`, `/about`, `*`); `AppLayout` shell (header nav + empty sidebar container + `<Outlet/>`); minimal neutral CSS (NOT the design system — that's Phase 4). Vitest+RTL(jsdom): 6 tests pass (routes render + nav works). Build succeeds. Lint/format clean. |
-| 4 | Design System Foundation | Not Started | — | — |
+| 4 | Design System Foundation | Complete | 2026-09-05 | Tailwind **v3** + PostCSS/autoprefixer configured with `design.md` §12 tokens (primary/ink/canvas/surface/border + 5 semantic color pairs, `heading`/`body` fonts, pill/md/lg/xl radii) plus §5 elevation shadows. Reusable base components under `src/components/ui/`: Button (primary/outline/danger + disabled-muted, `fullWidth`, ref-forwarding), Badge (5 semantic tones), Card (resting/raised), Input (label/error/disabled/search-icon/`pill`, ref-forwarding, a11y `aria-invalid`/`aria-describedby`). `/preview` route (`ComponentPreviewPage`) renders every §6 variant/state (acceptance met). `index.css` replaced with Tailwind base layer (§4 heading scale); `AppLayout` restyled to tokens; Inter + Plus Jakarta Sans via Google Fonts. Vitest+RTL: **24** tests pass (13 component + 5 preview + 6 prior). Build compiles all tokens (verified in dist CSS); lint/format clean. |
 | 5 | CI Baseline | Not Started | — | — |
 
 ### Milestone 1 — Authentication & Access Control
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 3 complete and merged. Phase 4 (Design System Foundation) is next.
-**File(s) touched in Phase 3:** `client/index.html`, `client/vite.config.js`, `client/src/{main.jsx,App.jsx,index.css,App.test.jsx}`, `client/src/layouts/AppLayout.jsx`, `client/src/pages/{HomePage,DrivesPage,AboutPage,NotFoundPage}.jsx`, `client/src/test/setup.js`, `client/package.json` (+lockfile), `Docs/rules.md` (§2 testing row: recorded `jsdom` + `@testing-library/jest-dom` per §8.6).
-**Next action:** Begin Phase 4 — Design System Foundation. Traces to `design.md` §3–6. Key Tasks: extend **Tailwind** config with color/typography/radius tokens (`design.md` §12); build base components (Button primary/outline/danger, Badge, Card, Input); a component-preview route rendering every variant/state (`design.md` §6). This phase **replaces** the minimal Phase 3 CSS with the Tailwind design system. Read `design.md` §3–6 and §10/§12 in full before starting.
+**Active phase:** None active — Phase 4 complete and merged. Phase 5 (CI Baseline) is next.
+**File(s) touched in Phase 4:** _New_ — `client/tailwind.config.js`, `client/postcss.config.js`, `client/src/lib/cn.js`, `client/src/components/ui/{Button,Badge,Card,Input}.jsx`, `client/src/components/ui/components.test.jsx`, `client/src/pages/ComponentPreviewPage.jsx`, `client/src/pages/ComponentPreviewPage.test.jsx`. _Modified_ — `client/index.html` (Google Fonts links), `client/src/index.css` (replaced with Tailwind base layer), `client/src/App.jsx` (`/preview` route), `client/src/layouts/AppLayout.jsx` (restyled to tokens + `Components` nav item), `client/package.json` (+lockfile: `tailwindcss`/`postcss`/`autoprefixer` dev, `lucide-react` runtime), `Docs/rules.md` (§2 Styling row: recorded Tailwind v3 + PostCSS + autoprefixer per §8.6).
+**Next action:** Begin Phase 5 — CI Baseline (M0). Cross-check `phases.md` Phase 5 for Objective/Key Tasks/Acceptance. Note the Ph.1 decision: **CI must use Node in ESLint 10's engine range** (`^20.19 || ^22.13 || >=24`) via `node-version-file: .nvmrc` (or `20.x`/`22.x` latest) — not a bare `20.9`. CI should run lint + build (+ tests) per-package (`client/` and `server/` are independent projects). Client Vitest already uses `pool: 'threads'`; on Linux CI the path has no spaces so `forks` would also work, but keep threads for parity.
 
 ---
 
@@ -187,6 +187,11 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-05 (Ph.3) | Client Vitest uses `pool: 'threads'` (set in `vite.config.js`). | The default `forks` pool's child-process worker fails to start ("Timeout waiting for worker to respond") when the project path contains spaces on Windows — the repo path is `D:\Projects\MERN Lab Project`. Threads are unaffected and also work on Linux CI. Server tests are unaffected (no Vite). |
 | 2026-09-05 (Ph.3) | Vitest `globals: false`: tests import `describe/it/expect` from `vitest`; `src/test/setup.js` registers manual RTL `cleanup()` + `@testing-library/jest-dom/vitest`. | Keeps `eslint src` clean without configuring test globals (mirrors the server test convention). |
 | 2026-09-05 (Ph.3) | Reuse finding (Home/Drives/About placeholder pages are near-identical) resolved as **no change**. | They are placeholders for genuinely distinct future pages that diverge in dedicated later phases; the file-per-page layout mirrors the intended `pages/` structure. Consolidating into one parametrized component now would just be reversed later (create→merge→re-split churn). |
+| 2026-09-05 (Ph.4) | **Tailwind v3** (JS `tailwind.config.js` + PostCSS) chosen over v4 (CSS-first `@theme`). | `design.md` §12 specifies tokens in the exact `theme.extend` object shape and `phases.md` Phase 4 says "Tailwind config extended with tokens" — v3 maps §12 1:1 with zero translation and is the least ambiguous reading of the binding docs. If v4's CSS-first tokens are later preferred, migrate and update `rules.md` §2 first (§8.6). |
+| 2026-09-05 (Ph.4) | Extended `design.md` §12 beyond its literal list: each semantic color gets a `DEFAULT` equal to its `text` value (so `bg-danger`/`text-success` read naturally), and the two §5 elevation shadows are added as `boxShadow.card`/`boxShadow.raised`. | Values are unchanged from `design.md` (§3.3 text colors, §5 shadows) — these are ergonomic aliases, not new design decisions. Phase 4 "Traces to §3–6," which includes the §5 elevation table. |
+| 2026-09-05 (Ph.4) | Fonts (Inter + Plus Jakarta Sans) loaded via a Google Fonts `<link>` in `index.html`, **not** self-hosted / `@fontsource`. | Avoids a new npm dependency (`rules.md` §8.6); `design.md` §4 notes self-hosting is a *performance* option, not a requirement. Offline/CSP-blocked → `sans-serif` fallback. Revisit as a perf optimization (Phase 65 polish) if needed. |
+| 2026-09-05 (Ph.4) | `AppLayout` restyled to Tailwind tokens and `index.css` replaced with the Tailwind base layer (rather than leaving the Phase 3 plain-CSS `.app-*` island). Added a `Components` nav item → `/preview` route. | Establishing the design foundation means the shell should consume the tokens too; a parallel plain-CSS system would violate `rules.md` §3 ("Tailwind utility classes only"). Landmark roles/`aria-label`s were preserved, so Phase 3 tests stay green. The preview link is for design-time access; later phases rebuild the nav/auth shell. Box-sizing/margin/full-height are re-established by Tailwind Preflight + `min-h-screen`. |
+| 2026-09-05 (Ph.4) | Introduced a local 5-line `cn()` joiner (`src/lib/cn.js`) instead of `clsx`/`tailwind-merge`. | Covers the components' conditional-class needs without a dependency. Limitation logged in §5 (no conflicting-utility resolution). |
 
 ---
 
@@ -196,7 +201,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 
 | Date | Issue | Introduced In (Phase) | Blocking? |
 |---|---|---|---|
-| — | — | — | — |
+| 2026-09-05 | `cn()` (`client/src/lib/cn.js`) joins class strings but does **not** resolve conflicting Tailwind utilities (no `tailwind-merge`). A base component's `className` prop therefore can't reliably override a conflicting *base* utility (e.g. padding/radius) — order in the class attribute doesn't decide CSS precedence. All current call sites pass only non-conflicting utilities (`w-64`, `mt-1`, `max-w-sm`), so there is no present bug. | Phase 4 | No — if a later phase needs override-safe merging, add `tailwind-merge` (update `rules.md` §2 first per §8.6). |
 
 ---
 

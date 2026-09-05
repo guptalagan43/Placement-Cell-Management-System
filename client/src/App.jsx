@@ -3,6 +3,7 @@ import AppLayout from './layouts/AppLayout.jsx'
 import HomePage from './pages/HomePage.jsx'
 import DrivesPage from './pages/DrivesPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
+import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
 // Placeholder route table for the skeleton. Real feature pages replace these
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/drives" element={<DrivesPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/preview" element={<ComponentPreviewPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

@@ -21,7 +21,7 @@ This file exists so that an AI coding agent (or any new contributor) makes the *
 | Concern | Choice | Do not substitute without updating this file |
 |---|---|---|
 | Frontend framework | React 18 (Vite) | — |
-| Styling | Tailwind CSS, tokens per `design.md` | — |
+| Styling | Tailwind CSS (v3, via PostCSS + autoprefixer), tokens per `design.md` | — |
 | Routing | React Router | — |
 | Server state / data fetching | React Query (TanStack Query) | — |
 | Forms | React Hook Form | — |

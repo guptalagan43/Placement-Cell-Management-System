@@ -1,72 +1,26 @@
-/*
- * Minimal, neutral base styles for the app shell only.
- * The real design system (tokens, typography, components) is Phase 4 — this
- * file intentionally avoids brand colors and design tokens.
- */
-* {
-  box-sizing: border-box;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-html,
-body,
-#root {
-  height: 100%;
-}
+/* Design-system base layer. All tokens live in tailwind.config.js
+ * (Docs/design.md §12 colors/fonts/radius + §5 elevation); this file only maps
+ * them onto document defaults: canvas background, ink body text, the
+ * Inter / Plus Jakarta Sans pairing, and the §4 heading scale. Component
+ * styling stays in the components themselves via utility classes. */
+@layer base {
+  body {
+    @apply bg-canvas font-body text-sm text-ink-900 antialiased;
+  }
 
-body {
-  margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  line-height: 1.5;
-}
+  h1 {
+    @apply font-heading text-[28px] font-bold leading-9;
+  }
 
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
+  h2 {
+    @apply font-heading text-xl font-semibold;
+  }
 
-.app-header {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.app-brand {
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.app-nav {
-  display: flex;
-  gap: 1rem;
-}
-
-.app-nav a {
-  text-decoration: none;
-  color: inherit;
-}
-
-.app-nav a.active {
-  font-weight: 600;
-  text-decoration: underline;
-}
-
-.app-body {
-  display: flex;
-  flex: 1;
-}
-
-.app-sidebar {
-  width: 240px;
-  border-right: 1px solid #e5e5e5;
-}
-
-.app-main {
-  flex: 1;
-  padding: 1.5rem;
+  h3 {
+    @apply font-heading text-base font-semibold;
+  }
 }
