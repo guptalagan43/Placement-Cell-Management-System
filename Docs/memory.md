@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 9 (RBAC Middleware) complete |
+| **Last Updated** | 2026-09-06 — Phase 10 (Department Scoping Middleware) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M1 — Authentication & Access Control |
-| **Current Phase** | Phase 10 — Department Scoping Middleware (Not Started; next up) |
-| **Phases Complete** | 9 / 67 |
-| **Overall Completion** | ~13% |
+| **Current Phase** | Phase 11 — Frontend Auth (Not Started; next up) |
+| **Phases Complete** | 10 / 67 |
+| **Overall Completion** | ~15% |
 | **Blockers** | None |
 
 ---
@@ -50,7 +50,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 7 | Login & JWT Issuance | Complete | 2026-09-06 | `POST /auth/login` with Zod validation; short-lived access token (15m) + rotating refresh token (7d, httpOnly cookie, `Path=/auth/refresh`); generic `INVALID_CREDENTIALS` error (no user-enumeration); `ACCOUNT_DEACTIVATED` for inactive users. `asyncHandler` utility added. Vitest+Supertest: **9** integration tests + **10** service tests pass. Lint/format clean. Introduced `jsonwebtoken`, `cookie-parser` (sanctioned in `rules.md` §2). |
 | 8 | Auth Middleware | Complete | 2026-09-06 | `authenticate` middleware validates Bearer access token, re-derives user from DB (fresh role/department/active), attaches to `req.user`. Rejects missing/invalid/expired tokens (`UNAUTHORIZED`), deleted users (`UNAUTHORIZED`), deactivated accounts (`ACCOUNT_DEACTIVATED`). **10** integration tests pass. `optionalAuthenticate` exported for future use. Lint/format clean. |
 | 9 | RBAC Middleware | Complete | 2026-09-06 | `authorize(...roles)` factory + convenience guards (`requireStudent`, `requireCoordinator`, `requireTPO`, `requireCoordinatorOrTPO`, `requireAnyRole`). Applied after `authenticate`; rejects with `FORBIDDEN` if role not allowed. Validates roles at startup. **20** integration tests pass. Lint/format clean. |
-| 10 | Department Scoping Middleware | Not Started | — | — |
+| 10 | Department Scoping Middleware | Complete | 2026-09-06 | `departmentScope` middleware attaches `req.departmentScope` from coordinator's department (null for TPO/student). `applyDepartmentScope(query, scope)` helper for Mongoose queries. Runs after `authenticate` + `requireCoordinator`/`requireCoordinatorOrTPO`. **9** integration + **8** unit tests pass. Lint/format clean. |
 | 11 | Frontend Auth | Not Started | — | — |
 | 12 | Forgot/Reset Password Flow | Not Started | — | — |
 
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 9 complete; **Milestone 1 (Authentication & Access Control) phases 6–9 done**. Phase 10 (Department Scoping Middleware, M1) is next.
-**File(s) touched in Phase 9:** _New_ — `server/src/middleware/rbac.middleware.js`, `server/src/middleware/rbac.middleware.test.js`.
-**Next action:** Begin Phase 10 — Department Scoping Middleware (M1). Traces to **FR-AUTH-06, NFR-SEC-05**. Key tasks: scoping middleware attaching `req.departmentScope` based on coordinator's department; applied to first scoped route (student list, Phase 15) as reference; verified by integration test with two coordinators in two departments.
+**Active phase:** None active — Phase 10 complete; **Milestone 1 (Authentication & Access Control) phases 6–10 done**. Phase 11 (Frontend Auth, M1) is next.
+**File(s) touched in Phase 10:** _New_ — `server/src/middleware/scope.middleware.js`, `server/src/middleware/scope.middleware.test.js`, `server/src/middleware/scope.middleware.unit.test.js`.
+**Next action:** Begin Phase 11 — Frontend Auth (M1). Traces to **FR-AUTH-01**. Key tasks: Login page (per `design.md` reference layout); AuthContext holding current user/token; ProtectedRoute and RoleRoute wrappers. Depends on Phase 7 (login API) and Phase 4 (design system). Acceptance: unauthenticated user redirected from protected route; authenticated student cannot navigate to admin-only route cosmetically.
 
 ---
 
@@ -204,6 +204,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.8) | Consistent error codes: `UNAUTHORIZED` for missing/invalid/expired/deleted-user; `ACCOUNT_DEACTIVATED` for inactive; `FORBIDDEN` reserved for RBAC (Phase 9). | Matches `rules.md` §6 contract and enables frontend to branch on specific codes. `TOKEN_EXPIRED` not used separately — treated as `UNAUTHORIZED` for simplicity (both require re-login). |
 | 2026-09-06 (Ph.9) | RBAC middleware is a factory `authorize(...roles)` returning middleware; convenience exports for common role combinations. | Keeps route definitions declarative (`router.get('/coordinator', authenticate, requireCoordinator, handler)`). Role validation at startup catches typos early. |
 | 2026-09-06 (Ph.9) | `FORBIDDEN` (403) used for role mismatches; `UNAUTHORIZED` (401) only for missing/invalid auth. | Clear semantic distinction: 401 = "who are you?", 403 = "you're not allowed here". Frontend can branch on codes. |
+| 2026-09-06 (Ph.10) | Department scoping middleware sets `req.departmentScope` (null for TPO/student). Coordinator scope = their department. | Enforces NFR-SEC-05 at query level, not just UI. `applyDepartmentScope()` helper adds `.where('department').equals(scope)` to Mongoose queries. Safety net: throws `CONFIG_ERROR` if coordinator missing department. |
 
 ---
 
