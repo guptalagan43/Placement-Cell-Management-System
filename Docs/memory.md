@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-05 — Phase 5 (CI Baseline) complete |
+| **Last Updated** | 2026-09-06 — Phase 6 (User Model & Password Hashing) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M1 — Authentication & Access Control |
-| **Current Phase** | Phase 6 — User Model & Password Hashing (Not Started; next up) |
-| **Phases Complete** | 5 / 67 |
-| **Overall Completion** | ~7% |
+| **Current Phase** | Phase 7 — Login & JWT Issuance (Not Started; next up) |
+| **Phases Complete** | 6 / 67 |
+| **Overall Completion** | ~9% |
 | **Blockers** | None |
 
 ---
@@ -46,7 +46,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 ### Milestone 1 — Authentication & Access Control
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 6 | User Model & Password Hashing | Not Started | — | — |
+| 6 | User Model & Password Hashing | Complete | 2026-09-06 | Mongoose `User` schema (email, bcrypt passwordHash, role, department, active, mustResetPassword); pre-validate hook hashes password; `select: false` + `toJSON`/`toObject` transforms exclude hash from all output; `comparePassword` instance method. Seed script (`src/scripts/seed-user.js`) creates users. Vitest+MongoMemoryServer: **15** unit tests pass (hashing, comparison, output exclusion, role/department validation, uniqueness). Lint/format clean. |
 | 7 | Login & JWT Issuance | Not Started | — | — |
 | 8 | Auth Middleware | Not Started | — | — |
 | 9 | RBAC Middleware | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 5 complete and merged; **Milestone 0 (Foundation & Tooling) is fully done**. Phase 6 (User Model & Password Hashing, M1) is next.
-**File(s) touched in Phase 5:** _New_ — `.github/workflows/ci.yml`. No application files changed (CI is repo-level config only).
-**Next action:** Begin Phase 6 — User Model & Password Hashing (M1, first auth phase). Traces to **DR-01, NFR-SEC-01**. Key tasks: Mongoose `User` schema (email, hashed password, role, department, active flag) + bcrypt hashing on save; a seed script can create a User; password is never stored or returned in plaintext. Enforce `rules.md` §7.1 (bcrypt-hash, never log, never return the password) — hash in a pre-save hook or service, and exclude the hash from serialized output (`select: false` / `toJSON` transform). Introduces **bcrypt** (already sanctioned in `rules.md` §2 Auth row — no §8.6 update needed). The `asyncHandler` deferred in Phase 2 can keep waiting until the first async route (Phase 7). Unit-test the hashing (hash differs from plaintext, `comparePassword` works) and the no-plaintext-in-output guarantee per `rules.md` §9.
+**Active phase:** None active — Phase 6 complete; **Milestone 1 (Authentication & Access Control) phase 6 done**. Phase 7 (Login & JWT Issuance, M1) is next.
+**File(s) touched in Phase 6:** _New_ — `server/src/models/User.model.js`, `server/src/models/User.model.test.js`, `server/src/scripts/seed-user.js`. _Modified_ — `server/package.json` (bcrypt already present from Phase 1 setup).
+**Next action:** Begin Phase 7 — Login & JWT Issuance (M1). Traces to **FR-AUTH-01**. Key tasks: `POST /auth/login` route; validate credentials against User model; issue short-lived access token (JWT) + rotating refresh token (httpOnly cookie); generic error on invalid credentials (no user-enumeration leakage). Introduces `jsonwebtoken` (sanctioned in `rules.md` §2). The `asyncHandler` deferred from Phase 2 can now be introduced as a small utility for wrapping async route handlers.
 
 ---
 
@@ -196,6 +196,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-05 (Ph.5) | Workflow triggers on **all** pushes and all pull requests (`on: {push, pull_request}`, no branch filter). | Most literal reading of "every push/PR." In this repo's actual process (local squash-merge, no PRs opened), an unfiltered `push` is what produces a pre-merge check on the feature-branch push and a post-merge check on `main`. If a human later opens a PR, both events fire (two runs) — an accepted minor cost, bounded by `concurrency`. Revisit to `push: {branches: [main]}` + `pull_request` if PR-based contribution begins. |
 | 2026-09-05 (Ph.5) | Server "build" realized via `npm run build --if-present`, not a no-op build script. | The server is a Node service with no compile step; `--if-present` makes the shared matrix step a clean no-op there (verified exit 0) without polluting `server/package.json` with a fake script. `phases.md` says "lint + build for both"; build is genuinely absent for the server, so skipping is the correct realization, not an omission. |
 | 2026-09-05 (Ph.5) | Acceptance ("broken PR fails, clean PR passes") validated by **command-level parity**, not an observed GitHub Actions run. | `gh` is unavailable and remote Actions results aren't observable from this environment (same constraint that makes merges local). Validated instead by running the exact CI sequence locally in both packages on the clean tree (all steps exit 0) and confirming a deliberately broken file makes `npm run lint` exit 1 (→ job red). The pushed workflow runs on GitHub for the user to observe. |
+| 2026-09-06 (Ph.6) | Password hashing done in a Mongoose **pre-validate** hook (not pre-save) so the required `passwordHash` field is populated before validation runs. | Mongoose validates before pre-save hooks; a pre-validate async hook ensures the hash exists when the `required: true` validator checks `passwordHash`. The plaintext password is accepted via a virtual setter that stores to `_plainPassword`, which the hook reads. |
 
 ---
 
