@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 10 (Department Scoping Middleware) complete |
+| **Last Updated** | 2026-09-06 — Phase 11 (Frontend Auth) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M1 — Authentication & Access Control |
-| **Current Phase** | Phase 11 — Frontend Auth (Not Started; next up) |
-| **Phases Complete** | 10 / 67 |
-| **Overall Completion** | ~15% |
+| **Current Phase** | Phase 12 — Forgot/Reset Password Flow (Not Started; next up) |
+| **Phases Complete** | 11 / 67 |
+| **Overall Completion** | ~16% |
 | **Blockers** | None |
 
 ---
@@ -51,7 +51,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 8 | Auth Middleware | Complete | 2026-09-06 | `authenticate` middleware validates Bearer access token, re-derives user from DB (fresh role/department/active), attaches to `req.user`. Rejects missing/invalid/expired tokens (`UNAUTHORIZED`), deleted users (`UNAUTHORIZED`), deactivated accounts (`ACCOUNT_DEACTIVATED`). **10** integration tests pass. `optionalAuthenticate` exported for future use. Lint/format clean. |
 | 9 | RBAC Middleware | Complete | 2026-09-06 | `authorize(...roles)` factory + convenience guards (`requireStudent`, `requireCoordinator`, `requireTPO`, `requireCoordinatorOrTPO`, `requireAnyRole`). Applied after `authenticate`; rejects with `FORBIDDEN` if role not allowed. Validates roles at startup. **20** integration tests pass. Lint/format clean. |
 | 10 | Department Scoping Middleware | Complete | 2026-09-06 | `departmentScope` middleware attaches `req.departmentScope` from coordinator's department (null for TPO/student). `applyDepartmentScope(query, scope)` helper for Mongoose queries. Runs after `authenticate` + `requireCoordinator`/`requireCoordinatorOrTPO`. **9** integration + **8** unit tests pass. Lint/format clean. |
-| 11 | Frontend Auth | Not Started | — | — |
+| 11 | Frontend Auth | Complete | 2026-09-06 | Login page (design.md §6 Sign In layout); `AuthContext` (user + accessToken in memory); `ProtectedRoute` redirects unauthenticated to `/login` preserving destination; `RoleRoute` cosmetic guard for admin routes. API client with `credentials: 'include'` for httpOnly refresh cookie. Button `size` prop added. **16** updated/added tests pass. Lint/format clean. Introduced `react-hook-form` (sanctioned in `rules.md` §2). |
 | 12 | Forgot/Reset Password Flow | Not Started | — | — |
 
 ### Milestone 2 — Student Onboarding & Profile
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 10 complete; **Milestone 1 (Authentication & Access Control) phases 6–10 done**. Phase 11 (Frontend Auth, M1) is next.
-**File(s) touched in Phase 10:** _New_ — `server/src/middleware/scope.middleware.js`, `server/src/middleware/scope.middleware.test.js`, `server/src/middleware/scope.middleware.unit.test.js`.
-**Next action:** Begin Phase 11 — Frontend Auth (M1). Traces to **FR-AUTH-01**. Key tasks: Login page (per `design.md` reference layout); AuthContext holding current user/token; ProtectedRoute and RoleRoute wrappers. Depends on Phase 7 (login API) and Phase 4 (design system). Acceptance: unauthenticated user redirected from protected route; authenticated student cannot navigate to admin-only route cosmetically.
+**Active phase:** None active — Phase 11 complete; **Milestone 1 (Authentication & Access Control) phases 6–11 done**. Phase 12 (Forgot/Reset Password Flow, M1) is next.
+**File(s) touched in Phase 11:** _New_ — `client/src/api/auth.api.js`, `client/src/context/AuthContext.jsx`, `client/src/components/auth/RouteGuards.jsx`, `client/src/pages/LoginPage.jsx`. _Modified_ — `client/src/App.jsx`, `client/src/layouts/AppLayout.jsx`, `client/src/components/ui/Button.jsx` (added `size` prop), `client/src/App.test.jsx`, `client/src/pages/ComponentPreviewPage.test.jsx`. _Installed_ — `react-hook-form` (sanctioned in `rules.md` §2).
+**Next action:** Begin Phase 12 — Forgot/Reset Password Flow (M1). Traces to **FR-AUTH-04**. Key tasks: `POST /auth/forgot-password` (emailed reset token); `POST /auth/reset-password`; corresponding frontend pages. Acceptance: full forgot→email→reset→login cycle works end-to-end in local test environment.
 
 ---
 
@@ -205,6 +205,8 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.9) | RBAC middleware is a factory `authorize(...roles)` returning middleware; convenience exports for common role combinations. | Keeps route definitions declarative (`router.get('/coordinator', authenticate, requireCoordinator, handler)`). Role validation at startup catches typos early. |
 | 2026-09-06 (Ph.9) | `FORBIDDEN` (403) used for role mismatches; `UNAUTHORIZED` (401) only for missing/invalid auth. | Clear semantic distinction: 401 = "who are you?", 403 = "you're not allowed here". Frontend can branch on codes. |
 | 2026-09-06 (Ph.10) | Department scoping middleware sets `req.departmentScope` (null for TPO/student). Coordinator scope = their department. | Enforces NFR-SEC-05 at query level, not just UI. `applyDepartmentScope()` helper adds `.where('department').equals(scope)` to Mongoose queries. Safety net: throws `CONFIG_ERROR` if coordinator missing department. |
+| 2026-09-06 (Ph.11) | Access token stored in memory (AuthContext), NOT in localStorage/sessionStorage. Refresh token in httpOnly cookie (`credentials: 'include'`). | Follows `rules.md` §3 token storage pattern. Access token in memory only prevents XSS exposure; httpOnly cookie prevents CSRF on refresh endpoint. |
+| 2026-09-06 (Ph.11) | `ProtectedRoute` redirects to `/login` with `state={{ from: location }}` for post-login redirect. `RoleRoute` is cosmetic only — real RBAC on server (Phase 9). | Per `architecture.md` §4: frontend guards mirror server enforcement for UX only. `RoleRoute` shows/hides nav links but server rejects unauthorized requests. |
 
 ---
 

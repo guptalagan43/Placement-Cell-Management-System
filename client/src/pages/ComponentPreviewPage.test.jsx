@@ -1,16 +1,41 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
 import App from '../App.jsx'
+import { AuthProvider } from '../context/AuthContext.jsx'
 
-// Acceptance test for Phase 4: the component-preview route renders every base
-// component in every variant/state defined in design.md §6.
-function renderPreview() {
-  render(
-    <MemoryRouter initialEntries={['/preview']}>
-      <App />
+// Mock user for testing
+const mockUser = {
+  email: 'test@student.skit.ac.in',
+  role: 'student',
+  department: 'Computer Science & Engineering',
+}
+
+// Test wrapper that provides authenticated AuthContext
+function renderWithAuth(path, user = mockUser) {
+  function TestWrapper({ children }) {
+    const mockAuth = {
+      user,
+      accessToken: 'mock-access-token',
+      isAuthenticated: true,
+      loading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+    }
+    return <AuthProvider value={mockAuth}>{children}</AuthProvider>
+  }
+
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <TestWrapper>
+        <App />
+      </TestWrapper>
     </MemoryRouter>
   )
+}
+
+function renderPreview() {
+  renderWithAuth('/preview')
 }
 
 describe('Component preview route', () => {
