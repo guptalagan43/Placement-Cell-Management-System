@@ -74,6 +74,10 @@ userSchema.set('toJSON', {
   transform: (_doc, ret) => {
     delete ret.passwordHash
     delete ret._plainPassword
+    // Normalize undefined department to null for consistent API output
+    if (ret.department === undefined) {
+      ret.department = null
+    }
     return ret
   },
 })
@@ -83,6 +87,9 @@ userSchema.set('toObject', {
   transform: (_doc, ret) => {
     delete ret.passwordHash
     delete ret._plainPassword
+    if (ret.department === undefined) {
+      ret.department = null
+    }
     return ret
   },
 })

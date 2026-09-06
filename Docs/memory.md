@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 6 (User Model & Password Hashing) complete |
+| **Last Updated** | 2026-09-06 — Phase 7 (Login & JWT Issuance) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M1 — Authentication & Access Control |
-| **Current Phase** | Phase 7 — Login & JWT Issuance (Not Started; next up) |
-| **Phases Complete** | 6 / 67 |
-| **Overall Completion** | ~9% |
+| **Current Phase** | Phase 8 — Auth Middleware (Not Started; next up) |
+| **Phases Complete** | 7 / 67 |
+| **Overall Completion** | ~10% |
 | **Blockers** | None |
 
 ---
@@ -47,7 +47,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 6 | User Model & Password Hashing | Complete | 2026-09-06 | Mongoose `User` schema (email, bcrypt passwordHash, role, department, active, mustResetPassword); pre-validate hook hashes password; `select: false` + `toJSON`/`toObject` transforms exclude hash from all output; `comparePassword` instance method. Seed script (`src/scripts/seed-user.js`) creates users. Vitest+MongoMemoryServer: **15** unit tests pass (hashing, comparison, output exclusion, role/department validation, uniqueness). Lint/format clean. |
-| 7 | Login & JWT Issuance | Not Started | — | — |
+| 7 | Login & JWT Issuance | Complete | 2026-09-06 | `POST /auth/login` with Zod validation; short-lived access token (15m) + rotating refresh token (7d, httpOnly cookie, `Path=/auth/refresh`); generic `INVALID_CREDENTIALS` error (no user-enumeration); `ACCOUNT_DEACTIVATED` for inactive users. `asyncHandler` utility added. Vitest+Supertest: **9** integration tests + **10** service tests pass. Lint/format clean. Introduced `jsonwebtoken`, `cookie-parser` (sanctioned in `rules.md` §2). |
 | 8 | Auth Middleware | Not Started | — | — |
 | 9 | RBAC Middleware | Not Started | — | — |
 | 10 | Department Scoping Middleware | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 6 complete; **Milestone 1 (Authentication & Access Control) phase 6 done**. Phase 7 (Login & JWT Issuance, M1) is next.
-**File(s) touched in Phase 6:** _New_ — `server/src/models/User.model.js`, `server/src/models/User.model.test.js`, `server/src/scripts/seed-user.js`. _Modified_ — `server/package.json` (bcrypt already present from Phase 1 setup).
-**Next action:** Begin Phase 7 — Login & JWT Issuance (M1). Traces to **FR-AUTH-01**. Key tasks: `POST /auth/login` route; validate credentials against User model; issue short-lived access token (JWT) + rotating refresh token (httpOnly cookie); generic error on invalid credentials (no user-enumeration leakage). Introduces `jsonwebtoken` (sanctioned in `rules.md` §2). The `asyncHandler` deferred from Phase 2 can now be introduced as a small utility for wrapping async route handlers.
+**Active phase:** None active — Phase 7 complete; **Milestone 1 (Authentication & Access Control) phases 6–7 done**. Phase 8 (Auth Middleware, M1) is next.
+**File(s) touched in Phase 7:** _New_ — `server/src/utils/async-handler.js`, `server/src/services/auth.service.js`, `server/src/services/auth.service.test.js`, `server/src/controllers/auth.controller.js`, `server/src/routes/auth.routes.js`, `server/src/routes/auth.routes.test.js`. _Modified_ — `server/src/app.js` (cookie-parser, auth routes), `server/src/config/env.js` (JWT secrets), `server/package.json` (jsonwebtoken, cookie-parser).
+**Next action:** Begin Phase 8 — Auth Middleware (M1). Traces to **FR-AUTH-05**. Key tasks: middleware validating the access token (JWT) and attaching the authenticated user to `req.user`; rejects missing/expired/invalid tokens with consistent error shape per `rules.md` §6 (`UNAUTHORIZED`, `TOKEN_EXPIRED`). Re-derives user from DB to ensure fresh role/department/active status (not trusting stale token claims).
 
 ---
 
@@ -197,6 +197,9 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-05 (Ph.5) | Server "build" realized via `npm run build --if-present`, not a no-op build script. | The server is a Node service with no compile step; `--if-present` makes the shared matrix step a clean no-op there (verified exit 0) without polluting `server/package.json` with a fake script. `phases.md` says "lint + build for both"; build is genuinely absent for the server, so skipping is the correct realization, not an omission. |
 | 2026-09-05 (Ph.5) | Acceptance ("broken PR fails, clean PR passes") validated by **command-level parity**, not an observed GitHub Actions run. | `gh` is unavailable and remote Actions results aren't observable from this environment (same constraint that makes merges local). Validated instead by running the exact CI sequence locally in both packages on the clean tree (all steps exit 0) and confirming a deliberately broken file makes `npm run lint` exit 1 (→ job red). The pushed workflow runs on GitHub for the user to observe. |
 | 2026-09-06 (Ph.6) | Password hashing done in a Mongoose **pre-validate** hook (not pre-save) so the required `passwordHash` field is populated before validation runs. | Mongoose validates before pre-save hooks; a pre-validate async hook ensures the hash exists when the `required: true` validator checks `passwordHash`. The plaintext password is accepted via a virtual setter that stores to `_plainPassword`, which the hook reads. |
+| 2026-09-06 (Ph.7) | Refresh token stored in httpOnly cookie with `Path=/auth/refresh` so it's only sent to the refresh endpoint (not on every request). Access token returned in response body for client to store in memory. | Limits CSRF exposure and follows the token storage pattern in `rules.md` §3 (access token in memory only, refresh token in httpOnly cookie). Cookie `sameSite: lax` balances security with cross-origin needs for the SPA. |
+| 2026-09-06 (Ph.7) | Generic `INVALID_CREDENTIALS` error for both "user not found" and "wrong password" — no user-enumeration leakage. | Required by `rules.md` §7.3 / NFR-SEC-02. Identical response shape and timing prevents attackers from determining valid emails. |
+| 2026-09-06 (Ph.7) | `asyncHandler` wrapper introduced as the first async route appears (Phase 7 login). | Deferred from Phase 2 per `architecture.md` and `rules.md` §6 — now needed to forward unhandled rejections to centralized error handler. |
 
 ---
 
