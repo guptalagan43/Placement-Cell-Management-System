@@ -25,6 +25,24 @@ export async function login(email, password) {
   return handleResponse(res)
 }
 
+export async function forgotPassword(email) {
+  const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  return handleResponse(res)
+}
+
+export async function resetPassword(token, password) {
+  const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password }),
+  })
+  return handleResponse(res)
+}
+
 export async function logout() {
   // Refresh token is cleared server-side via cookie; access token cleared in memory.
   // If a /auth/logout endpoint is added later, call it here.

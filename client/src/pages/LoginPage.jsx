@@ -92,7 +92,10 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center font-body text-xs text-ink-500">
-          Forgot password? Reset link coming in Phase 12.
+          Forgot password?{' '}
+          <a href="/forgot-password" className="text-primary-700 hover:underline font-semibold">
+            Reset password
+          </a>
         </p>
       </Card>
     </div>

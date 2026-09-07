@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 11 (Frontend Auth) complete |
+| **Last Updated** | 2026-09-06 — Phase 12 (Forgot/Reset Password Flow) complete |
 
 ---
 
@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M1 — Authentication & Access Control |
-| **Current Phase** | Phase 12 — Forgot/Reset Password Flow (Not Started; next up) |
-| **Phases Complete** | 11 / 67 |
-| **Overall Completion** | ~16% |
+| **Current Milestone** | M2 — Student Onboarding & Profile |
+| **Current Phase** | Phase 13 — Bulk Student CSV Import (Not Started; next up) |
+| **Phases Complete** | 12 / 67 |
+| **Overall Completion** | ~18% |
 | **Blockers** | None |
 
 ---
@@ -52,7 +52,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 9 | RBAC Middleware | Complete | 2026-09-06 | `authorize(...roles)` factory + convenience guards (`requireStudent`, `requireCoordinator`, `requireTPO`, `requireCoordinatorOrTPO`, `requireAnyRole`). Applied after `authenticate`; rejects with `FORBIDDEN` if role not allowed. Validates roles at startup. **20** integration tests pass. Lint/format clean. |
 | 10 | Department Scoping Middleware | Complete | 2026-09-06 | `departmentScope` middleware attaches `req.departmentScope` from coordinator's department (null for TPO/student). `applyDepartmentScope(query, scope)` helper for Mongoose queries. Runs after `authenticate` + `requireCoordinator`/`requireCoordinatorOrTPO`. **9** integration + **8** unit tests pass. Lint/format clean. |
 | 11 | Frontend Auth | Complete | 2026-09-06 | Login page (design.md §6 Sign In layout); `AuthContext` (user + accessToken in memory); `ProtectedRoute` redirects unauthenticated to `/login` preserving destination; `RoleRoute` cosmetic guard for admin routes. API client with `credentials: 'include'` for httpOnly refresh cookie. Button `size` prop added. **16** updated/added tests pass. Lint/format clean. Introduced `react-hook-form` (sanctioned in `rules.md` §2). |
-| 12 | Forgot/Reset Password Flow | Not Started | — | — |
+| 12 | Forgot/Reset Password Flow | Complete | 2026-09-06 | `POST /auth/forgot-password` (generic response, no user enumeration); `POST /auth/reset-password` (validates token, sets new password via virtual setter). Password reset token (1h expiry, distinct audience `pcms-password-reset`). Frontend: ForgotPasswordPage + ResetPasswordPage with token from URL query. Nodemailer integration with SMTP config (optional in dev). **18** new tests pass. Lint/format clean. Introduced `nodemailer` (sanctioned in `rules.md` §2). Milestone 1 (Auth & Access Control) fully complete. |
 
 ### Milestone 2 — Student Onboarding & Profile
 | # | Phase | Status | Completed | Notes |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 11 complete; **Milestone 1 (Authentication & Access Control) phases 6–11 done**. Phase 12 (Forgot/Reset Password Flow, M1) is next.
-**File(s) touched in Phase 11:** _New_ — `client/src/api/auth.api.js`, `client/src/context/AuthContext.jsx`, `client/src/components/auth/RouteGuards.jsx`, `client/src/pages/LoginPage.jsx`. _Modified_ — `client/src/App.jsx`, `client/src/layouts/AppLayout.jsx`, `client/src/components/ui/Button.jsx` (added `size` prop), `client/src/App.test.jsx`, `client/src/pages/ComponentPreviewPage.test.jsx`. _Installed_ — `react-hook-form` (sanctioned in `rules.md` §2).
-**Next action:** Begin Phase 12 — Forgot/Reset Password Flow (M1). Traces to **FR-AUTH-04**. Key tasks: `POST /auth/forgot-password` (emailed reset token); `POST /auth/reset-password`; corresponding frontend pages. Acceptance: full forgot→email→reset→login cycle works end-to-end in local test environment.
+**Active phase:** None active — Phase 12 complete; **Milestone 1 (Authentication & Access Control) fully complete (phases 6–12)**. Phase 13 (Bulk Student CSV Import, M2) is next.
+**File(s) touched in Phase 12:** _New_ — `server/src/routes/auth.forgot.test.js`, `client/src/pages/ForgotPasswordPage.jsx`, `client/src/pages/ResetPasswordPage.jsx`. _Modified_ — `server/src/services/auth.service.js`, `server/src/controllers/auth.controller.js`, `server/src/routes/auth.routes.js`, `server/src/config/env.js`, `client/src/api/auth.api.js`, `client/src/App.jsx`, `client/src/pages/LoginPage.jsx`. _Installed_ — `nodemailer` (sanctioned in `rules.md` §2).
+**Next action:** Begin Phase 13 — Bulk Student CSV Import (M2). Traces to **FR-AUTH-02**. Key tasks: `POST /students/bulk-import` accepting CSV; creates User + StudentProfile per row; sends activation email per new student. Acceptance: CSV of 50 rows creates 50 accounts and triggers 50 activation emails (test SMTP sink); malformed rows rejected with per-row error report.
 
 ---
 
@@ -207,6 +207,9 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.10) | Department scoping middleware sets `req.departmentScope` (null for TPO/student). Coordinator scope = their department. | Enforces NFR-SEC-05 at query level, not just UI. `applyDepartmentScope()` helper adds `.where('department').equals(scope)` to Mongoose queries. Safety net: throws `CONFIG_ERROR` if coordinator missing department. |
 | 2026-09-06 (Ph.11) | Access token stored in memory (AuthContext), NOT in localStorage/sessionStorage. Refresh token in httpOnly cookie (`credentials: 'include'`). | Follows `rules.md` §3 token storage pattern. Access token in memory only prevents XSS exposure; httpOnly cookie prevents CSRF on refresh endpoint. |
 | 2026-09-06 (Ph.11) | `ProtectedRoute` redirects to `/login` with `state={{ from: location }}` for post-login redirect. `RoleRoute` is cosmetic only — real RBAC on server (Phase 9). | Per `architecture.md` §4: frontend guards mirror server enforcement for UX only. `RoleRoute` shows/hides nav links but server rejects unauthorized requests. |
+| 2026-09-06 (Ph.12) | Password reset token uses **distinct JWT audience** (`pcms-password-reset`) and 1h expiry, separate from access/refresh tokens. | Prevents token confusion attacks. Reset token cannot be used as access token. Short expiry limits exposure window. |
+| 2026-09-06 (Ph.12) | `POST /auth/forgot-password` returns **generic success** for both existing and non-existing emails. | Prevents user enumeration (same as login). Email is sent only if user exists, but response is identical. |
+| 2026-09-06 (Ph.12) | SMTP configuration optional in development/test — email send failures are logged but don't fail the request. | Allows local development without SMTP server. Production requires valid SMTP config. |
 
 ---
 
