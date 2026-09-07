@@ -43,9 +43,7 @@ describe('POST /auth/forgot-password', () => {
   })
 
   it('returns generic success for existing email (no user enumeration)', async () => {
-    const res = await request(app)
-      .post('/auth/forgot-password')
-      .send({ email: testEmail })
+    const res = await request(app).post('/auth/forgot-password').send({ email: testEmail })
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
@@ -63,9 +61,7 @@ describe('POST /auth/forgot-password', () => {
   })
 
   it('returns 400 for missing email', async () => {
-    const res = await request(app)
-      .post('/auth/forgot-password')
-      .send({})
+    const res = await request(app).post('/auth/forgot-password').send({})
 
     expect(res.status).toBe(400)
     expect(res.body.success).toBe(false)
@@ -73,9 +69,7 @@ describe('POST /auth/forgot-password', () => {
   })
 
   it('returns 400 for invalid email format', async () => {
-    const res = await request(app)
-      .post('/auth/forgot-password')
-      .send({ email: 'not-an-email' })
+    const res = await request(app).post('/auth/forgot-password').send({ email: 'not-an-email' })
 
     expect(res.status).toBe(400)
     expect(res.body.success).toBe(false)
@@ -194,9 +188,7 @@ describe('POST /auth/reset-password', () => {
   })
 
   it('returns 400 for missing token', async () => {
-    const res = await request(app)
-      .post('/auth/reset-password')
-      .send({ password: 'NewPass123!' })
+    const res = await request(app).post('/auth/reset-password').send({ password: 'NewPass123!' })
 
     expect(res.status).toBe(400)
     expect(res.body.success).toBe(false)

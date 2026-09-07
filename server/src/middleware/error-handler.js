@@ -5,6 +5,24 @@
 import { ApiError } from '../utils/api-error.js'
 
 export function errorHandler(err, req, res, _next) {
+  // Handle multer errors (file upload validation)
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+      code: 'UPLOAD_ERROR',
+    })
+  }
+
+  // Handle multer fileFilter errors (custom errors thrown by fileFilter)
+  if (err.message && err.message.includes('Only CSV files are allowed')) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+      code: 'INVALID_FILE_TYPE',
+    })
+  }
+
   const isApiError = err instanceof ApiError
   const statusCode = isApiError ? err.statusCode : 500
   const code = isApiError ? err.code : 'INTERNAL_ERROR'
@@ -16,6 +34,14 @@ export function errorHandler(err, req, res, _next) {
   }
 
   res.status(statusCode).json({ success: false, message, code })
+}
+
+// Lazy import multer to avoid circular dependency
+let multer
+try {
+  multer = require('multer')
+} catch {
+  multer = { MulterError: class MulterError extends Error {} }
 }
 
 export default errorHandler

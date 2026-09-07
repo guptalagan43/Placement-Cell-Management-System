@@ -26,9 +26,11 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
+    "csv-parse": "^7.0.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.5",
+    "multer": "^2.3.0",
     "nodemailer": "^10.0.0",
     "zod": "^4.5.4"
   }
