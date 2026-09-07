@@ -7,6 +7,7 @@ import healthRoutes from './routes/health.routes.js'
 import authRoutes from './routes/auth.routes.js'
 import studentImportRoutes from './routes/studentImport.routes.js'
 import studentProfileRoutes from './routes/studentProfile.routes.js'
+import resumeRoutes from './routes/resume.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -27,6 +28,9 @@ export function createApp() {
 
   // Student profile routes (protected with auth + RBAC + scoping)
   app.use('/students', studentProfileRoutes)
+
+  // Resume routes (student only)
+  app.use('/students', resumeRoutes)
 
   // Unmatched routes -> consistent 404 error contract.
   app.use(notFound)

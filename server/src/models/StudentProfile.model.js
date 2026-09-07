@@ -3,6 +3,46 @@
 import mongoose from 'mongoose'
 import { DEPARTMENTS } from '../constants/departments.js'
 
+const resumeSchema = new mongoose.Schema(
+  {
+    label: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+    cloudinaryPublicId: {
+      type: String,
+      required: true,
+    },
+    cloudinarySecureUrl: {
+      type: String,
+      required: true,
+    },
+    originalFilename: {
+      type: String,
+      required: true,
+    },
+    fileSize: {
+      type: Number,
+      required: true,
+    },
+    mimeType: {
+      type: String,
+      required: true,
+    },
+    isDefault: {
+      type: Boolean,
+      default: false,
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: true }
+)
+
 const studentProfileSchema = new mongoose.Schema(
   {
     user: {
@@ -50,7 +90,7 @@ const studentProfileSchema = new mongoose.Schema(
     },
     currentTier: { type: Number, default: null },
     // Resume and other fields (Phase 15+)
-    resumes: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    resumes: { type: [resumeSchema], default: [] },
     skills: { type: [String], default: [] },
     certifications: { type: [mongoose.Schema.Types.Mixed], default: [] },
     projects: { type: [mongoose.Schema.Types.Mixed], default: [] },

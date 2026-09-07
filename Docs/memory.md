@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 16 (Student Profile Page) complete |
+| **Last Updated** | 2026-09-06 — Phase 17 (Resume Upload Backend) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M2 — Student Onboarding & Profile |
-| **Current Phase** | Phase 17 — Resume Upload (Backend) (Not Started; next up) |
-| **Phases Complete** | 16 / 67 |
-| **Overall Completion** | ~24% |
+| **Current Phase** | Phase 18 — Resume Upload UI + Completeness Meter (Not Started; next up) |
+| **Phases Complete** | 17 / 67 |
+| **Overall Completion** | ~25% |
 | **Blockers** | None |
 
 ---
@@ -61,7 +61,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 14 | Password Activation Flow | Complete | 2026-09-06 | `POST /auth/activate` endpoint validates activation token (same JWT as reset password), sets new password, clears `mustResetPassword` flag, returns token pair for auto-login. Frontend: ActivatePage at `/activate?token=` reads token from URL, submits new password, auto-logs in and redirects to dashboard. ForgotPasswordPage updated to mention activation for newly imported students. **10** integration tests pass (valid token, expired/invalid token, already activated, role support). Lint/format clean. |
 | 15 | StudentProfile Schema & CRUD API | Complete | 2026-09-06 | StudentProfile model (rollNumber, branch, batch, section, CGPA, backlogs, skills, certifications, projects, placementStatus, blacklist); `GET/PUT /students/me/profile` for student self-profile; `GET /students` scoped list for coordinators/TPO with filters, pagination, sorting; `GET/PUT /students/:id` for admin access with department scoping. Department scoping enforced at query level via `departmentScope` middleware (Phase 10). **23** integration tests pass. Lint/format clean. |
 | 16 | Student Profile Page | Complete | 2026-09-06 | Student-facing profile page at `/profile` with tabbed sections: Academic (CGPA, semester-wise CGPA, backlogs, 10th/12th %, section), Skills (dynamic array), Certifications (name, issuer, year, proof URL), Projects (title, description, tech stack, link). Uses React Hook Form + Zod with field arrays for dynamic lists. Auto-loads profile on mount, saves with validation. `GET/PUT /students/me/profile` integration. **All lint/format clean**, client build successful. |
-| 17 | Resume Upload (Backend) | Not Started | — | — |
+| 17 | Resume Upload (Backend) | Complete | 2026-09-06 | StudentProfile model extended with `resumes` array (label, cloudinaryPublicId, cloudinarySecureUrl, originalFilename, fileSize, mimeType, isDefault, uploadedAt). Cloudinary signed-upload integration via `GET /students/me/resumes/upload-params` (signed params for direct client upload). `POST /students/me/resumes` adds resume metadata after client upload. `GET /students/me/resumes` lists all, `GET /students/me/resumes/default` gets default, `PUT /:resumeId/default` sets default, `DELETE /:resumeId` deletes from Cloudinary and profile. Files never touch app server (direct client→Cloudinary). **17** integration tests pass. Lint/format clean. Introduced `cloudinary` (sanctioned in `rules.md` §2). |
 | 18 | Resume Upload UI + Completeness Meter | Not Started | — | — |
 
 ### Milestone 3 — Company & Drive Management
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 16 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–16 done**. Phase 17 (Resume Upload Backend, M2) is next.
-**File(s) touched in Phase 16:** _New_ — `client/src/api/studentProfile.api.js`, `client/src/pages/StudentProfilePage.jsx`. _Modified_ — `client/src/App.jsx` (added `/profile` route).
-**Next action:** Begin Phase 17 — Resume Upload (Backend, M2). Traces to **FR-STU-02, NFR-PERF-02**. Key tasks: Cloudinary signed-upload integration; multi-resume array on StudentProfile with a default flag. Acceptance: student can upload, label, and delete multiple resume versions; files never touch the application server's local disk.
+**Active phase:** None active — Phase 17 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–17 done**. Phase 18 (Resume Upload UI + Completeness Meter, M2) is next.
+**File(s) touched in Phase 17:** _New_ — `server/src/services/cloudinary.service.js`, `server/src/services/resume.service.js`, `server/src/controllers/resume.controller.js`, `server/src/routes/resume.routes.js`, `server/src/routes/resume.routes.test.js`. _Modified_ — `server/src/models/StudentProfile.model.js`, `server/src/app.js`, `server/src/controllers/resume.controller.js` (validation middleware throws ApiError).
+**Next action:** Begin Phase 18 — Resume Upload UI + Completeness Meter (M2). Traces to **FR-STU-04**. Key tasks: Resume upload/list/delete UI on Student Profile Page; profile-completeness percentage computation and display. Acceptance: completeness percentage updates correctly as required fields/resume are added.
 
 ---
 
@@ -219,6 +219,9 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.15) | `applyDepartmentScope()` helper fixed to filter by `branch` field (not `department`) to match StudentProfile schema. | StudentProfile uses `branch` field for department; the helper was incorrectly using `department` field. |
 | 2026-09-06 (Ph.16) | Student Profile Page uses **tabbed interface** with 4 sections (Academic, Skills, Certifications, Projects) and React Hook Form + Zod for validation. | Tabbed UX keeps long form manageable. Field arrays for dynamic lists (skills, certifications, projects). Zod schemas per section for granular validation. Client-side validation mirrors server-side Zod schemas. |
 | 2026-09-06 (Ph.16) | Student Profile Page **does not use `useAuth` or `useNavigate`** — relies on API client and `methods.reset()` for data loading. | Removes unnecessary dependencies. Navigation handled by AppLayout's logout button. Auth state managed by AuthContext provider at app root. |
+| 2026-09-06 (Ph.17) | Resume upload uses **direct client-to-Cloudinary upload** with signed parameters; server never touches file bytes. | Satisfies NFR-PERF-02 (files never touch app server) and keeps server stateless. Signed upload params generated server-side with short expiry. |
+| 2026-09-06 (Ph.17) | Resume metadata stored in StudentProfile `resumes` array with `cloudinaryPublicId`, `cloudinarySecureUrl`, `isDefault` flag. | Keeps resume metadata with profile for easy querying. `isDefault` ensures only one default resume per student. |
+| 2026-09-06 (Ph.17) | Validation middleware throws `ApiError` for Zod validation errors (not plain Error). | Ensures error handler correctly returns 400 with `VALIDATION_ERROR` code instead of 500. |
 
 ---
 
