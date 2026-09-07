@@ -3,6 +3,8 @@
 // client; full detail is logged server-side only. `_next` is required so Express
 // recognizes this as a 4-arg error handler (it identifies them by arity).
 import { ApiError } from '../utils/api-error.js'
+import { ZodError } from 'zod'
+import mongoose from 'mongoose'
 
 export function errorHandler(err, req, res, _next) {
   // Handle multer errors (file upload validation)
@@ -20,6 +22,40 @@ export function errorHandler(err, req, res, _next) {
       success: false,
       message: err.message,
       code: 'INVALID_FILE_TYPE',
+    })
+  }
+
+  // Handle Zod validation errors
+  if (err instanceof ZodError) {
+    const details = err.flatten().fieldErrors
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid input',
+      code: 'VALIDATION_ERROR',
+      details,
+    })
+  }
+
+  // Handle Mongoose validation errors
+  if (err instanceof mongoose.Error.ValidationError) {
+    const details = {}
+    for (const [field, error] of Object.entries(err.errors)) {
+      details[field] = error.message
+    }
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      details,
+    })
+  }
+
+  // Handle Mongoose cast errors (e.g., invalid ObjectId)
+  if (err instanceof mongoose.Error.CastError) {
+    return res.status(400).json({
+      success: false,
+      message: `Invalid ${err.path}: ${err.value}`,
+      code: 'INVALID_ID',
     })
   }
 

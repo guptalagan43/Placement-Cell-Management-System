@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 14 (Password Activation Flow) complete |
+| **Last Updated** | 2026-09-06 — Phase 15 (StudentProfile Schema & CRUD API) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M2 — Student Onboarding & Profile |
-| **Current Phase** | Phase 15 — StudentProfile Schema & CRUD API (Not Started; next up) |
-| **Phases Complete** | 14 / 67 |
-| **Overall Completion** | ~21% |
+| **Current Phase** | Phase 16 — Student Profile Page (Not Started; next up) |
+| **Phases Complete** | 15 / 67 |
+| **Overall Completion** | ~22% |
 | **Blockers** | None |
 
 ---
@@ -59,7 +59,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 |---|---|---|---|---|
 | 13 | Bulk Student CSV Import | Complete | 2026-09-06 | `POST /students/bulk-import` with multer CSV upload; creates User (mustResetPassword=true) + StudentProfile per row; per-row validation (email format, branch enum, batch range); duplicate roll number/email reported as row errors; generic 200 response with per-row report (no silent partial import). Multer fileFilter rejects non-CSV. Email sending optional in dev (SMTP not required). **12** integration tests pass (valid CSV, mixed valid/invalid, duplicates, empty CSV, 50-row acceptance, TPO/coordinator roles). Lint/format clean. Introduced `csv-parse`, `multer` (sanctioned in `rules.md` §2). |
 | 14 | Password Activation Flow | Complete | 2026-09-06 | `POST /auth/activate` endpoint validates activation token (same JWT as reset password), sets new password, clears `mustResetPassword` flag, returns token pair for auto-login. Frontend: ActivatePage at `/activate?token=` reads token from URL, submits new password, auto-logs in and redirects to dashboard. ForgotPasswordPage updated to mention activation for newly imported students. **10** integration tests pass (valid token, expired/invalid token, already activated, role support). Lint/format clean. |
-| 15 | StudentProfile Schema & CRUD API | Not Started | — | — |
+| 15 | StudentProfile Schema & CRUD API | Complete | 2026-09-06 | StudentProfile model (rollNumber, branch, batch, section, CGPA, backlogs, skills, certifications, projects, placementStatus, blacklist); `GET/PUT /students/me/profile` for student self-profile; `GET /students` scoped list for coordinators/TPO with filters, pagination, sorting; `GET/PUT /students/:id` for admin access with department scoping. Department scoping enforced at query level via `departmentScope` middleware (Phase 10). **23** integration tests pass. Lint/format clean. |
 | 16 | Student Profile Page | Not Started | — | — |
 | 17 | Resume Upload (Backend) | Not Started | — | — |
 | 18 | Resume Upload UI + Completeness Meter | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 14 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–14 done**. Phase 15 (StudentProfile Schema & CRUD API, M2) is next.
-**File(s) touched in Phase 14:** _New_ — `server/src/routes/auth.activate.test.js`, `client/src/pages/ActivatePage.jsx`. _Modified_ — `server/src/controllers/auth.controller.js`, `server/src/routes/auth.routes.js`, `client/src/api/auth.api.js`, `client/src/App.jsx`, `client/src/pages/ForgotPasswordPage.jsx`, `client/src/pages/LoginPage.jsx`.
-**Next action:** Begin Phase 15 — StudentProfile Schema & CRUD API (M2). Traces to **FR-STU-01, FR-STU-05**. Key tasks: StudentProfile schema (DR-02); `GET/PUT` self-profile routes; `GET` list route for coordinators/admins with department scoping (Phase 10) applied. Acceptance: student can fetch and update own profile; coordinator's list route is correctly department-scoped.
+**Active phase:** None active — Phase 15 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–15 done**. Phase 16 (Student Profile Page, M2) is next.
+**File(s) touched in Phase 15:** _New_ — `server/src/services/studentProfile.service.js`, `server/src/controllers/studentProfile.controller.js`, `server/src/routes/studentProfile.routes.js`, `server/src/routes/studentProfile.routes.test.js`. _Modified_ — `server/src/app.js`, `server/src/middleware/scope.middleware.js` (fixed `applyDepartmentScope` to use `branch` field).
+**Next action:** Begin Phase 16 — Student Profile Page (M2). Traces to **FR-STU-01, FR-STU-03**. Key tasks: Profile page with academic fields, skills, certifications, projects sections; form validation using React Hook Form and Zod. Acceptance: changes persist and reload correctly; invalid input (e.g., CGPA out of range) rejected client- and server-side.
 
 ---
 
@@ -215,6 +215,8 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.13) | Duplicate roll number/email reported as **row-level errors** (not 500), import continues for other rows. | Per-row error report enables admin to fix specific rows and re-import. |
 | 2026-09-06 (Ph.14) | Activation endpoint reuses **password reset token** (same JWT, audience `pcms-password-reset`) but clears `mustResetPassword` flag and returns token pair for auto-login. | Reuses existing token infrastructure. Single token type for both reset and activation simplifies implementation. |
 | 2026-09-06 (Ph.14) | Activation page at `/activate?token=` reads token from URL query param; on success, auto-logs in and redirects to dashboard. | Follows same pattern as reset password flow. Token in URL is standard for email-based activation. |
+| 2026-09-06 (Ph.15) | StudentProfile CRUD routes enforce **department scoping** via `departmentScope` middleware (Phase 10) — coordinators only see their dept's students. | Enforces NFR-SEC-05 at query level. Self-profile routes (`/me/profile`) are separate from admin routes and don't use scoping. |
+| 2026-09-06 (Ph.15) | `applyDepartmentScope()` helper fixed to filter by `branch` field (not `department`) to match StudentProfile schema. | StudentProfile uses `branch` field for department; the helper was incorrectly using `department` field. |
 
 ---
 

@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser'
 import healthRoutes from './routes/health.routes.js'
 import authRoutes from './routes/auth.routes.js'
 import studentImportRoutes from './routes/studentImport.routes.js'
+import studentProfileRoutes from './routes/studentProfile.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -23,6 +24,9 @@ export function createApp() {
 
   // Student import routes (protected - will add auth middleware in later phase)
   app.use('/students', studentImportRoutes)
+
+  // Student profile routes (protected with auth + RBAC + scoping)
+  app.use('/students', studentProfileRoutes)
 
   // Unmatched routes -> consistent 404 error contract.
   app.use(notFound)

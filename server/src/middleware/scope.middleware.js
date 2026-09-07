@@ -39,7 +39,8 @@ export function departmentScope(req, _res, next) {
 // Usage: applyDepartmentScope(StudentProfile.find(), req.departmentScope)
 export function applyDepartmentScope(query, departmentScope) {
   if (departmentScope) {
-    return query.where('department').equals(departmentScope)
+    // StudentProfile uses 'branch' field for department
+    return query.where('branch').equals(departmentScope)
   }
   // null/undefined scope means no filtering (TPO or non-scoped query)
   return query
