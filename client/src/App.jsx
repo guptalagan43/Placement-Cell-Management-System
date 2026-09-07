@@ -5,6 +5,7 @@ import AppLayout from './layouts/AppLayout.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
+import ActivatePage from './pages/ActivatePage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import DrivesPage from './pages/DrivesPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
@@ -31,6 +32,12 @@ function AppRoutes() {
       <Route
         path="/reset-password"
         element={isAuthenticated ? <Navigate to="/" replace /> : <ResetPasswordPage />}
+      />
+
+      {/* Public activation route — redirects away if already authenticated */}
+      <Route
+        path="/activate"
+        element={isAuthenticated ? <Navigate to="/" replace /> : <ActivatePage />}
       />
 
       {/* Protected routes under AppLayout */}

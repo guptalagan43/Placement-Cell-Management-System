@@ -43,6 +43,15 @@ export async function resetPassword(token, password) {
   return handleResponse(res)
 }
 
+export async function activate(token, password) {
+  const res = await fetch(`${API_BASE}/auth/activate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password }),
+  })
+  return handleResponse(res)
+}
+
 export async function logout() {
   // Refresh token is cleared server-side via cookie; access token cleared in memory.
   // If a /auth/logout endpoint is added later, call it here.

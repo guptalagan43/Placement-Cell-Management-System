@@ -1,4 +1,4 @@
-// Auth controller: handles login, forgot password, reset password.
+// Auth controller: handles login, forgot password, reset password, activation.
 // Validates input, delegates to service, returns token pair.
 import { z } from 'zod'
 import User from '../models/User.model.js'
@@ -12,6 +12,7 @@ import {
   INVALID_CREDENTIALS_ERROR,
   generatePasswordResetToken,
   sendPasswordResetEmail,
+  verifyPasswordResetToken,
 } from '../services/auth.service.js'
 
 // Input validation schemas.
@@ -31,6 +32,13 @@ const forgotPasswordSchema = z.object({
 const resetPasswordSchema = z.object({
   body: z.object({
     token: z.string().min(1, 'Reset token is required'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+  }),
+})
+
+const activateSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'Activation token is required'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
   }),
 })
@@ -117,7 +125,7 @@ export const resetPassword = [
     // Verify the reset token.
     let payload
     try {
-      payload = require('../services/auth.service.js').verifyPasswordResetToken(token)
+      payload = verifyPasswordResetToken(token)
     } catch {
       throw new ApiError(400, 'Invalid or expired reset token', 'INVALID_RESET_TOKEN')
     }
@@ -141,6 +149,58 @@ export const resetPassword = [
     res.json({
       success: true,
       message: 'Password has been reset. You can now log in with your new password.',
+    })
+  }),
+]
+
+// POST /auth/activate
+// Used by bulk-imported students to set their initial password.
+// Consumes activation token, sets password, clears mustResetPassword flag, returns token pair.
+export const activate = [
+  asyncHandler(async (req, res) => {
+    const { token, password } = req.body
+
+    // Verify the activation token (same token type as reset password).
+    let payload
+    try {
+      payload = verifyPasswordResetToken(token)
+    } catch {
+      throw new ApiError(400, 'Invalid or expired activation token', 'INVALID_ACTIVATION_TOKEN')
+    }
+
+    // Find user by ID from token.
+    const user = await User.findById(payload.sub).select('+passwordHash')
+    if (!user) {
+      throw new ApiError(400, 'Invalid or expired activation token', 'INVALID_ACTIVATION_TOKEN')
+    }
+
+    // Verify the token email matches the user email (extra safety).
+    if (user.email !== payload.email) {
+      throw new ApiError(400, 'Invalid or expired activation token', 'INVALID_ACTIVATION_TOKEN')
+    }
+
+    // Ensure user actually needs activation.
+    if (!user.mustResetPassword) {
+      throw new ApiError(400, 'Account already activated', 'ALREADY_ACTIVATED')
+    }
+
+    // Set new password (virtual setter triggers pre-validate hash).
+    user.password = password
+    user.mustResetPassword = false
+    await user.save()
+
+    // Generate token pair for auto-login after activation.
+    const accessToken = generateAccessToken(user)
+    const refreshToken = generateRefreshToken(user)
+
+    // Set refresh token in httpOnly cookie.
+    setRefreshCookie(res, refreshToken)
+
+    res.json({
+      success: true,
+      message: 'Account activated successfully.',
+      accessToken,
+      user: user.toJSON(),
     })
   }),
 ]
@@ -181,6 +241,18 @@ export const validateResetPassword = (req, res, next) => {
   next()
 }
 
+// Validation middleware for activate.
+export const validateActivate = (req, res, next) => {
+  const result = activateSchema.safeParse({ body: req.body })
+  if (!result.success) {
+    const details = result.error.flatten().fieldErrors
+    const err = new ApiError(400, 'Invalid input', 'VALIDATION_ERROR')
+    err.details = details
+    return next(err)
+  }
+  next()
+}
+
 export default {
   login,
   validateLogin,
@@ -188,4 +260,6 @@ export default {
   validateForgotPassword,
   resetPassword,
   validateResetPassword,
+  activate,
+  validateActivate,
 }

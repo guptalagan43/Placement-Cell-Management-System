@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 13 (Bulk Student CSV Import) complete |
+| **Last Updated** | 2026-09-06 — Phase 14 (Password Activation Flow) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M2 — Student Onboarding & Profile |
-| **Current Phase** | Phase 14 — Password Activation Flow (Not Started; next up) |
-| **Phases Complete** | 13 / 67 |
-| **Overall Completion** | ~19% |
+| **Current Phase** | Phase 15 — StudentProfile Schema & CRUD API (Not Started; next up) |
+| **Phases Complete** | 14 / 67 |
+| **Overall Completion** | ~21% |
 | **Blockers** | None |
 
 ---
@@ -58,7 +58,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 13 | Bulk Student CSV Import | Complete | 2026-09-06 | `POST /students/bulk-import` with multer CSV upload; creates User (mustResetPassword=true) + StudentProfile per row; per-row validation (email format, branch enum, batch range); duplicate roll number/email reported as row errors; generic 200 response with per-row report (no silent partial import). Multer fileFilter rejects non-CSV. Email sending optional in dev (SMTP not required). **12** integration tests pass (valid CSV, mixed valid/invalid, duplicates, empty CSV, 50-row acceptance, TPO/coordinator roles). Lint/format clean. Introduced `csv-parse`, `multer` (sanctioned in `rules.md` §2). |
-| 14 | Password Activation Flow | Not Started | — | — |
+| 14 | Password Activation Flow | Complete | 2026-09-06 | `POST /auth/activate` endpoint validates activation token (same JWT as reset password), sets new password, clears `mustResetPassword` flag, returns token pair for auto-login. Frontend: ActivatePage at `/activate?token=` reads token from URL, submits new password, auto-logs in and redirects to dashboard. ForgotPasswordPage updated to mention activation for newly imported students. **10** integration tests pass (valid token, expired/invalid token, already activated, role support). Lint/format clean. |
 | 15 | StudentProfile Schema & CRUD API | Not Started | — | — |
 | 16 | Student Profile Page | Not Started | — | — |
 | 17 | Resume Upload (Backend) | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 13 complete; **Milestone 2 (Student Onboarding & Profile) phase 13 done**. Phase 14 (Password Activation Flow, M2) is next.
-**File(s) touched in Phase 13:** _New_ — `server/src/models/StudentProfile.model.js`, `server/src/services/studentImport.service.js`, `server/src/controllers/studentImport.controller.js`, `server/src/routes/studentImport.routes.js`, `server/src/routes/studentImport.routes.test.js`. _Modified_ — `server/src/app.js`, `server/src/middleware/error-handler.js`. _Installed_ — `csv-parse`, `multer` (sanctioned in `rules.md` §2).
-**Next action:** Begin Phase 14 — Password Activation Flow (M2). Traces to **FR-AUTH-03**. Key tasks: Activation page consuming emailed token; forced password-set enforced by `mustResetPassword` flag from Phase 6. Acceptance: newly imported student cannot log in normally until activation completed.
+**Active phase:** None active — Phase 14 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–14 done**. Phase 15 (StudentProfile Schema & CRUD API, M2) is next.
+**File(s) touched in Phase 14:** _New_ — `server/src/routes/auth.activate.test.js`, `client/src/pages/ActivatePage.jsx`. _Modified_ — `server/src/controllers/auth.controller.js`, `server/src/routes/auth.routes.js`, `client/src/api/auth.api.js`, `client/src/App.jsx`, `client/src/pages/ForgotPasswordPage.jsx`, `client/src/pages/LoginPage.jsx`.
+**Next action:** Begin Phase 15 — StudentProfile Schema & CRUD API (M2). Traces to **FR-STU-01, FR-STU-05**. Key tasks: StudentProfile schema (DR-02); `GET/PUT` self-profile routes; `GET` list route for coordinators/admins with department scoping (Phase 10) applied. Acceptance: student can fetch and update own profile; coordinator's list route is correctly department-scoped.
 
 ---
 
@@ -213,6 +213,8 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.13) | Bulk import returns **200 with per-row report** even when all rows fail (acceptance criteria). | "Malformed rows are rejected with a per-row error report, not a silent partial import" — return 200 with summary + results array so client can display all errors. |
 | 2026-09-06 (Ph.13) | Email sending is **optional in dev/test** — skipped when SMTP not configured; logged as warning. | Allows local development without SMTP server. Production requires valid SMTP config. |
 | 2026-09-06 (Ph.13) | Duplicate roll number/email reported as **row-level errors** (not 500), import continues for other rows. | Per-row error report enables admin to fix specific rows and re-import. |
+| 2026-09-06 (Ph.14) | Activation endpoint reuses **password reset token** (same JWT, audience `pcms-password-reset`) but clears `mustResetPassword` flag and returns token pair for auto-login. | Reuses existing token infrastructure. Single token type for both reset and activation simplifies implementation. |
+| 2026-09-06 (Ph.14) | Activation page at `/activate?token=` reads token from URL query param; on success, auto-logs in and redirects to dashboard. | Follows same pattern as reset password flow. Token in URL is standard for email-based activation. |
 
 ---
 

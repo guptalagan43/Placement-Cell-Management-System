@@ -5,7 +5,8 @@ import Input from '../components/ui/Input.jsx'
 import Button from '../components/ui/Button.jsx'
 import Card from '../components/ui/Card.jsx'
 
-// Forgot password page: user enters email to receive reset link.
+// Forgot password page: user enters email to receive reset/activation link.
+// For newly imported students, this sends an activation link to set their initial password.
 export default function ForgotPasswordPage() {
   const [status, setStatus] = useState('idle') // idle | submitted | error
   const [error, setError] = useState('')
@@ -38,6 +39,9 @@ export default function ForgotPasswordPage() {
           <p className="mt-2 font-body text-sm text-ink-600">
             Enter your email and we'll send you a link to reset your password.
           </p>
+          <p className="mt-2 font-body text-xs text-ink-500">
+            Newly imported students: use this to receive your account activation link.
+          </p>
         </div>
 
         {status === 'error' && (
@@ -54,7 +58,7 @@ export default function ForgotPasswordPage() {
             className="mb-6 rounded-md bg-success-bg p-3 text-sm font-body text-success"
             role="status"
           >
-            If the email exists, a password reset link has been sent.
+            If the email exists, a password reset/activation link has been sent.
           </div>
         )}
 
@@ -82,7 +86,7 @@ export default function ForgotPasswordPage() {
               disabled={isSubmitting}
               className="mt-4"
             >
-              {isSubmitting ? 'Sending…' : 'Send Reset Link'}
+              {isSubmitting ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>
         )}
