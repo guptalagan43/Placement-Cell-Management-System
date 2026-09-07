@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import ActivatePage from './pages/ActivatePage.jsx'
+import StudentProfilePage from './pages/StudentProfilePage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import DrivesPage from './pages/DrivesPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
@@ -71,6 +72,16 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ComponentPreviewPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Student Profile Page */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <StudentProfilePage />
             </ProtectedRoute>
           }
         />

@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 15 (StudentProfile Schema & CRUD API) complete |
+| **Last Updated** | 2026-09-06 — Phase 16 (Student Profile Page) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M2 — Student Onboarding & Profile |
-| **Current Phase** | Phase 16 — Student Profile Page (Not Started; next up) |
-| **Phases Complete** | 15 / 67 |
-| **Overall Completion** | ~22% |
+| **Current Phase** | Phase 17 — Resume Upload (Backend) (Not Started; next up) |
+| **Phases Complete** | 16 / 67 |
+| **Overall Completion** | ~24% |
 | **Blockers** | None |
 
 ---
@@ -60,7 +60,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 13 | Bulk Student CSV Import | Complete | 2026-09-06 | `POST /students/bulk-import` with multer CSV upload; creates User (mustResetPassword=true) + StudentProfile per row; per-row validation (email format, branch enum, batch range); duplicate roll number/email reported as row errors; generic 200 response with per-row report (no silent partial import). Multer fileFilter rejects non-CSV. Email sending optional in dev (SMTP not required). **12** integration tests pass (valid CSV, mixed valid/invalid, duplicates, empty CSV, 50-row acceptance, TPO/coordinator roles). Lint/format clean. Introduced `csv-parse`, `multer` (sanctioned in `rules.md` §2). |
 | 14 | Password Activation Flow | Complete | 2026-09-06 | `POST /auth/activate` endpoint validates activation token (same JWT as reset password), sets new password, clears `mustResetPassword` flag, returns token pair for auto-login. Frontend: ActivatePage at `/activate?token=` reads token from URL, submits new password, auto-logs in and redirects to dashboard. ForgotPasswordPage updated to mention activation for newly imported students. **10** integration tests pass (valid token, expired/invalid token, already activated, role support). Lint/format clean. |
 | 15 | StudentProfile Schema & CRUD API | Complete | 2026-09-06 | StudentProfile model (rollNumber, branch, batch, section, CGPA, backlogs, skills, certifications, projects, placementStatus, blacklist); `GET/PUT /students/me/profile` for student self-profile; `GET /students` scoped list for coordinators/TPO with filters, pagination, sorting; `GET/PUT /students/:id` for admin access with department scoping. Department scoping enforced at query level via `departmentScope` middleware (Phase 10). **23** integration tests pass. Lint/format clean. |
-| 16 | Student Profile Page | Not Started | — | — |
+| 16 | Student Profile Page | Complete | 2026-09-06 | Student-facing profile page at `/profile` with tabbed sections: Academic (CGPA, semester-wise CGPA, backlogs, 10th/12th %, section), Skills (dynamic array), Certifications (name, issuer, year, proof URL), Projects (title, description, tech stack, link). Uses React Hook Form + Zod with field arrays for dynamic lists. Auto-loads profile on mount, saves with validation. `GET/PUT /students/me/profile` integration. **All lint/format clean**, client build successful. |
 | 17 | Resume Upload (Backend) | Not Started | — | — |
 | 18 | Resume Upload UI + Completeness Meter | Not Started | — | — |
 
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 15 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–15 done**. Phase 16 (Student Profile Page, M2) is next.
-**File(s) touched in Phase 15:** _New_ — `server/src/services/studentProfile.service.js`, `server/src/controllers/studentProfile.controller.js`, `server/src/routes/studentProfile.routes.js`, `server/src/routes/studentProfile.routes.test.js`. _Modified_ — `server/src/app.js`, `server/src/middleware/scope.middleware.js` (fixed `applyDepartmentScope` to use `branch` field).
-**Next action:** Begin Phase 16 — Student Profile Page (M2). Traces to **FR-STU-01, FR-STU-03**. Key tasks: Profile page with academic fields, skills, certifications, projects sections; form validation using React Hook Form and Zod. Acceptance: changes persist and reload correctly; invalid input (e.g., CGPA out of range) rejected client- and server-side.
+**Active phase:** None active — Phase 16 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–16 done**. Phase 17 (Resume Upload Backend, M2) is next.
+**File(s) touched in Phase 16:** _New_ — `client/src/api/studentProfile.api.js`, `client/src/pages/StudentProfilePage.jsx`. _Modified_ — `client/src/App.jsx` (added `/profile` route).
+**Next action:** Begin Phase 17 — Resume Upload (Backend, M2). Traces to **FR-STU-02, NFR-PERF-02**. Key tasks: Cloudinary signed-upload integration; multi-resume array on StudentProfile with a default flag. Acceptance: student can upload, label, and delete multiple resume versions; files never touch the application server's local disk.
 
 ---
 
@@ -217,6 +217,8 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.14) | Activation page at `/activate?token=` reads token from URL query param; on success, auto-logs in and redirects to dashboard. | Follows same pattern as reset password flow. Token in URL is standard for email-based activation. |
 | 2026-09-06 (Ph.15) | StudentProfile CRUD routes enforce **department scoping** via `departmentScope` middleware (Phase 10) — coordinators only see their dept's students. | Enforces NFR-SEC-05 at query level. Self-profile routes (`/me/profile`) are separate from admin routes and don't use scoping. |
 | 2026-09-06 (Ph.15) | `applyDepartmentScope()` helper fixed to filter by `branch` field (not `department`) to match StudentProfile schema. | StudentProfile uses `branch` field for department; the helper was incorrectly using `department` field. |
+| 2026-09-06 (Ph.16) | Student Profile Page uses **tabbed interface** with 4 sections (Academic, Skills, Certifications, Projects) and React Hook Form + Zod for validation. | Tabbed UX keeps long form manageable. Field arrays for dynamic lists (skills, certifications, projects). Zod schemas per section for granular validation. Client-side validation mirrors server-side Zod schemas. |
+| 2026-09-06 (Ph.16) | Student Profile Page **does not use `useAuth` or `useNavigate`** — relies on API client and `methods.reset()` for data loading. | Removes unnecessary dependencies. Navigation handled by AppLayout's logout button. Auth state managed by AuthContext provider at app root. |
 
 ---
 

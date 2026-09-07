@@ -75,14 +75,14 @@ describe('Department Scoping Middleware (unit)', () => {
 })
 
 describe('applyDepartmentScope helper', () => {
-  it('adds department filter when scope provided', () => {
+  it('adds branch filter when scope provided', () => {
     const mockQuery = {
       where: vi.fn().mockReturnThis(),
       equals: vi.fn().mockReturnThis(),
     }
     const result = applyDepartmentScope(mockQuery, 'Computer Science & Engineering')
 
-    expect(mockQuery.where).toHaveBeenCalledWith('department')
+    expect(mockQuery.where).toHaveBeenCalledWith('branch')
     expect(mockQuery.equals).toHaveBeenCalledWith('Computer Science & Engineering')
     expect(result).toBe(mockQuery)
   })
