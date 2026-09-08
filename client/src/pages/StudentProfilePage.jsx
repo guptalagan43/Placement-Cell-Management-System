@@ -1,12 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { getSelfProfile, updateSelfProfile } from '../api/studentProfile.api.js'
+import {
+  getResumes,
+  getUploadParams,
+  addResume,
+  deleteResume,
+  setDefaultResume,
+} from '../api/resume.api.js'
 import Input from '../components/ui/Input.jsx'
 import Button from '../components/ui/Button.jsx'
 import Card from '../components/ui/Card.jsx'
 import Badge from '../components/ui/Badge.jsx'
+import Progress from '../components/ui/Progress.jsx'
 
 // Validation schemas for each section
 const academicSchema = z.object({
@@ -53,12 +62,57 @@ const profileSchema = z.object({
 // Helper to generate semester CGPA fields
 const SEMESTER_COUNT = 8
 
+// Compute profile completeness percentage
+function computeCompleteness(profile) {
+  if (!profile) return 0
+
+  const weights = {
+    academic: 30,
+    skills: 15,
+    certifications: 15,
+    projects: 15,
+    resumes: 25,
+  }
+
+  let score = 0
+
+  // Academic (30%)
+  if (profile.cgpaOverall != null) score += weights.academic * 0.3
+  if (profile.tenthPercent != null) score += weights.academic * 0.2
+  if (profile.twelfthPercent != null) score += weights.academic * 0.2
+  if (profile.section) score += weights.academic * 0.15
+  if (profile.cgpaSemesters?.some((v) => v != null)) score += weights.academic * 0.15
+
+  // Skills (15%)
+  // Handle both string array (from server) and object array (from form)
+  if (profile.skills?.some((s) => (typeof s === 'string' ? s.trim() : s?.name?.trim())))
+    score += weights.skills
+
+  // Certifications (15%)
+  if (profile.certifications?.some((c) => c?.name?.trim())) score += weights.certifications
+
+  // Projects (15%)
+  if (profile.projects?.some((p) => p?.title?.trim())) score += weights.projects
+
+  // Resumes (25%)
+  if (profile.resumes?.length > 0) score += weights.resumes
+
+  return Math.round(score)
+}
+
 export default function StudentProfilePage() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeSection, setActiveSection] = useState('academic')
   const [message, setMessage] = useState({ type: '', text: '' })
+
+  // Resume state
+  const [resumes, setResumes] = useState([])
+  const [showUpload, setShowUpload] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [settingDefault, setSettingDefault] = useState(null)
+  const [deleting, setDeleting] = useState(null)
 
   // Initialize form with nested field arrays
   const methods = useForm({
@@ -84,56 +138,150 @@ export default function StudentProfilePage() {
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = methods
 
-  // Fetch profile on mount
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const profileData = await getSelfProfile()
-        setProfile(profileData.profile)
-
-        // Populate form with fetched data
-        const p = profileData.profile
-        methods.reset({
-          academic: {
-            cgpaOverall: p.cgpaOverall ?? null,
-            cgpaSemesters: p.cgpaSemesters?.length
-              ? p.cgpaSemesters
-              : Array(SEMESTER_COUNT).fill(null),
-            backlogsActive: p.backlogsActive ?? null,
-            backlogsHistory: p.backlogsHistory ?? [],
-            tenthPercent: p.tenthPercent ?? null,
-            twelfthPercent: p.twelfthPercent ?? null,
-            section: p.section ?? '',
-          },
-          skills: p.skills?.length ? p.skills.map((s) => ({ name: s })) : [{ name: '' }],
-          certifications: p.certifications?.length
-            ? p.certifications.map((c) => ({
-                name: c.name,
-                issuer: c.issuer ?? '',
-                year: c.year ?? null,
-                proofUrl: c.proofUrl ?? '',
-              }))
-            : [{ name: '', issuer: '', year: null, proofUrl: '' }],
-          projects: p.projects?.length
-            ? p.projects.map((pr) => ({
-                title: pr.title,
-                description: pr.description ?? '',
-                techStack: pr.techStack ?? [],
-                link: pr.link ?? '',
-              }))
-            : [{ title: '', description: '', techStack: [], link: '' }],
-        })
-      } catch (err) {
-        setMessage({ type: 'error', text: err.message ?? 'Failed to load profile' })
-      } finally {
-        setLoading(false)
-      }
+  const fetchResumes = async () => {
+    try {
+      const data = await getResumes()
+      setResumes(data.resumes)
+    } catch (err) {
+      console.error('Failed to fetch resumes:', err)
     }
-    fetchProfile()
+  }
+
+  const handleUploadSubmit = async (uploadData) => {
+    if (!uploadData.file) return
+    setUploading(true)
+    try {
+      // Get signed upload params
+      const params = await getUploadParams()
+
+      // Upload to Cloudinary
+      const formData = new FormData()
+      Object.entries(params).forEach(([key, value]) => {
+        formData.append(key, value)
+      })
+      formData.append('file', uploadData.file)
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${params.cloud_name}/raw/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
+
+      const uploadResult = await uploadRes.json()
+      if (!uploadRes.ok) throw new Error(uploadResult.error?.message || 'Upload failed')
+
+      // Add resume metadata to profile
+      await addResume({
+        label: uploadData.label,
+        cloudinaryPublicId: uploadResult.public_id,
+        cloudinarySecureUrl: uploadResult.secure_url,
+        originalFilename: uploadData.file.name,
+        fileSize: uploadData.file.size,
+        mimeType: uploadData.file.type,
+        isDefault: uploadData.isDefault,
+      })
+
+      setShowUpload(false)
+      setValue('upload.label', '', { shouldValidate: true })
+      setValue('upload.file', null, { shouldValidate: true })
+      setValue('upload.isDefault', false, { shouldValidate: true })
+      await fetchResumes()
+      await fetchProfile()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message ?? 'Upload failed' })
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleUploadFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setValue('upload.file', file, { shouldValidate: true })
+    }
+  }
+
+  const handleDelete = async (resumeId) => {
+    if (!confirm('Are you sure you want to delete this resume?')) return
+    setDeleting(resumeId)
+    try {
+      await deleteResume(resumeId)
+      await fetchResumes()
+      await fetchProfile()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message ?? 'Failed to delete resume' })
+    } finally {
+      setDeleting(null)
+    }
+  }
+
+  const handleSetDefault = async (resumeId) => {
+    setSettingDefault(resumeId)
+    try {
+      await setDefaultResume(resumeId)
+      await fetchResumes()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message ?? 'Failed to set default' })
+    } finally {
+      setSettingDefault(null)
+    }
+  }
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const profileData = await getSelfProfile()
+      setProfile(profileData.profile)
+
+      // Populate form with fetched data
+      const p = profileData.profile
+      methods.reset({
+        academic: {
+          cgpaOverall: p.cgpaOverall ?? null,
+          cgpaSemesters: p.cgpaSemesters?.length
+            ? p.cgpaSemesters
+            : Array(SEMESTER_COUNT).fill(null),
+          backlogsActive: p.backlogsActive ?? null,
+          backlogsHistory: p.backlogsHistory ?? [],
+          tenthPercent: p.tenthPercent ?? null,
+          twelfthPercent: p.twelfthPercent ?? null,
+          section: p.section ?? '',
+        },
+        skills: p.skills?.length ? p.skills.map((s) => ({ name: s })) : [{ name: '' }],
+        certifications: p.certifications?.length
+          ? p.certifications.map((c) => ({
+              name: c.name,
+              issuer: c.issuer ?? '',
+              year: c.year ?? null,
+              proofUrl: c.proofUrl ?? '',
+            }))
+          : [{ name: '', issuer: '', year: null, proofUrl: '' }],
+        projects: p.projects?.length
+          ? p.projects.map((pr) => ({
+              title: pr.title,
+              description: pr.description ?? '',
+              techStack: pr.techStack ?? [],
+              link: pr.link ?? '',
+            }))
+          : [{ title: '', description: '', techStack: [], link: '' }],
+      })
+      await fetchResumes()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message ?? 'Failed to load profile' })
+    } finally {
+      setLoading(false)
+    }
   }, [methods])
+
+  // Fetch profile and resumes on mount
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile, methods])
 
   const onSubmit = async (formData) => {
     setSaving(true)
@@ -181,37 +329,51 @@ export default function StudentProfilePage() {
     { id: 'skills', label: 'Skills', icon: '🛠️' },
     { id: 'certifications', label: 'Certifications', icon: '📜' },
     { id: 'projects', label: 'Projects', icon: '💼' },
+    { id: 'resumes', label: 'Resumes', icon: '📄' },
   ]
+
+  const completeness = profile ? computeCompleteness(profile) : 0
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Profile Header with Completeness Meter */}
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl font-bold text-ink-900">My Profile</h1>
           <p className="mt-1 font-body text-sm text-ink-600">
             Manage your academic and professional information
           </p>
         </div>
-        {profile && (
-          <div className="flex items-center gap-2">
-            <Badge
-              variant={
-                profile.placementStatus === 'placed'
-                  ? 'success'
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          {profile && (
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={
+                  profile.placementStatus === 'placed'
+                    ? 'success'
+                    : profile.placementStatus === 'opted_out'
+                      ? 'neutral'
+                      : 'neutral'
+                }
+              >
+                {profile.placementStatus === 'placed'
+                  ? 'Placed'
                   : profile.placementStatus === 'opted_out'
-                    ? 'neutral'
-                    : 'neutral'
-              }
-            >
-              {profile.placementStatus === 'placed'
-                ? 'Placed'
-                : profile.placementStatus === 'opted_out'
-                  ? 'Opted Out'
-                  : 'Not Placed'}
-            </Badge>
-            {profile.isBlacklisted && <Badge variant="danger">Blacklisted</Badge>}
+                    ? 'Opted Out'
+                    : 'Not Placed'}
+              </Badge>
+              {profile.isBlacklisted && <Badge variant="danger">Blacklisted</Badge>}
+            </div>
+          )}
+          {/* Completeness Meter */}
+          <div className="w-48">
+            <div className="flex items-center justify-between text-xs font-body text-ink-600 mb-1">
+              <span>Profile Complete</span>
+              <span className="font-semibold text-ink-900">{completeness}%</span>
+            </div>
+            <Progress value={completeness} max={100} className="h-2" />
           </div>
-        )}
+        </div>
       </div>
 
       {message.text && (
@@ -535,6 +697,138 @@ export default function StudentProfilePage() {
                 </div>
               ))}
             </div>
+          </Card>
+        )}
+
+        {/* Resumes Section */}
+        {activeSection === 'resumes' && (
+          <Card className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-heading text-lg font-semibold text-ink-900">Resumes</h2>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowUpload(true)}
+                disabled={uploading}
+              >
+                + Upload Resume
+              </Button>
+            </div>
+
+            {/* Upload Modal (rendered via portal to avoid nested forms) */}
+            {showUpload &&
+              createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                  <div className="bg-surface rounded-xl p-6 w-full max-w-md shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-heading text-lg font-semibold text-ink-900">
+                        Upload Resume
+                      </h3>
+                      <Button variant="ghost" size="sm" onClick={() => setShowUpload(false)}>
+                        ✕
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      <Input
+                        label="Label"
+                        placeholder="e.g., Main Resume, Internship Resume"
+                        {...register('upload.label', { required: 'Label is required' })}
+                      />
+                      <Input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        label="Resume File"
+                        onChange={handleUploadFileChange}
+                      />
+                      <label className="flex items-center gap-2 text-sm font-body text-ink-600">
+                        <input type="checkbox" {...register('upload.isDefault')} />
+                        <span>Set as default resume</span>
+                      </label>
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowUpload(false)}
+                          disabled={uploading}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="primary"
+                          disabled={uploading}
+                          onClick={() => handleUploadSubmit(methods.getValues().upload)}
+                        >
+                          {uploading ? 'Uploading…' : 'Upload'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>,
+                document.body
+              )}
+
+            {/* Resume List */}
+            {resumes.length === 0 && (
+              <div className="text-center py-12">
+                <p className="font-body text-ink-500 mb-4">No resumes uploaded yet</p>
+                <Button variant="outline" onClick={() => setShowUpload(true)}>
+                  Upload Your First Resume
+                </Button>
+              </div>
+            )}
+
+            {resumes.length > 0 && (
+              <div className="space-y-4">
+                {resumes.map((resume) => (
+                  <div
+                    key={resume._id}
+                    className="flex items-center justify-between p-4 border border-border rounded-lg bg-surface"
+                  >
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="p-2 bg-primary-100 rounded-lg text-primary-700">📄</div>
+                      <div className="min-w-0">
+                        <p className="font-body font-semibold text-ink-900 truncate">
+                          {resume.label}
+                        </p>
+                        <p className="font-body text-sm text-ink-500 truncate">
+                          {resume.originalFilename}
+                        </p>
+                        <p className="font-body text-xs text-ink-400">
+                          {(resume.fileSize / 1024).toFixed(1)} KB • {resume.mimeType}
+                        </p>
+                      </div>
+                      {resume.isDefault && (
+                        <Badge variant="success" className="ml-2">
+                          Default
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!resume.isDefault && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSetDefault(resume._id)}
+                          disabled={settingDefault === resume._id}
+                        >
+                          {settingDefault === resume._id ? 'Setting…' : 'Set Default'}
+                        </Button>
+                      )}
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDelete(resume._id)}
+                        disabled={deleting === resume._id}
+                      >
+                        {deleting === resume._id ? 'Deleting…' : 'Delete'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         )}
 

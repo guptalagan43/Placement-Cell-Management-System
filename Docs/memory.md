@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-06 — Phase 17 (Resume Upload Backend) complete |
+| **Last Updated** | 2026-09-08 — Phase 18 (Resume Upload UI + Completeness Meter) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M2 — Student Onboarding & Profile |
-| **Current Phase** | Phase 18 — Resume Upload UI + Completeness Meter (Not Started; next up) |
-| **Phases Complete** | 17 / 67 |
-| **Overall Completion** | ~25% |
+| **Current Phase** | Phase 19 — Company Schema & CRUD API (Not Started; next up) |
+| **Phases Complete** | 18 / 67 |
+| **Overall Completion** | ~27% |
 | **Blockers** | None |
 
 ---
@@ -62,7 +62,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 15 | StudentProfile Schema & CRUD API | Complete | 2026-09-06 | StudentProfile model (rollNumber, branch, batch, section, CGPA, backlogs, skills, certifications, projects, placementStatus, blacklist); `GET/PUT /students/me/profile` for student self-profile; `GET /students` scoped list for coordinators/TPO with filters, pagination, sorting; `GET/PUT /students/:id` for admin access with department scoping. Department scoping enforced at query level via `departmentScope` middleware (Phase 10). **23** integration tests pass. Lint/format clean. |
 | 16 | Student Profile Page | Complete | 2026-09-06 | Student-facing profile page at `/profile` with tabbed sections: Academic (CGPA, semester-wise CGPA, backlogs, 10th/12th %, section), Skills (dynamic array), Certifications (name, issuer, year, proof URL), Projects (title, description, tech stack, link). Uses React Hook Form + Zod with field arrays for dynamic lists. Auto-loads profile on mount, saves with validation. `GET/PUT /students/me/profile` integration. **All lint/format clean**, client build successful. |
 | 17 | Resume Upload (Backend) | Complete | 2026-09-06 | StudentProfile model extended with `resumes` array (label, cloudinaryPublicId, cloudinarySecureUrl, originalFilename, fileSize, mimeType, isDefault, uploadedAt). Cloudinary signed-upload integration via `GET /students/me/resumes/upload-params` (signed params for direct client upload). `POST /students/me/resumes` adds resume metadata after client upload. `GET /students/me/resumes` lists all, `GET /students/me/resumes/default` gets default, `PUT /:resumeId/default` sets default, `DELETE /:resumeId` deletes from Cloudinary and profile. Files never touch app server (direct client→Cloudinary). **17** integration tests pass. Lint/format clean. Introduced `cloudinary` (sanctioned in `rules.md` §2). |
-| 18 | Resume Upload UI + Completeness Meter | Not Started | — | — |
+| 18 | Resume Upload UI + Completeness Meter | Complete | 2026-09-08 | Resume tab added to Student Profile Page with upload/list/delete/set-default UI using Cloudinary direct upload; profile completeness meter (Progress component) displayed in header showing real-time percentage. Created `client/src/api/resume.api.js` client. Fixed `computeCompleteness` to handle string-array skills from server. **11** component tests pass (completeness meter, resume tab, upload modal, resume list, computeCompleteness function). Lint/format clean, build successful. |
 
 ### Milestone 3 — Company & Drive Management
 | # | Phase | Status | Completed | Notes |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 17 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–17 done**. Phase 18 (Resume Upload UI + Completeness Meter, M2) is next.
-**File(s) touched in Phase 17:** _New_ — `server/src/services/cloudinary.service.js`, `server/src/services/resume.service.js`, `server/src/controllers/resume.controller.js`, `server/src/routes/resume.routes.js`, `server/src/routes/resume.routes.test.js`. _Modified_ — `server/src/models/StudentProfile.model.js`, `server/src/app.js`, `server/src/controllers/resume.controller.js` (validation middleware throws ApiError).
-**Next action:** Begin Phase 18 — Resume Upload UI + Completeness Meter (M2). Traces to **FR-STU-04**. Key tasks: Resume upload/list/delete UI on Student Profile Page; profile-completeness percentage computation and display. Acceptance: completeness percentage updates correctly as required fields/resume are added.
+**Active phase:** None active — Phase 18 complete; **Milestone 2 (Student Onboarding & Profile) phases 13–18 fully done**. Phase 19 (Company Schema & CRUD API, M3) is next.
+**File(s) touched in Phase 18:** _New_ — `client/src/api/resume.api.js`, `client/src/pages/StudentProfilePage.test.jsx`. _Modified_ — `client/src/pages/StudentProfilePage.jsx` (added Resumes tab, completeness meter, upload modal, fixed computeCompleteness for string skills).
+**Next action:** Begin Phase 19 — Company Schema & CRUD API (M3). Traces to **FR-DRV-01**. Key tasks: Company schema (DR-03); CRUD routes, RBAC-restricted to coordinator/admin.
 
 ---
 
@@ -222,6 +222,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.17) | Resume upload uses **direct client-to-Cloudinary upload** with signed parameters; server never touches file bytes. | Satisfies NFR-PERF-02 (files never touch app server) and keeps server stateless. Signed upload params generated server-side with short expiry. |
 | 2026-09-06 (Ph.17) | Resume metadata stored in StudentProfile `resumes` array with `cloudinaryPublicId`, `cloudinarySecureUrl`, `isDefault` flag. | Keeps resume metadata with profile for easy querying. `isDefault` ensures only one default resume per student. |
 | 2026-09-06 (Ph.17) | Validation middleware throws `ApiError` for Zod validation errors (not plain Error). | Ensures error handler correctly returns 400 with `VALIDATION_ERROR` code instead of 500. |
+| 2026-09-08 (Ph.18) | `computeCompleteness` function handles skills as string array (from server) not object array (from form). | Server stores skills as string[] but form uses {name} objects; fixed check to handle both formats for accurate completeness calculation. |
 
 ---
 
