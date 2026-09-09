@@ -17,7 +17,32 @@ import Card from '../components/ui/Card.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import Progress from '../components/ui/Progress.jsx'
 
-// Validation schemas for each section
+// --- Zod sub-schemas --------------------------------------------------------
+
+const addressSchema = z.object({
+  street: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pincode: z.string().optional(),
+})
+
+const personalSchema = z.object({
+  dateOfBirth: z.string().optional().or(z.literal('')),
+  gender: z.enum(['male', 'female', 'other', '']).optional(),
+  phone2: z.string().optional(),
+  address: addressSchema.optional(),
+  country: z.string().optional(),
+})
+
+const academicDetailSchema = z.object({
+  year: z.number().int().min(1900).max(2100).nullable().optional(),
+  rollNumber: z.string().optional(),
+  board: z.string().optional(),
+  obtainedMarks: z.number().min(0).nullable().optional(),
+  maxMarks: z.number().min(1).nullable().optional(),
+  percentage: z.number().min(0).max(100).nullable().optional(),
+})
+
 const academicSchema = z.object({
   cgpaOverall: z.number().min(0).max(10).nullable().optional(),
   cgpaSemesters: z.array(z.number().min(0).max(10)).optional(),
@@ -25,7 +50,23 @@ const academicSchema = z.object({
   backlogsHistory: z.array(z.number().int().min(0)).optional(),
   tenthPercent: z.number().min(0).max(100).nullable().optional(),
   twelfthPercent: z.number().min(0).max(100).nullable().optional(),
+  tenthDetails: academicDetailSchema.optional(),
+  twelfthDetails: academicDetailSchema.optional(),
   section: z.string().optional(),
+})
+
+const guardianSubSchema = z.object({
+  name: z.string().optional(),
+  mobile: z.string().optional(),
+  mobile2: z.string().optional(),
+  email: z.string().optional().or(z.literal('')),
+  occupation: z.string().optional(),
+})
+
+const guardianInfoSchema = z.object({
+  father: guardianSubSchema.optional(),
+  mother: guardianSubSchema.optional(),
+  localGuardianName: z.string().optional(),
 })
 
 const skillSchema = z.object({
@@ -53,11 +94,24 @@ const projectSchema = z.object({
 })
 
 const profileSchema = z.object({
+  personal: personalSchema.optional(),
   academic: academicSchema,
+  guardianInfo: guardianInfoSchema.optional(),
   skills: z.array(skillSchema).optional(),
   certifications: z.array(certificationSchema).optional(),
   projects: z.array(projectSchema).optional(),
 })
+
+// Empty-object defaults for nested structures
+const EMPTY_GUARDIAN = { name: '', mobile: '', mobile2: '', email: '', occupation: '' }
+const EMPTY_ACADEMIC_DETAIL = {
+  year: null,
+  rollNumber: '',
+  board: '',
+  obtainedMarks: null,
+  maxMarks: null,
+  percentage: null,
+}
 
 // Helper to generate semester CGPA fields
 const SEMESTER_COUNT = 8
@@ -67,31 +121,46 @@ function computeCompleteness(profile) {
   if (!profile) return 0
 
   const weights = {
-    academic: 30,
+    personal: 10,
+    academic: 25,
+    guardian: 5,
     skills: 15,
-    certifications: 15,
-    projects: 15,
+    certifications: 10,
+    projects: 10,
     resumes: 25,
   }
 
   let score = 0
 
-  // Academic (30%)
-  if (profile.cgpaOverall != null) score += weights.academic * 0.3
-  if (profile.tenthPercent != null) score += weights.academic * 0.2
-  if (profile.twelfthPercent != null) score += weights.academic * 0.2
-  if (profile.section) score += weights.academic * 0.15
+  // Personal (10%)
+  if (profile.dateOfBirth) score += weights.personal * 0.3
+  if (profile.gender) score += weights.personal * 0.2
+  if (profile.address?.city) score += weights.personal * 0.3
+  if (profile.phone2) score += weights.personal * 0.2
+
+  // Academic (25%)
+  if (profile.cgpaOverall != null) score += weights.academic * 0.25
+  const tenth = profile.tenthDetails ?? {}
+  const twelfth = profile.twelfthDetails ?? {}
+  if (tenth.percentage != null || profile.tenthPercent != null) score += weights.academic * 0.2
+  if (twelfth.percentage != null || profile.twelfthPercent != null) score += weights.academic * 0.2
+  if (profile.section) score += weights.academic * 0.1
   if (profile.cgpaSemesters?.some((v) => v != null)) score += weights.academic * 0.15
+  if (profile.backlogsActive != null) score += weights.academic * 0.1
+
+  // Guardian (5%)
+  if (profile.guardianInfo?.father?.name) score += weights.guardian * 0.4
+  if (profile.guardianInfo?.mother?.name) score += weights.guardian * 0.4
+  if (profile.guardianInfo?.localGuardianName) score += weights.guardian * 0.2
 
   // Skills (15%)
-  // Handle both string array (from server) and object array (from form)
   if (profile.skills?.some((s) => (typeof s === 'string' ? s.trim() : s?.name?.trim())))
     score += weights.skills
 
-  // Certifications (15%)
+  // Certifications (10%)
   if (profile.certifications?.some((c) => c?.name?.trim())) score += weights.certifications
 
-  // Projects (15%)
+  // Projects (10%)
   if (profile.projects?.some((p) => p?.title?.trim())) score += weights.projects
 
   // Resumes (25%)
@@ -104,7 +173,7 @@ export default function StudentProfilePage() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeSection, setActiveSection] = useState('academic')
+  const [activeSection, setActiveSection] = useState('personal')
   const [message, setMessage] = useState({ type: '', text: '' })
 
   // Resume state
@@ -118,6 +187,13 @@ export default function StudentProfilePage() {
   const methods = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
+      personal: {
+        dateOfBirth: '',
+        gender: '',
+        phone2: '',
+        address: { street: '', city: '', state: '', pincode: '' },
+        country: 'India',
+      },
       academic: {
         cgpaOverall: null,
         cgpaSemesters: Array(SEMESTER_COUNT).fill(null),
@@ -125,7 +201,14 @@ export default function StudentProfilePage() {
         backlogsHistory: [],
         tenthPercent: null,
         twelfthPercent: null,
+        tenthDetails: { ...EMPTY_ACADEMIC_DETAIL },
+        twelfthDetails: { ...EMPTY_ACADEMIC_DETAIL },
         section: '',
+      },
+      guardianInfo: {
+        father: { ...EMPTY_GUARDIAN },
+        mother: { ...EMPTY_GUARDIAN },
+        localGuardianName: '',
       },
       skills: [{ name: '' }],
       certifications: [{ name: '', issuer: '', year: null, proofUrl: '' }],
@@ -240,7 +323,20 @@ export default function StudentProfilePage() {
 
       // Populate form with fetched data
       const p = profileData.profile
+      const g = p.guardianInfo ?? {}
       methods.reset({
+        personal: {
+          dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().slice(0, 10) : '',
+          gender: p.gender ?? '',
+          phone2: p.phone2 ?? '',
+          address: {
+            street: p.address?.street ?? '',
+            city: p.address?.city ?? '',
+            state: p.address?.state ?? '',
+            pincode: p.address?.pincode ?? '',
+          },
+          country: p.country ?? 'India',
+        },
         academic: {
           cgpaOverall: p.cgpaOverall ?? null,
           cgpaSemesters: p.cgpaSemesters?.length
@@ -250,7 +346,40 @@ export default function StudentProfilePage() {
           backlogsHistory: p.backlogsHistory ?? [],
           tenthPercent: p.tenthPercent ?? null,
           twelfthPercent: p.twelfthPercent ?? null,
+          tenthDetails: {
+            year: p.tenthDetails?.year ?? null,
+            rollNumber: p.tenthDetails?.rollNumber ?? '',
+            board: p.tenthDetails?.board ?? '',
+            obtainedMarks: p.tenthDetails?.obtainedMarks ?? null,
+            maxMarks: p.tenthDetails?.maxMarks ?? null,
+            percentage: p.tenthDetails?.percentage ?? null,
+          },
+          twelfthDetails: {
+            year: p.twelfthDetails?.year ?? null,
+            rollNumber: p.twelfthDetails?.rollNumber ?? '',
+            board: p.twelfthDetails?.board ?? '',
+            obtainedMarks: p.twelfthDetails?.obtainedMarks ?? null,
+            maxMarks: p.twelfthDetails?.maxMarks ?? null,
+            percentage: p.twelfthDetails?.percentage ?? null,
+          },
           section: p.section ?? '',
+        },
+        guardianInfo: {
+          father: {
+            name: g.father?.name ?? '',
+            mobile: g.father?.mobile ?? '',
+            mobile2: g.father?.mobile2 ?? '',
+            email: g.father?.email ?? '',
+            occupation: g.father?.occupation ?? '',
+          },
+          mother: {
+            name: g.mother?.name ?? '',
+            mobile: g.mother?.mobile ?? '',
+            mobile2: g.mother?.mobile2 ?? '',
+            email: g.mother?.email ?? '',
+            occupation: g.mother?.occupation ?? '',
+          },
+          localGuardianName: g.localGuardianName ?? '',
         },
         skills: p.skills?.length ? p.skills.map((s) => ({ name: s })) : [{ name: '' }],
         certifications: p.certifications?.length
@@ -287,7 +416,37 @@ export default function StudentProfilePage() {
     setSaving(true)
     setMessage({ type: '', text: '' })
     try {
-      await updateSelfProfile(formData)
+      // Flatten the form's nested grouping into the flat structure the API expects
+      const { personal, academic, guardianInfo, skills, certifications, projects } = formData
+
+      const payload = {
+        // Personal (top-level API keys)
+        dateOfBirth: personal?.dateOfBirth
+          ? new Date(personal.dateOfBirth).toISOString()
+          : null,
+        gender: personal?.gender || null,
+        phone2: personal?.phone2 ?? '',
+        address: personal?.address,
+        country: personal?.country ?? 'India',
+        // Academic (top-level API keys)
+        cgpaOverall: academic?.cgpaOverall,
+        cgpaSemesters: academic?.cgpaSemesters,
+        backlogsActive: academic?.backlogsActive,
+        backlogsHistory: academic?.backlogsHistory,
+        tenthPercent: academic?.tenthPercent,
+        twelfthPercent: academic?.twelfthPercent,
+        tenthDetails: academic?.tenthDetails,
+        twelfthDetails: academic?.twelfthDetails,
+        section: academic?.section,
+        // Guardian (nested object at top level)
+        guardianInfo,
+        // Arrays
+        skills: skills?.map((s) => s.name).filter(Boolean),
+        certifications: certifications?.filter((c) => c.name?.trim()),
+        projects: projects?.filter((p) => p.title?.trim()),
+      }
+
+      await updateSelfProfile(payload)
       setMessage({ type: 'success', text: 'Profile saved successfully!' })
       // Refresh profile to get server-validated data
       const profileData = await getSelfProfile()
@@ -325,7 +484,9 @@ export default function StudentProfilePage() {
   }
 
   const sections = [
+    { id: 'personal', label: 'Personal', icon: '👤' },
     { id: 'academic', label: 'Academic', icon: '🎓' },
+    { id: 'guardian', label: 'Guardian', icon: '👨‍👩‍👧' },
     { id: 'skills', label: 'Skills', icon: '🛠️' },
     { id: 'certifications', label: 'Certifications', icon: '📜' },
     { id: 'projects', label: 'Projects', icon: '💼' },
@@ -413,16 +574,91 @@ export default function StudentProfilePage() {
           </div>
         )}
 
-        {/* Academic Section */}
-        {activeSection === 'academic' && (
+        {/* ── Personal Information ────────────────────────────────────── */}
+        {activeSection === 'personal' && (
           <Card className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-semibold text-ink-900">
-                Academic Information
-              </h2>
-            </div>
+            <h2 className="font-heading text-lg font-semibold text-ink-900">
+              Personal Information
+            </h2>
 
             <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Date of Birth"
+                type="date"
+                error={errors.personal?.dateOfBirth?.message}
+                {...register('personal.dateOfBirth')}
+              />
+
+              <div className="flex flex-col gap-1">
+                <label className="font-body text-sm font-semibold text-ink-900">Gender</label>
+                <select
+                  className="w-full border border-border bg-surface px-3 py-2 rounded-md font-body text-sm text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-700/20"
+                  {...register('personal.gender')}
+                >
+                  <option value="">Select…</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+                {errors.personal?.gender?.message && (
+                  <p className="font-body text-xs font-medium text-danger-text">
+                    {errors.personal.gender.message}
+                  </p>
+                )}
+              </div>
+
+              <Input
+                label="Alternate Phone"
+                placeholder="e.g., +91 98765 43210"
+                error={errors.personal?.phone2?.message}
+                {...register('personal.phone2')}
+              />
+
+              <Input
+                label="Country"
+                placeholder="e.g., India"
+                error={errors.personal?.country?.message}
+                {...register('personal.country')}
+              />
+            </div>
+
+            {/* Address sub-card */}
+            <div className="space-y-4 rounded-lg border border-border p-4">
+              <h3 className="font-body text-sm font-semibold text-ink-900">Address</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Street"
+                  placeholder="Street / locality"
+                  {...register('personal.address.street')}
+                />
+                <Input
+                  label="City"
+                  placeholder="City"
+                  {...register('personal.address.city')}
+                />
+                <Input
+                  label="State"
+                  placeholder="State / province"
+                  {...register('personal.address.state')}
+                />
+                <Input
+                  label="Pincode"
+                  placeholder="e.g., 302017"
+                  {...register('personal.address.pincode')}
+                />
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* ── Academic History ──────────────────────────────────────────── */}
+        {activeSection === 'academic' && (
+          <Card className="space-y-6">
+            <h2 className="font-heading text-lg font-semibold text-ink-900">
+              Academic History
+            </h2>
+
+            <div className="grid gap-4 md:grid-cols-3">
               <Input
                 label="Overall CGPA"
                 type="number"
@@ -432,28 +668,6 @@ export default function StudentProfilePage() {
                 placeholder="e.g., 8.5"
                 error={errors.academic?.cgpaOverall?.message}
                 {...register('academic.cgpaOverall', { valueAsNumber: true })}
-              />
-
-              <Input
-                label="10th Percentage"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                placeholder="e.g., 92.5"
-                error={errors.academic?.tenthPercent?.message}
-                {...register('academic.tenthPercent', { valueAsNumber: true })}
-              />
-
-              <Input
-                label="12th Percentage"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                placeholder="e.g., 88.0"
-                error={errors.academic?.twelfthPercent?.message}
-                {...register('academic.twelfthPercent', { valueAsNumber: true })}
               />
 
               <Input
@@ -471,6 +685,104 @@ export default function StudentProfilePage() {
                 error={errors.academic?.section?.message}
                 {...register('academic.section')}
               />
+            </div>
+
+            {/* 10th Details sub-card */}
+            <div className="space-y-4 rounded-lg border border-border p-4">
+              <h3 className="font-body text-sm font-semibold text-ink-900">10th (Secondary) Details</h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <Input
+                  label="Year"
+                  type="number"
+                  min="1900"
+                  max="2100"
+                  placeholder="e.g., 2018"
+                  {...register('academic.tenthDetails.year', { valueAsNumber: true })}
+                />
+                <Input
+                  label="Roll Number"
+                  placeholder="Board roll no."
+                  {...register('academic.tenthDetails.rollNumber')}
+                />
+                <Input
+                  label="Board"
+                  placeholder="e.g., CBSE, RBSE"
+                  {...register('academic.tenthDetails.board')}
+                />
+                <Input
+                  label="Obtained Marks"
+                  type="number"
+                  min="0"
+                  placeholder="e.g., 462"
+                  {...register('academic.tenthDetails.obtainedMarks', { valueAsNumber: true })}
+                />
+                <Input
+                  label="Max Marks"
+                  type="number"
+                  min="1"
+                  placeholder="e.g., 500"
+                  {...register('academic.tenthDetails.maxMarks', { valueAsNumber: true })}
+                />
+                <Input
+                  label="Percentage"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  placeholder="e.g., 92.4"
+                  error={errors.academic?.tenthDetails?.percentage?.message}
+                  {...register('academic.tenthDetails.percentage', { valueAsNumber: true })}
+                />
+              </div>
+            </div>
+
+            {/* 12th Details sub-card */}
+            <div className="space-y-4 rounded-lg border border-border p-4">
+              <h3 className="font-body text-sm font-semibold text-ink-900">12th (Senior Secondary) Details</h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <Input
+                  label="Year"
+                  type="number"
+                  min="1900"
+                  max="2100"
+                  placeholder="e.g., 2020"
+                  {...register('academic.twelfthDetails.year', { valueAsNumber: true })}
+                />
+                <Input
+                  label="Roll Number"
+                  placeholder="Board roll no."
+                  {...register('academic.twelfthDetails.rollNumber')}
+                />
+                <Input
+                  label="Board"
+                  placeholder="e.g., CBSE, RBSE"
+                  {...register('academic.twelfthDetails.board')}
+                />
+                <Input
+                  label="Obtained Marks"
+                  type="number"
+                  min="0"
+                  placeholder="e.g., 438"
+                  {...register('academic.twelfthDetails.obtainedMarks', { valueAsNumber: true })}
+                />
+                <Input
+                  label="Max Marks"
+                  type="number"
+                  min="1"
+                  placeholder="e.g., 500"
+                  {...register('academic.twelfthDetails.maxMarks', { valueAsNumber: true })}
+                />
+                <Input
+                  label="Percentage"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  placeholder="e.g., 87.6"
+                  error={errors.academic?.twelfthDetails?.percentage?.message}
+                  {...register('academic.twelfthDetails.percentage', { valueAsNumber: true })}
+                />
+              </div>
             </div>
 
             {/* Semester-wise CGPA */}
@@ -495,11 +807,9 @@ export default function StudentProfilePage() {
 
             {/* Backlogs History */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-body text-sm font-semibold text-ink-900">
-                  Backlogs History (per semester)
-                </h3>
-              </div>
+              <h3 className="font-body text-sm font-semibold text-ink-900">
+                Backlogs History (per semester)
+              </h3>
               <div className="grid gap-3 md:grid-cols-4">
                 {Array.from({ length: SEMESTER_COUNT }, (_, i) => (
                   <Input
@@ -512,6 +822,90 @@ export default function StudentProfilePage() {
                   />
                 ))}
               </div>
+            </div>
+          </Card>
+        )}
+
+        {/* ── Guardian Information ──────────────────────────────────────── */}
+        {activeSection === 'guardian' && (
+          <Card className="space-y-6">
+            <h2 className="font-heading text-lg font-semibold text-ink-900">
+              Guardian Information
+            </h2>
+
+            {/* Father */}
+            <div className="space-y-4 rounded-lg border border-border p-4">
+              <h3 className="font-body text-sm font-semibold text-ink-900">Father</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Name"
+                  placeholder="Father's full name"
+                  {...register('guardianInfo.father.name')}
+                />
+                <Input
+                  label="Occupation"
+                  placeholder="e.g., Business, Govt. Service"
+                  {...register('guardianInfo.father.occupation')}
+                />
+                <Input
+                  label="Mobile"
+                  placeholder="Primary mobile"
+                  {...register('guardianInfo.father.mobile')}
+                />
+                <Input
+                  label="Alt. Mobile"
+                  placeholder="Secondary mobile"
+                  {...register('guardianInfo.father.mobile2')}
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  placeholder="Email address"
+                  {...register('guardianInfo.father.email')}
+                />
+              </div>
+            </div>
+
+            {/* Mother */}
+            <div className="space-y-4 rounded-lg border border-border p-4">
+              <h3 className="font-body text-sm font-semibold text-ink-900">Mother</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Name"
+                  placeholder="Mother's full name"
+                  {...register('guardianInfo.mother.name')}
+                />
+                <Input
+                  label="Occupation"
+                  placeholder="e.g., Homemaker, Teacher"
+                  {...register('guardianInfo.mother.occupation')}
+                />
+                <Input
+                  label="Mobile"
+                  placeholder="Primary mobile"
+                  {...register('guardianInfo.mother.mobile')}
+                />
+                <Input
+                  label="Alt. Mobile"
+                  placeholder="Secondary mobile"
+                  {...register('guardianInfo.mother.mobile2')}
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  placeholder="Email address"
+                  {...register('guardianInfo.mother.email')}
+                />
+              </div>
+            </div>
+
+            {/* Local Guardian */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Local Guardian Name"
+                placeholder="Name of local guardian (if applicable)"
+                {...register('guardianInfo.localGuardianName')}
+              />
             </div>
           </Card>
         )}

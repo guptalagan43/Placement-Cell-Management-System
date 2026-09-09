@@ -34,7 +34,19 @@ const mockProfileComplete = {
   backlogsHistory: [0, 0, 0, 0, 0, 0, 0, 0],
   tenthPercent: 92.5,
   twelfthPercent: 88.0,
+  tenthDetails: { percentage: 92.5, year: 2018, board: 'CBSE' },
+  twelfthDetails: { percentage: 88.0, year: 2020, board: 'CBSE' },
   section: 'A',
+  dateOfBirth: '2003-05-15T00:00:00.000Z',
+  gender: 'male',
+  phone2: '+91 9876543210',
+  address: { street: '123 Main St', city: 'Jaipur', state: 'Rajasthan', pincode: '302017' },
+  country: 'India',
+  guardianInfo: {
+    father: { name: 'Father Name', mobile: '9876543210' },
+    mother: { name: 'Mother Name', mobile: '9876543211' },
+    localGuardianName: 'Uncle Name',
+  },
   skills: ['JavaScript', 'React', 'Node.js'],
   certifications: [{ name: 'AWS Certified', issuer: 'Amazon', year: 2023, proofUrl: '' }],
   projects: [
@@ -57,6 +69,8 @@ const mockProfileIncomplete = {
   backlogsHistory: [0, 0, 0, 0, 0, 0, 0, 0],
   tenthPercent: 92.5,
   twelfthPercent: 88.0,
+  tenthDetails: { percentage: 92.5 },
+  twelfthDetails: { percentage: 88.0 },
   section: 'A',
   skills: ['JavaScript'],
   certifications: [],
@@ -100,7 +114,7 @@ describe('StudentProfilePage', () => {
       expect(screen.getByText('My Profile')).toBeInTheDocument()
     })
 
-    // Check completeness meter - complete profile should be 75% (academic 30 + skills 15 + certs 15 + projects 15 = 75)
+    // Check completeness meter - complete profile (personal 10 + academic 25 + guardian 5 + skills 15 + certs 10 + projects 10 = 75)
     await waitFor(() => {
       expect(screen.getByText('Profile Complete')).toBeInTheDocument()
     })
@@ -119,7 +133,9 @@ describe('StudentProfilePage', () => {
     renderWithProviders(<StudentProfilePage />)
 
     await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /Personal/ })).toBeInTheDocument()
       expect(screen.getByRole('tab', { name: /Academic/ })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: /Guardian/ })).toBeInTheDocument()
       expect(screen.getByRole('tab', { name: /Skills/ })).toBeInTheDocument()
       expect(screen.getByRole('tab', { name: /Certifications/ })).toBeInTheDocument()
       expect(screen.getByRole('tab', { name: /Projects/ })).toBeInTheDocument()
@@ -219,9 +235,9 @@ describe('StudentProfilePage', () => {
       expect(screen.getByText('My Profile')).toBeInTheDocument()
     })
 
-    // With incomplete profile: academic 30% (all fields), skills 15%, no certs, no projects, no resumes = 45%
+    // Incomplete: personal 0% + academic 25% (cgpa 25% + 10th 20% + 12th 20% + section 10% + sems 15% + backlogs 10% = 100% of 25) + skills 15% = 40%
     await waitFor(() => {
-      expect(screen.getByText('45%')).toBeInTheDocument()
+      expect(screen.getByText('40%')).toBeInTheDocument()
     })
   })
 })
@@ -231,29 +247,46 @@ function computeCompleteness(profile) {
   if (!profile) return 0
 
   const weights = {
-    academic: 30,
+    personal: 10,
+    academic: 25,
+    guardian: 5,
     skills: 15,
-    certifications: 15,
-    projects: 15,
+    certifications: 10,
+    projects: 10,
     resumes: 25,
   }
 
   let score = 0
 
-  // Academic (30%)
-  if (profile.cgpaOverall != null) score += weights.academic * 0.3
-  if (profile.tenthPercent != null) score += weights.academic * 0.2
-  if (profile.twelfthPercent != null) score += weights.academic * 0.2
-  if (profile.section) score += weights.academic * 0.15
+  // Personal (10%)
+  if (profile.dateOfBirth) score += weights.personal * 0.3
+  if (profile.gender) score += weights.personal * 0.2
+  if (profile.address?.city) score += weights.personal * 0.3
+  if (profile.phone2) score += weights.personal * 0.2
+
+  // Academic (25%)
+  if (profile.cgpaOverall != null) score += weights.academic * 0.25
+  const tenth = profile.tenthDetails ?? {}
+  const twelfth = profile.twelfthDetails ?? {}
+  if (tenth.percentage != null || profile.tenthPercent != null) score += weights.academic * 0.2
+  if (twelfth.percentage != null || profile.twelfthPercent != null) score += weights.academic * 0.2
+  if (profile.section) score += weights.academic * 0.1
   if (profile.cgpaSemesters?.some((v) => v != null)) score += weights.academic * 0.15
+  if (profile.backlogsActive != null) score += weights.academic * 0.1
+
+  // Guardian (5%)
+  if (profile.guardianInfo?.father?.name) score += weights.guardian * 0.4
+  if (profile.guardianInfo?.mother?.name) score += weights.guardian * 0.4
+  if (profile.guardianInfo?.localGuardianName) score += weights.guardian * 0.2
 
   // Skills (15%)
-  if (profile.skills?.some((s) => s?.trim())) score += weights.skills
+  if (profile.skills?.some((s) => (typeof s === 'string' ? s.trim() : s?.name?.trim())))
+    score += weights.skills
 
-  // Certifications (15%)
+  // Certifications (10%)
   if (profile.certifications?.some((c) => c?.name?.trim())) score += weights.certifications
 
-  // Projects (15%)
+  // Projects (10%)
   if (profile.projects?.some((p) => p?.title?.trim())) score += weights.projects
 
   // Resumes (25%)
@@ -268,13 +301,13 @@ describe('computeCompleteness', () => {
   })
 
   it('returns 75 for complete profile without resume', () => {
-    // Academic: 30%, Skills: 15%, Certs: 15%, Projects: 15%, Resumes: 0% = 75%
+    // personal 10 + academic 25 + guardian 5 + skills 15 + certs 10 + projects 10 = 75
     expect(computeCompleteness(mockProfileComplete)).toBe(75)
   })
 
-  it('returns 45 for partial profile', () => {
-    // Academic: 30%, Skills: 15%, Certs: 0%, Projects: 0%, Resumes: 0% = 45%
-    expect(computeCompleteness(mockProfileIncomplete)).toBe(45)
+  it('returns 40 for partial profile', () => {
+    // personal 0 + academic 25 + guardian 0 + skills 15 + certs 0 + projects 0 + resumes 0 = 40
+    expect(computeCompleteness(mockProfileIncomplete)).toBe(40)
   })
 
   it('adds 25% when resume exists', () => {
@@ -286,14 +319,21 @@ describe('computeCompleteness', () => {
     expect(computeCompleteness(profileWithResume)).toBe(100)
   })
 
-  it('returns 30 for only academic fields', () => {
-    const onlyAcademic = {
+  it('returns 40 for only academic + guardian fields', () => {
+    const onlyAcademicAndGuardian = {
       ...mockProfileComplete,
+      // zero out personal
+      dateOfBirth: null,
+      gender: null,
+      phone2: '',
+      address: {},
+      // keep academic (25) + guardian (5) + skills (15) = 45, but also zero skills/certs/projects
       skills: [],
       certifications: [],
       projects: [],
       resumes: [],
     }
-    expect(computeCompleteness(onlyAcademic)).toBe(30)
+    // academic 25 + guardian 5 = 30
+    expect(computeCompleteness(onlyAcademicAndGuardian)).toBe(30)
   })
 })

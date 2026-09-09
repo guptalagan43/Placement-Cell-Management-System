@@ -22,6 +22,8 @@ export default function AppLayout() {
     navigate('/login', { replace: true })
   }
 
+  const isAdmin = user && ['tpo', 'coordinator'].includes(user.role)
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between gap-6 border-b border-border bg-surface px-6 py-3">
@@ -50,22 +52,24 @@ export default function AppLayout() {
 
         {isAuthenticated && (
           <div className="flex items-center gap-4">
-            <nav className="flex gap-4" aria-label="Admin">
-              {adminNavItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    cn(
-                      'font-body text-sm text-ink-600 transition-colors hover:text-ink-900',
-                      isActive && 'font-semibold text-primary-700'
-                    )
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
+            {isAdmin && (
+              <nav className="flex gap-4" aria-label="Admin">
+                {adminNavItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      cn(
+                        'font-body text-sm text-ink-600 transition-colors hover:text-ink-900',
+                        isActive && 'font-semibold text-primary-700'
+                      )
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
+            )}
 
             <div className="flex items-center gap-3">
               <div className="hidden sm:block text-right">

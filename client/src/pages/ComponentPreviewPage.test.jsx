@@ -1,41 +1,37 @@
 import { describe, it, expect, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
-import App from '../App.jsx'
-import { AuthProvider } from '../context/AuthContext.jsx'
 
-// Mock user for testing
+// Mock the auth context module so useAuth returns authenticated state
 const mockUser = {
   email: 'test@student.skit.ac.in',
   role: 'student',
   department: 'Computer Science & Engineering',
 }
 
-// Test wrapper that provides authenticated AuthContext
-function renderWithAuth(path, user = mockUser) {
-  function TestWrapper({ children }) {
-    const mockAuth = {
-      user,
+vi.mock('../context/AuthContext.jsx', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useAuth: () => ({
+      user: mockUser,
       accessToken: 'mock-access-token',
       isAuthenticated: true,
       loading: false,
       login: vi.fn(),
       logout: vi.fn(),
-    }
-    return <AuthProvider value={mockAuth}>{children}</AuthProvider>
+    }),
   }
+})
 
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <TestWrapper>
-        <App />
-      </TestWrapper>
-    </MemoryRouter>
-  )
-}
+import App from '../App.jsx'
 
 function renderPreview() {
-  renderWithAuth('/preview')
+  render(
+    <MemoryRouter initialEntries={['/preview']}>
+      <App />
+    </MemoryRouter>
+  )
 }
 
 describe('Component preview route', () => {

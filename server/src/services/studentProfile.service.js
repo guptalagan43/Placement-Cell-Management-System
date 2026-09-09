@@ -6,16 +6,33 @@ import { ApiError } from '../utils/api-error.js'
 
 // Fields that a student can update on their own profile
 const STUDENT_UPDATABLE_FIELDS = [
+  // Academic
   'cgpaOverall',
   'cgpaSemesters',
   'backlogsActive',
   'backlogsHistory',
   'tenthPercent',
   'twelfthPercent',
+  'tenthDetails',
+  'twelfthDetails',
+  // Personal
+  'section',
+  'classGroup',
+  'alternateClassGroup',
+  'dateOfBirth',
+  'gender',
+  'phone2',
+  'address',
+  'country',
+  // Admission
+  'admissionYear',
+  'dateOfAdmission',
+  // Skills, certifications, projects
   'skills',
   'certifications',
   'projects',
-  'section',
+  // Guardian
+  'guardianInfo',
 ]
 
 // Get profile by user ID (self)
@@ -133,7 +150,7 @@ export async function updateProfileById(profileId, updateData, departmentScope) 
   await getProfileById(profileId, departmentScope)
 
   // Coordinators can update placement status, blacklist, etc.
-  // But cannot change rollNumber, user, branch, batch
+  // But cannot change rollNumber, user, branch, batch, registrationNumber, universityEnrollmentNumber
   const ALLOWED_ADMIN_FIELDS = [
     'placementStatus',
     'currentTier',
@@ -146,6 +163,17 @@ export async function updateProfileById(profileId, updateData, departmentScope) 
     'backlogsHistory',
     'tenthPercent',
     'twelfthPercent',
+    'tenthDetails',
+    'twelfthDetails',
+    'classGroup',
+    'alternateClassGroup',
+    'dateOfBirth',
+    'gender',
+    'phone2',
+    'address',
+    'country',
+    'admissionYear',
+    'dateOfAdmission',
   ]
 
   const filtered = {}

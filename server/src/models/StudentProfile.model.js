@@ -1,5 +1,6 @@
 // StudentProfile model. Basic academic/placement profile linked to User (DR-02).
 // Extended in Phase 15 with full CRUD API.
+// Amended 2026-09-08 to match institutional student record format.
 import mongoose from 'mongoose'
 import { DEPARTMENTS } from '../constants/departments.js'
 
@@ -43,6 +44,48 @@ const resumeSchema = new mongoose.Schema(
   { _id: true }
 )
 
+const addressSchema = new mongoose.Schema(
+  {
+    street: { type: String, trim: true, default: '' },
+    city: { type: String, trim: true, default: '' },
+    state: { type: String, trim: true, default: '' },
+    pincode: { type: String, trim: true, default: '' },
+  },
+  { _id: false }
+)
+
+const academicDetailsSchema = new mongoose.Schema(
+  {
+    year: { type: Number, min: 1900, max: 2100 },
+    rollNumber: { type: String, trim: true, default: '' },
+    board: { type: String, trim: true, default: '' },
+    obtainedMarks: { type: Number, min: 0 },
+    maxMarks: { type: Number, min: 1 },
+    percentage: { type: Number, min: 0, max: 100 },
+  },
+  { _id: false }
+)
+
+const guardianSchema = new mongoose.Schema(
+  {
+    name: { type: String, trim: true, default: '' },
+    mobile: { type: String, trim: true, default: '' },
+    mobile2: { type: String, trim: true, default: '' },
+    email: { type: String, trim: true, default: '' },
+    occupation: { type: String, trim: true, default: '' },
+  },
+  { _id: false }
+)
+
+const guardianInfoSchema = new mongoose.Schema(
+  {
+    father: { type: guardianSchema, default: () => ({}) },
+    mother: { type: guardianSchema, default: () => ({}) },
+    localGuardianName: { type: String, trim: true, default: '' },
+  },
+  { _id: false }
+)
+
 const studentProfileSchema = new mongoose.Schema(
   {
     user: {
@@ -51,6 +94,7 @@ const studentProfileSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    // Identity numbers
     rollNumber: {
       type: String,
       required: true,
@@ -58,6 +102,19 @@ const studentProfileSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
     },
+    registrationNumber: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: '',
+    },
+    universityEnrollmentNumber: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: '',
+    },
+    // Department & batch
     branch: {
       type: String,
       enum: DEPARTMENTS,
@@ -75,11 +132,40 @@ const studentProfileSchema = new mongoose.Schema(
       uppercase: true,
       default: '',
     },
-    // Academic fields (Phase 15 will extend)
+    classGroup: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: '',
+    },
+    alternateClassGroup: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: '',
+    },
+    // Personal details
+    dateOfBirth: { type: Date },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other'],
+      default: null,
+    },
+    phone2: { type: String, trim: true, default: '' },
+    address: { type: addressSchema, default: () => ({}) },
+    country: { type: String, trim: true, default: 'India' },
+    // Admission details
+    admissionYear: { type: Number, min: 2000, max: 2100 },
+    dateOfAdmission: { type: Date },
+    // Academic fields
     cgpaOverall: { type: Number, min: 0, max: 10, default: null },
     cgpaSemesters: { type: [Number], default: [] },
     backlogsActive: { type: Number, min: 0, default: 0 },
     backlogsHistory: { type: [Number], default: [] },
+    // Expanded 10th/12th details
+    tenthDetails: { type: academicDetailsSchema, default: () => ({}) },
+    twelfthDetails: { type: academicDetailsSchema, default: () => ({}) },
+    // Legacy flat fields (kept for backward compatibility during migration)
     tenthPercent: { type: Number, min: 0, max: 100, default: null },
     twelfthPercent: { type: Number, min: 0, max: 100, default: null },
     // Placement status
@@ -89,17 +175,19 @@ const studentProfileSchema = new mongoose.Schema(
       default: 'not_placed',
     },
     currentTier: { type: Number, default: null },
-    // Resume and other fields (Phase 15+)
+    // Resume and other fields
     resumes: { type: [resumeSchema], default: [] },
     skills: { type: [String], default: [] },
     certifications: { type: [mongoose.Schema.Types.Mixed], default: [] },
     projects: { type: [mongoose.Schema.Types.Mixed], default: [] },
-    // Policy acknowledgment (Phase 47)
+    // Guardian information
+    guardianInfo: { type: guardianInfoSchema, default: () => ({}) },
+    // Policy acknowledgment
     policyAcknowledgment: {
       version: { type: String, default: null },
       acceptedAt: { type: Date, default: null },
     },
-    // Blacklist flag (Phase 13+)
+    // Blacklist flag
     isBlacklisted: { type: Boolean, default: false },
     blacklistReason: { type: String, default: null },
   },
@@ -112,6 +200,8 @@ const studentProfileSchema = new mongoose.Schema(
 // Indexes for common queries
 studentProfileSchema.index({ branch: 1, batch: 1 })
 studentProfileSchema.index({ placementStatus: 1 })
+studentProfileSchema.index({ registrationNumber: 1 })
+studentProfileSchema.index({ universityEnrollmentNumber: 1 })
 
 export const StudentProfile = mongoose.model('StudentProfile', studentProfileSchema)
 export default StudentProfile
