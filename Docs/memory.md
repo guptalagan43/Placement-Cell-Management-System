@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-09 — Phase 19 (Company Schema & CRUD API) complete |
+| **Last Updated** | 2026-09-09 — Phase 20 (Company Admin UI) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M3 — Company & Drive Management |
-| **Current Phase** | Phase 20 — Company Admin UI (Not Started; next up) |
-| **Phases Complete** | 19 / 67 |
-| **Overall Completion** | ~28% |
+| **Current Phase** | Phase 21 — Drive Schema & CRUD API (Not Started; next up) |
+| **Phases Complete** | 20 / 67 |
+| **Overall Completion** | ~30% |
 | **Blockers** | None |
 
 ---
@@ -68,6 +68,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 19 | Company Schema & CRUD API | Complete | 2026-09-09 | Company schema (DR-03) with name, sector, about, HR contact, website, isActive; CRUD routes (POST/GET/PUT/DELETE /companies) RBAC-restricted to coordinator/TPO; GET /companies/active for all authenticated users (students for drive dropdowns); search, filter (sector, isActive), pagination, sorting. **36** integration tests pass. Lint/format clean. |
+| 20 | Company Admin UI | Complete | 2026-09-09 | Company list page with search, filter (sector, status), pagination, sorting; create/edit modal with React Hook Form + Zod validation; delete confirmation modal; HR contact fields (name, email, phone, designation); active/inactive badge. Accessible via /companies route with RoleRoute guard (coordinator/TPO only). Lint/format clean, build successful. |
 | 20 | Company Admin UI | Not Started | — | — |
 | 21 | Drive Schema & CRUD API | Not Started | — | — |
 | 22 | Drive Create/Edit Admin Form | Not Started | — | — |
@@ -153,9 +154,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 19 complete; **Milestone 3 (Company & Drive Management) Phase 19 done**. Phase 20 (Company Admin UI, M3) is next.
-**File(s) touched in Phase 19:** _New_ — `server/src/models/Company.model.js`, `server/src/services/company.service.js`, `server/src/controllers/company.controller.js`, `server/src/routes/company.routes.js`, `server/src/routes/company.routes.test.js`. _Modified_ — `server/src/app.js` (added company routes).
-**Next action:** Begin Phase 20 — Company Admin UI (M3). Traces to **FR-DRV-01**. Key tasks: Company list + create/edit form; UI for coordinators/TPO to manage companies.
+**Active phase:** None active — Phase 20 complete; **Milestone 3 (Company & Drive Management) Phases 19–20 done**. Phase 21 (Drive Schema & CRUD API, M3) is next.
+**File(s) touched in Phase 20:** _New_ — `client/src/api/company.api.js`, `client/src/pages/CompaniesPage.jsx`. _Modified_ — `client/src/App.jsx` (added CompaniesPage route and import), `client/src/layouts/AppLayout.jsx` (added Companies to admin nav).
+**Next action:** Begin Phase 21 — Drive Schema & CRUD API (M3). Traces to **FR-DRV-02, FR-DRV-03**. Key tasks: Drive schema (DR-04) with nested eligibility criteria, tier, department scope, status; CRUD routes with department scoping.
 
 ---
 
