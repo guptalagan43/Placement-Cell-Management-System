@@ -421,9 +421,7 @@ export default function StudentProfilePage() {
 
       const payload = {
         // Personal (top-level API keys)
-        dateOfBirth: personal?.dateOfBirth
-          ? new Date(personal.dateOfBirth).toISOString()
-          : null,
+        dateOfBirth: personal?.dateOfBirth ? new Date(personal.dateOfBirth).toISOString() : null,
         gender: personal?.gender || null,
         phone2: personal?.phone2 ?? '',
         address: personal?.address,
@@ -631,11 +629,7 @@ export default function StudentProfilePage() {
                   placeholder="Street / locality"
                   {...register('personal.address.street')}
                 />
-                <Input
-                  label="City"
-                  placeholder="City"
-                  {...register('personal.address.city')}
-                />
+                <Input label="City" placeholder="City" {...register('personal.address.city')} />
                 <Input
                   label="State"
                   placeholder="State / province"
@@ -654,9 +648,7 @@ export default function StudentProfilePage() {
         {/* ── Academic History ──────────────────────────────────────────── */}
         {activeSection === 'academic' && (
           <Card className="space-y-6">
-            <h2 className="font-heading text-lg font-semibold text-ink-900">
-              Academic History
-            </h2>
+            <h2 className="font-heading text-lg font-semibold text-ink-900">Academic History</h2>
 
             <div className="grid gap-4 md:grid-cols-3">
               <Input
@@ -689,7 +681,9 @@ export default function StudentProfilePage() {
 
             {/* 10th Details sub-card */}
             <div className="space-y-4 rounded-lg border border-border p-4">
-              <h3 className="font-body text-sm font-semibold text-ink-900">10th (Secondary) Details</h3>
+              <h3 className="font-body text-sm font-semibold text-ink-900">
+                10th (Secondary) Details
+              </h3>
               <div className="grid gap-4 md:grid-cols-3">
                 <Input
                   label="Year"
@@ -738,7 +732,9 @@ export default function StudentProfilePage() {
 
             {/* 12th Details sub-card */}
             <div className="space-y-4 rounded-lg border border-border p-4">
-              <h3 className="font-body text-sm font-semibold text-ink-900">12th (Senior Secondary) Details</h3>
+              <h3 className="font-body text-sm font-semibold text-ink-900">
+                12th (Senior Secondary) Details
+              </h3>
               <div className="grid gap-4 md:grid-cols-3">
                 <Input
                   label="Year"

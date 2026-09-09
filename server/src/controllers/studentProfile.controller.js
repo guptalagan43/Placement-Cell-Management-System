@@ -74,18 +74,32 @@ const updateSelfSchema = z.object({
     dateOfAdmission: z.string().datetime().nullable().optional(),
     // Skills, certifications, projects
     skills: z.array(z.string()).optional(),
-    certifications: z.array(z.object({
-      name: z.string().min(1),
-      issuer: z.string().optional(),
-      year: z.number().int().min(1900).max(new Date().getFullYear() + 1).nullable().optional(),
-      proofUrl: z.string().url().optional().or(z.literal('')),
-    })).optional(),
-    projects: z.array(z.object({
-      title: z.string().min(1),
-      description: z.string().optional(),
-      techStack: z.array(z.string()).optional(),
-      link: z.string().url().optional().or(z.literal('')),
-    })).optional(),
+    certifications: z
+      .array(
+        z.object({
+          name: z.string().min(1),
+          issuer: z.string().optional(),
+          year: z
+            .number()
+            .int()
+            .min(1900)
+            .max(new Date().getFullYear() + 1)
+            .nullable()
+            .optional(),
+          proofUrl: z.string().url().optional().or(z.literal('')),
+        })
+      )
+      .optional(),
+    projects: z
+      .array(
+        z.object({
+          title: z.string().min(1),
+          description: z.string().optional(),
+          techStack: z.array(z.string()).optional(),
+          link: z.string().url().optional().or(z.literal('')),
+        })
+      )
+      .optional(),
     // Guardian
     guardianInfo: guardianInfoSchema.optional(),
   }),

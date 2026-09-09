@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.routes.js'
 import studentImportRoutes from './routes/studentImport.routes.js'
 import studentProfileRoutes from './routes/studentProfile.routes.js'
 import resumeRoutes from './routes/resume.routes.js'
+import companyRoutes from './routes/company.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -31,6 +32,9 @@ export function createApp() {
 
   // Resume routes (student only)
   app.use('/students', resumeRoutes)
+
+  // Company routes (coordinator/TPO write, student read)
+  app.use('/companies', companyRoutes)
 
   // Unmatched routes -> consistent 404 error contract.
   app.use(notFound)
