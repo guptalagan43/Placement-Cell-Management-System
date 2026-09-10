@@ -8,9 +8,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: false,
     setupFiles: './src/test/setup.js',
-    // Use worker_threads instead of the default child-process 'forks' pool: the
-    // forks worker fails to start when the project path contains spaces on
-    // Windows (e.g. "MERN Lab Project"). Threads are unaffected and work in CI.
-    pool: 'threads',
+    // jsdom v30 uses webidl.util.markAsUncloneable which is unavailable inside
+    // worker_threads; use forks (child processes) instead. This is vitest's
+    // default pool and works on Linux CI. On Windows with spaces in the path,
+    // run tests via WSL or a path without spaces if the forks pool errors.
+    pool: 'forks',
   },
 })
