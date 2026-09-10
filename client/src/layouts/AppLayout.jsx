@@ -11,7 +11,10 @@ const navItems = [
   { to: '/preview', label: 'Components' },
 ]
 
-const adminNavItems = [{ to: '/admin', label: 'Admin' }]
+const adminNavItems = [
+  { to: '/companies', label: 'Companies' },
+  { to: '/admin', label: 'Admin' },
+]
 
 export default function AppLayout() {
   const { user, logout, isAuthenticated } = useAuth()

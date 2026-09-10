@@ -7,6 +7,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import ActivatePage from './pages/ActivatePage.jsx'
 import StudentProfilePage from './pages/StudentProfilePage.jsx'
+import CompanyListPage from './pages/CompanyListPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import DrivesPage from './pages/DrivesPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
@@ -82,6 +83,18 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <StudentProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Company Management (Coordinator/TPO only) */}
+        <Route
+          path="/companies"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={['coordinator', 'tpo']}>
+                <CompanyListPage />
+              </RoleRoute>
             </ProtectedRoute>
           }
         />
