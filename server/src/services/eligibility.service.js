@@ -1,12 +1,14 @@
 // Eligibility Engine Service: Pure, stateless rule-evaluation logic.
 // Compares a student profile snapshot against a drive's eligibility criteria.
 // Returns { eligible: boolean, reasons: string[] }.
-// Traces to FR-ELG-01, srs.md §8.
+// Traces to FR-ELG-01, FR-ELG-05, srs.md §8.
 
 /**
  * Reasons for ineligibility (machine-readable codes for frontend branching)
+ * Includes academic criteria (Phase 26) and business rules (Phase 27).
  */
 export const INELIGIBILITY_REASONS = {
+  // Academic criteria (Phase 26)
   BLACKLISTED: 'BLACKLISTED',
   BRANCH_NOT_ELIGIBLE: 'BRANCH_NOT_ELIGIBLE',
   BATCH_NOT_ELIGIBLE: 'BATCH_NOT_ELIGIBLE',
@@ -14,6 +16,9 @@ export const INELIGIBILITY_REASONS = {
   BACKLOGS_EXCEED_MAXIMUM: 'BACKLOGS_EXCEED_MAXIMUM',
   TENTH_BELOW_MINIMUM: 'TENTH_BELOW_MINIMUM',
   TWELFTH_BELOW_MINIMUM: 'TWELFTH_BELOW_MINIMUM',
+  // Business rules (Phase 27)
+  ONE_OFFER_RULE: 'ONE_OFFER_RULE',
+  TIER_LOCK_RULE: 'TIER_LOCK_RULE',
 }
 
 /**
@@ -27,6 +32,9 @@ const REASON_MESSAGES = {
   [INELIGIBILITY_REASONS.BACKLOGS_EXCEED_MAXIMUM]: 'Active backlogs exceed maximum allowed',
   [INELIGIBILITY_REASONS.TENTH_BELOW_MINIMUM]: '10th percentage below minimum requirement',
   [INELIGIBILITY_REASONS.TWELFTH_BELOW_MINIMUM]: '12th percentage below minimum requirement',
+  [INELIGIBILITY_REASONS.ONE_OFFER_RULE]: 'Student already placed (One-Offer Rule)',
+  [INELIGIBILITY_REASONS.TIER_LOCK_RULE]:
+    'Cannot apply to equal or lower tier drive (Tier-Lock Rule)',
 }
 
 /**
@@ -192,6 +200,100 @@ export function checkEligibility(student, drive) {
 }
 
 /**
+ * Determines if a candidate tier is strictly better than a reference tier.
+ * Per srs.md §8.2: lower tier number = more competitive/better tier.
+ * This is configurable via season config but defaults to lowerIsBetter = true.
+ *
+ * @param {number} candidateTier - The tier to check (drive's tier)
+ * @param {number} referenceTier - The reference tier (student's currentTier)
+ * @param {Object} seasonConfig - Season configuration (optional, uses defaults if not provided)
+ * @param {boolean} seasonConfig.tierConfig.lowerIsBetter - Whether lower tier number is better (default: true)
+ * @returns {boolean} True if candidateTier is strictly better than referenceTier
+ */
+export function isTierStrictlyBetter(candidateTier, referenceTier, seasonConfig = {}) {
+  const lowerIsBetter = seasonConfig.tierConfig?.lowerIsBetter ?? true
+
+  if (lowerIsBetter) {
+    return candidateTier < referenceTier
+  }
+  return candidateTier > referenceTier
+}
+
+/**
+ * Applies business rules (One-Offer Rule, Tier-Lock Rule) on top of raw eligibility.
+ * Per srs.md §8.1–8.2 and NFR-MAINT-01 (season-configurable).
+ *
+ * @param {Object} rawEligibility - Result from checkEligibility()
+ * @param {boolean} rawEligibility.eligible - Raw academic eligibility
+ * @param {string[]} rawEligibility.reasons - Raw academic ineligibility reasons
+ * @param {Object} student - Student profile with placement info
+ * @param {string} student.placementStatus - 'not_placed', 'placed', 'opted_out'
+ * @param {number|null} student.currentTier - Tier at which student was placed
+ * @param {Object} drive - Drive with tier info
+ * @param {number} drive.tier - Drive's tier (lower = better per default config)
+ * @param {Object} seasonConfig - Season configuration for business rules
+ * @param {Object} seasonConfig.oneOfferRule - One-Offer Rule config
+ * @param {boolean} seasonConfig.oneOfferRule.enabled - Whether rule is active
+ * @param {boolean} seasonConfig.oneOfferRule.allowTierUpgrade - Allow upgrade to better tier
+ * @param {Object} seasonConfig.tierConfig - Tier configuration
+ * @param {boolean} seasonConfig.tierConfig.lowerIsBetter - Lower tier number = better
+ * @returns {{ eligible: boolean, reasons: string[] }}
+ *   eligible: true if eligible after business rules, false otherwise
+ *   reasons: Combined array of academic + business rule ineligibility reasons
+ */
+export function applyBusinessRules(rawEligibility, student, drive, seasonConfig = {}) {
+  const reasons = [...rawEligibility.reasons]
+
+  // If already ineligible by academic criteria, return early (reasons already captured)
+  if (!rawEligibility.eligible) {
+    return { eligible: false, reasons }
+  }
+
+  // Default season config (data-driven per NFR-MAINT-01)
+  const config = {
+    oneOfferRule: {
+      enabled: true,
+      allowTierUpgrade: true,
+      ...seasonConfig.oneOfferRule,
+    },
+    tierConfig: {
+      lowerIsBetter: true,
+      ...seasonConfig.tierConfig,
+    },
+  }
+
+  // 1. One-Offer Rule (srs.md §8.1)
+  // Once placed, excluded from further drives except Tier-Lock exception
+  if (config.oneOfferRule.enabled && student.placementStatus === 'placed') {
+    const currentTier = student.currentTier
+    const driveTier = drive.tier
+
+    // If no current tier recorded, cannot evaluate Tier-Lock exception
+    if (currentTier === null || currentTier === undefined) {
+      reasons.push(INELIGIBILITY_REASONS.ONE_OFFER_RULE)
+      return { eligible: false, reasons }
+    }
+
+    // Check Tier-Lock exception (srs.md §8.2)
+    // Placed student may apply to strictly better tier (upgrade)
+    const canUpgrade =
+      config.oneOfferRule.allowTierUpgrade && isTierStrictlyBetter(driveTier, currentTier, config)
+
+    if (!canUpgrade) {
+      reasons.push(INELIGIBILITY_REASONS.ONE_OFFER_RULE)
+      // Also add tier lock reason if it's a tier lock issue
+      if (!isTierStrictlyBetter(driveTier, currentTier, config)) {
+        reasons.push(INELIGIBILITY_REASONS.TIER_LOCK_RULE)
+      }
+      return { eligible: false, reasons }
+    }
+  }
+
+  // Student is eligible after all business rules
+  return { eligible: true, reasons }
+}
+
+/**
  * Get human-readable reason messages for an eligibility result
  * @param {string[]} reasons - Array of reason codes
  * @returns {string[]} Human-readable messages
@@ -202,9 +304,11 @@ export function getReasonMessages(reasons) {
 
 export default {
   checkEligibility,
+  applyBusinessRules,
   getReasonMessages,
   INELIGIBILITY_REASONS,
   getReasonMessage,
+  isTierStrictlyBetter,
   // Individual check functions (exported for unit testing)
   checkBranch,
   checkBatch,

@@ -607,6 +607,8 @@ describe('Eligibility Engine Service - Reason Messages', () => {
         BACKLOGS_EXCEED_MAXIMUM: 'BACKLOGS_EXCEED_MAXIMUM',
         TENTH_BELOW_MINIMUM: 'TENTH_BELOW_MINIMUM',
         TWELFTH_BELOW_MINIMUM: 'TWELFTH_BELOW_MINIMUM',
+        ONE_OFFER_RULE: 'ONE_OFFER_RULE',
+        TIER_LOCK_RULE: 'TIER_LOCK_RULE',
       })
     })
   })

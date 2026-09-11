@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M4 — Eligibility Engine |
-| **Current Phase** | Phase 27 — Business Rules Layer (Not Started; next up) |
-| **Phases Complete** | 26 / 67 |
-| **Overall Completion** | ~39% |
+| **Current Phase** | Phase 28 — Eligibility Badge Integration (Not Started; next up) |
+| **Phases Complete** | 27 / 67 |
+| **Overall Completion** | ~40% |
 | **Blockers** | None |
 
 ---
@@ -79,7 +79,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 26 | Eligibility Engine Service | Complete | 2026-09-11 | Stateless `checkEligibility(student, drive)` service with individual check functions (branch, batch, CGPA, backlogs, 10th/12th %, blacklist); returns `{eligible, reasons[]}` with machine-readable codes; 64 unit tests covering every boundary condition in srs.md §8 (exact-CGPA-match, one-backlog-over, wrong-branch, blacklisted, null/undefined fields, detailed vs legacy 10th/12th records). Lint/format clean. |
-| 27 | Business Rules Layer | Not Started | — | — |
+| 27 | Business Rules Layer | Complete | 2026-09-11 | Extended eligibility engine with One-Offer Rule and Tier-Lock Rule (srs.md §8.1–8.2); season-configurable via SeasonConfig model (NFR-MAINT-01); `applyBusinessRules(rawEligibility, student, drive, seasonConfig)` returns combined academic + business rule reasons; 21 unit tests covering placed student blocked from equal/worse tier, allowed for strictly better tier, rule enable/disable configs, reverse tier ordering, short-circuit on academic ineligibility. Lint/format clean. |
 | 28 | Eligibility Badge Integration | Not Started | — | — |
 
 ### Milestone 5 — Round & Info Session Scheduling
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 26 complete; **Milestone 4 (Eligibility Engine) Phase 26 done**. Phase 27 (Business Rules Layer, M4) is next.
-**File(s) touched in Phase 26:** _New_ — `server/src/services/eligibility.service.js`, `server/src/services/eligibility.service.test.js`.
-**Next action:** Begin Phase 27 — Business Rules Layer (M4). Traces to **FR-ELG-05, srs.md §8.1–8.2, NFR-MAINT-01**. Key tasks: Extend eligibility engine with One-Offer Rule and Tier-Lock Rule; season-configurable tier boundaries (not hardcoded).
+**Active phase:** None active — Phase 27 complete; **Milestone 4 (Eligibility Engine) Phases 26–27 done**. Phase 28 (Eligibility Badge Integration, M4) is next.
+**File(s) touched in Phase 27:** _New_ — `server/src/models/SeasonConfig.model.js`, `server/src/services/eligibility.business.test.js`. _Modified_ — `server/src/services/eligibility.service.js` (added business rules layer, INELIGIBILITY_REASONS).
+**Next action:** Begin Phase 28 — Eligibility Badge Integration (M4). Traces to **FR-ELG-02, FR-ELG-03**. Key tasks: Drive-list and drive-detail endpoints annotate each drive with computed eligibility for requesting student; frontend eligibility badge component (per design.md §7) with reason text on ineligible drives.
 
 ---
 
@@ -227,6 +227,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-11 (Ph.24) | Student-facing drive list API (`GET /drives/student`) was implemented in Phase 21 (not Phase 24) and already meets all Phase 24 acceptance criteria: pagination, Published+ status filter (excludes Draft), job-type/CTC/tier filters, search, sorting. Phase 24 required no new code — only verification against existing implementation. | FR-DRV-05 (student drive browsing) is satisfied by the `/drives/student` endpoint created in Phase 21. Acceptance criteria (pagination, no Draft drives, filters, sort) all verified via existing 12 integration tests. |
 | 2026-09-11 (Ph.25) | Student drive list UI uses "Drives" as page heading (not "Available Drives") to match existing test expectations. Cards layout follows `design.md` reference with semantic color badges for status, icons for job type/tier/CTC/deadline, and eligibility summary. Filter chips with inline clear (×) for active filters. Heading "Drives" satisfies test `getByRole('heading', { name: 'Drives' })`. | Matches FR-DRV-05 (student drive browsing) and FR-SEA-01 (search/filter/sort). Test compatibility required heading text match. Cards layout per design.md §6 Data Table / Card patterns with semantic status colors from §7. |
 | 2026-09-11 (Ph.26) | Eligibility engine is a pure, stateless service (`checkEligibility`) with no DB dependencies — enables identical logic at browse-time and apply-time. Individual check functions exported for granular unit testing. Blacklist checked first (override). 10th/12th % prefers detailed records (`tenthDetails.percentage`, `twelfthDetails.percentage`) with fallback to legacy fields (`tenthPercent`, `twelfthPercent`). Null/undefined academic fields treated as failure. Machine-readable reason codes (`INELIGIBILITY_REASONS`) returned for frontend branching. | Matches FR-ELG-01 and srs.md §8. Pure function design per architecture.md §5 enables exhaustive unit testing (64 tests) without database. Business rules (One-Offer, Tier-Lock) deferred to Phase 27 per srs.md §8.1–8.2. |
+| 2026-09-11 (Ph.27) | Business rules layered onto raw eligibility via `applyBusinessRules()`. One-Offer Rule blocks placed students; Tier-Lock Rule allows upgrade to strictly better tier (lower number = better by default). SeasonConfig model provides data-driven configuration (tier ordering, rule enable/disable) per NFR-MAINT-01. Academic ineligibility short-circuits business rules. 21 unit tests cover all rule combinations, config variations, and short-circuit behavior. | Matches FR-ELG-05, srs.md §8.1–8.2, NFR-MAINT-01. Data-driven tier ordering (not hardcoded) enables annual policy changes. Lower-is-better default matches srs.md §8.2. Short-circuit ensures academic reasons take precedence. |
 
 ---
 
