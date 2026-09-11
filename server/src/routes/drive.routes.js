@@ -13,6 +13,8 @@ import {
   getDriveByIdForStudent,
   updateDrive,
   deleteDrive,
+  updateDriveStatus,
+  cloneDrive,
 } from '../controllers/drive.controller.js'
 
 const router = Router()
@@ -29,5 +31,17 @@ router.get('/', authenticate, requireCoordinatorOrTPO, departmentScope, getDrive
 router.get('/:id', authenticate, requireCoordinatorOrTPO, departmentScope, getDriveById)
 router.put('/:id', authenticate, requireCoordinatorOrTPO, departmentScope, updateDrive)
 router.delete('/:id', authenticate, requireCoordinatorOrTPO, departmentScope, deleteDrive)
+
+// Status lifecycle transition
+router.patch(
+  '/:id/status',
+  authenticate,
+  requireCoordinatorOrTPO,
+  departmentScope,
+  updateDriveStatus
+)
+
+// Clone drive
+router.post('/:id/clone', authenticate, requireCoordinatorOrTPO, departmentScope, cloneDrive)
 
 export default router

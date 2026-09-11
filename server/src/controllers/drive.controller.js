@@ -129,6 +129,41 @@ const idParamSchema = z.object({
   }),
 })
 
+const updateStatusSchema = z.object({
+  body: z.object({
+    status: z.enum([
+      'draft',
+      'published',
+      'registration_open',
+      'registration_closed',
+      'in_progress',
+      'completed',
+      'results_declared',
+    ]),
+  }),
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid drive ID'),
+  }),
+})
+
+// POST /drives/:id/status — update drive status with transition validation (coordinator/TPO)
+export const updateDriveStatus = [
+  asyncHandler(async (req, res) => {
+    const { body, params } = updateStatusSchema.parse({ body: req.body, params: req.params })
+    const drive = await driveSvc.updateDriveStatus(params.id, body.status, req.user)
+    res.json({ success: true, drive })
+  }),
+]
+
+// POST /drives/:id/clone — clone drive (coordinator/TPO)
+export const cloneDrive = [
+  asyncHandler(async (req, res) => {
+    const { params } = idParamSchema.parse({ params: req.params })
+    const drive = await driveSvc.cloneDrive(params.id, req.user)
+    res.status(201).json({ success: true, drive })
+  }),
+]
+
 // POST /drives — create drive (coordinator/TPO)
 export const createDrive = [
   asyncHandler(async (req, res) => {
@@ -209,4 +244,6 @@ export default {
   getDriveByIdForStudent,
   updateDrive,
   deleteDrive,
+  updateDriveStatus,
+  cloneDrive,
 }

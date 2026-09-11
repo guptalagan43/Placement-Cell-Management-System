@@ -1,6 +1,6 @@
 // Drive service: CRUD operations for drives with department scoping enforcement.
 // Handles create, read, update, delete with RBAC enforcement and department scoping.
-// Traces to FR-DRV-02, FR-DRV-03.
+// Traces to FR-DRV-02, FR-DRV-03, FR-DRV-04.
 import Drive from '../models/Drive.model.js'
 import Company from '../models/Company.model.js'
 import { ApiError } from '../utils/api-error.js'
@@ -21,6 +21,17 @@ const ALLOWED_FIELDS = [
   'departmentScope',
   'description',
 ]
+
+// Valid status transitions (forward-only lifecycle)
+// Draft → Published → Registration Open → Registration Closed → In Progress → Completed → Results Declared
+const STATUS_TRANSITIONS = {
+  draft: ['published'],
+  published: ['registration_open'],
+  registration_open: ['registration_closed'],
+  registration_closed: ['in_progress'],
+  in_progress: ['completed'],
+  completed: ['results_declared'],
+}
 
 // Create a new drive (coordinator/TPO)
 export async function createDrive(data, user) {
@@ -324,6 +335,109 @@ export async function getActiveCompaniesForDrive() {
   return companies
 }
 
+// Update drive status with transition validation (coordinator/TPO with department scoping)
+export async function updateDriveStatus(driveId, newStatus, user) {
+  // Validate new status is a valid status value
+  const validStatuses = [
+    'draft',
+    'published',
+    'registration_open',
+    'registration_closed',
+    'in_progress',
+    'completed',
+    'results_declared',
+  ]
+  if (!validStatuses.includes(newStatus)) {
+    throw new ApiError(400, 'Invalid status value', 'VALIDATION_ERROR')
+  }
+
+  // Apply department scoping: coordinators can only update drives in their department
+  const filter = { _id: driveId }
+  if (user.role === ROLES.COORDINATOR) {
+    filter.departmentScope = user.department
+  }
+
+  // Get current drive to validate transition
+  const currentDrive = await Drive.findOne(filter).lean()
+  if (!currentDrive) {
+    throw new ApiError(404, 'Drive not found or access denied', 'DRIVE_NOT_FOUND')
+  }
+
+  const currentStatus = currentDrive.status
+
+  // Check if transition is valid
+  const allowedNextStatuses = STATUS_TRANSITIONS[currentStatus] || []
+  if (!allowedNextStatuses.includes(newStatus)) {
+    throw new ApiError(
+      400,
+      `Invalid status transition from "${currentStatus}" to "${newStatus}". Allowed: ${allowedNextStatuses.join(', ') || 'none'}`,
+      'INVALID_STATUS_TRANSITION'
+    )
+  }
+
+  // Update status
+  const drive = await Drive.findOneAndUpdate(
+    filter,
+    { $set: { status: newStatus } },
+    { returnDocument: 'after', runValidators: true }
+  )
+    .populate('company', 'name sector')
+    .lean({ virtuals: true })
+
+  if (!drive) {
+    throw new ApiError(404, 'Drive not found or access denied', 'DRIVE_NOT_FOUND')
+  }
+  return drive
+}
+
+// Clone drive (coordinator/TPO with department scoping)
+// Creates a new Draft drive with all fields copied except deadline/status
+export async function cloneDrive(driveId, user) {
+  // Apply department scoping
+  const filter = { _id: driveId }
+  if (user.role === ROLES.COORDINATOR) {
+    filter.departmentScope = user.department
+  }
+
+  const originalDrive = await Drive.findOne(filter).lean()
+  if (!originalDrive) {
+    throw new ApiError(404, 'Drive not found or access denied', 'DRIVE_NOT_FOUND')
+  }
+
+  // Prepare clone data - copy all fields except _id, createdAt, updatedAt, status, registrationDeadline
+  const cloneData = {
+    company: originalDrive.company,
+    title: `${originalDrive.title} (Copy)`,
+    jobType: originalDrive.jobType,
+    compensation: originalDrive.compensation,
+    eligibilityCriteria: originalDrive.eligibilityCriteria,
+    tier: originalDrive.tier,
+    vacancies: originalDrive.vacancies,
+    registrationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+    status: 'draft',
+    departmentScope: originalDrive.departmentScope,
+    description: originalDrive.description,
+  }
+
+  // For coordinators, force department scope
+  if (user.role === ROLES.COORDINATOR) {
+    if (!user.department) {
+      throw new ApiError(500, 'Coordinator missing department assignment', 'CONFIG_ERROR')
+    }
+    cloneData.departmentScope = user.department
+  }
+
+  try {
+    const drive = await Drive.create(cloneData)
+    return drive.toObject({ virtuals: true })
+  } catch (err) {
+    if (err instanceof mongoose.mongo.MongoServerError && err.code === 11000) {
+      throw new ApiError(400, 'Drive clone failed due to duplicate constraint', 'VALIDATION_ERROR')
+    }
+    throw err
+  }
+}
+
 export default {
   createDrive,
   getDrives,
@@ -333,4 +447,6 @@ export default {
   updateDrive,
   deleteDrive,
   getActiveCompaniesForDrive,
+  updateDriveStatus,
+  cloneDrive,
 }

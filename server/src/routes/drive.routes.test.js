@@ -879,4 +879,241 @@ describe('Drive API', () => {
       expect(res.body.code).toBe('DRIVE_NOT_FOUND')
     })
   })
+
+  describe('PATCH /drives/:id/status (update drive status)', () => {
+    let draftDrive
+
+    beforeEach(async () => {
+      draftDrive = await Drive.create({
+        ...validDriveData,
+        company: company._id,
+        title: 'Status Test Drive',
+        departmentScope: DEPARTMENTS[0],
+        status: 'draft',
+      })
+    })
+
+    it('transitions draft -> published as coordinator', async () => {
+      const res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'published' })
+
+      expect(res.status).toBe(200)
+      expect(res.body.success).toBe(true)
+      expect(res.body.drive.status).toBe('published')
+    })
+
+    it('transitions draft -> published as TPO', async () => {
+      const res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+        .send({ status: 'published' })
+
+      expect(res.status).toBe(200)
+      expect(res.body.drive.status).toBe('published')
+    })
+
+    it('rejects invalid transition (draft -> completed)', async () => {
+      const res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'completed' })
+
+      expect(res.status).toBe(400)
+      expect(res.body.code).toBe('INVALID_STATUS_TRANSITION')
+      expect(res.body.message).toContain('Invalid status transition')
+    })
+
+    it('rejects invalid transition (published -> draft - backwards)', async () => {
+      // First transition to published
+      await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'published' })
+
+      // Then try to go back to draft
+      const res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'draft' })
+
+      expect(res.status).toBe(400)
+      expect(res.body.code).toBe('INVALID_STATUS_TRANSITION')
+    })
+
+    it('allows full lifecycle transition sequence', async () => {
+      // draft -> published
+      let res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'published' })
+      expect(res.status).toBe(200)
+      expect(res.body.drive.status).toBe('published')
+
+      // published -> registration_open
+      res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'registration_open' })
+      expect(res.status).toBe(200)
+      expect(res.body.drive.status).toBe('registration_open')
+
+      // registration_open -> registration_closed
+      res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'registration_closed' })
+      expect(res.status).toBe(200)
+      expect(res.body.drive.status).toBe('registration_closed')
+
+      // registration_closed -> in_progress
+      res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'in_progress' })
+      expect(res.status).toBe(200)
+      expect(res.body.drive.status).toBe('in_progress')
+
+      // in_progress -> completed
+      res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'completed' })
+      expect(res.status).toBe(200)
+      expect(res.body.drive.status).toBe('completed')
+
+      // completed -> results_declared
+      res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'results_declared' })
+      expect(res.status).toBe(200)
+      expect(res.body.drive.status).toBe('results_declared')
+    })
+
+    it('rejects student access', async () => {
+      const res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ status: 'published' })
+
+      expect(res.status).toBe(403)
+      expect(res.body.code).toBe('FORBIDDEN')
+    })
+
+    it('rejects coordinator in different department', async () => {
+      const res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken2}`)
+        .send({ status: 'published' })
+
+      expect(res.status).toBe(404)
+      expect(res.body.code).toBe('DRIVE_NOT_FOUND')
+    })
+
+    it('rejects invalid status value', async () => {
+      const res = await request(app)
+        .patch(`/drives/${draftDrive._id}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'invalid_status' })
+
+      expect(res.status).toBe(400)
+      expect(res.body.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('returns 404 for non-existent drive', async () => {
+      const fakeId = new mongoose.Types.ObjectId()
+      const res = await request(app)
+        .patch(`/drives/${fakeId}/status`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({ status: 'published' })
+
+      expect(res.status).toBe(404)
+      expect(res.body.code).toBe('DRIVE_NOT_FOUND')
+    })
+  })
+
+  describe('POST /drives/:id/clone (clone drive)', () => {
+    let publishedDrive
+
+    beforeEach(async () => {
+      publishedDrive = await Drive.create({
+        ...validDriveData,
+        company: company._id,
+        title: 'Original Drive',
+        departmentScope: DEPARTMENTS[0],
+        status: 'published',
+        registrationDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+      })
+    })
+
+    it('clones drive as coordinator in same department', async () => {
+      const res = await request(app)
+        .post(`/drives/${publishedDrive._id}/clone`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+
+      expect(res.status).toBe(201)
+      expect(res.body.success).toBe(true)
+      expect(res.body.drive.title).toBe('Original Drive (Copy)')
+      expect(res.body.drive.status).toBe('draft')
+      expect(res.body.drive.registrationDeadline).not.toBe(publishedDrive.registrationDeadline)
+      expect(res.body.drive.company.toString()).toBe(company._id.toString())
+      expect(res.body.drive.tier).toBe(publishedDrive.tier)
+      // Convert Mongoose document to plain object for comparison
+      expect(res.body.drive.eligibilityCriteria).toEqual(
+        publishedDrive.eligibilityCriteria.toObject()
+      )
+    })
+
+    it('clones drive as TPO', async () => {
+      const res = await request(app)
+        .post(`/drives/${publishedDrive._id}/clone`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+
+      expect(res.status).toBe(201)
+      expect(res.body.drive.status).toBe('draft')
+    })
+
+    it('rejects student access', async () => {
+      const res = await request(app)
+        .post(`/drives/${publishedDrive._id}/clone`)
+        .set('Authorization', `Bearer ${studentToken}`)
+
+      expect(res.status).toBe(403)
+      expect(res.body.code).toBe('FORBIDDEN')
+    })
+
+    it('rejects coordinator in different department', async () => {
+      const res = await request(app)
+        .post(`/drives/${publishedDrive._id}/clone`)
+        .set('Authorization', `Bearer ${coordinatorToken2}`)
+
+      expect(res.status).toBe(404)
+      expect(res.body.code).toBe('DRIVE_NOT_FOUND')
+    })
+
+    it('returns 404 for non-existent drive', async () => {
+      const fakeId = new mongoose.Types.ObjectId()
+      const res = await request(app)
+        .post(`/drives/${fakeId}/clone`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+
+      expect(res.status).toBe(404)
+      expect(res.body.code).toBe('DRIVE_NOT_FOUND')
+    })
+
+    it('cloned drive has new registration deadline (30 days from now)', async () => {
+      const res = await request(app)
+        .post(`/drives/${publishedDrive._id}/clone`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+
+      expect(res.status).toBe(201)
+      const clonedDeadline = new Date(res.body.drive.registrationDeadline).getTime()
+      const expectedMin = Date.now() + 29 * 24 * 60 * 60 * 1000 // ~29 days
+      const expectedMax = Date.now() + 31 * 24 * 60 * 60 * 1000 // ~31 days
+      expect(clonedDeadline).toBeGreaterThanOrEqual(expectedMin)
+      expect(clonedDeadline).toBeLessThanOrEqual(expectedMax)
+    })
+  })
 })
