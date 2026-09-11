@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M3 — Company & Drive Management |
-| **Current Phase** | Phase 24 — Public Drive List API (Basic) (Not Started; next up) |
-| **Phases Complete** | 23 / 67 |
-| **Overall Completion** | ~34% |
+| **Current Phase** | Phase 25 — Student Drive List UI (Basic) (Not Started; next up) |
+| **Phases Complete** | 24 / 67 |
+| **Overall Completion** | ~36% |
 | **Blockers** | None |
 
 ---
@@ -72,7 +72,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 21 | Drive Schema & CRUD API | Complete | 2026-09-10 | Drive schema (DR-04) with nested eligibility criteria, tier, department scope, status; CRUD routes with department scoping; registration deadline validation; 59 integration tests pass. Lint/format clean. |
 | 22 | Drive Create/Edit Admin Form | Complete | 2026-09-11 | Drive list page at `/drives-admin` with search, filter (status, job type, tier), pagination, sorting; create/edit modal with multi-section form (basic info, compensation, eligibility criteria, department scope) with Zod validation; field-level error display; company dropdown from active companies; branch/batch checkboxes; delete with confirmation; RBAC via RoleRoute (coordinator/TPO only). Nav link added to admin header. **All client tests pass**, build successful. Lint/format clean. |
 | 23 | Drive Status Lifecycle + Clone | Complete | 2026-09-11 | `PATCH /drives/:id/status` enforcing legal transitions only (draft→published→registration_open→registration_closed→in_progress→completed→results_declared); `POST /drives/:id/clone` creates new Draft with all fields copied except deadline/status; 15 new integration tests added (74 total for drive routes). Lint/format clean. |
-| 24 | Public Drive List API (Basic) | Not Started | — | — |
+| 24 | Public Drive List API (Basic) | Complete | 2026-09-11 | Student-facing `GET /drives/student` endpoint (implemented in Phase 21) with pagination, Published+ status filter (excludes Draft), job-type filter, CTC range filter, tier filter, search, and sorting; 12 integration tests pass. All acceptance criteria met. Lint/format clean. |
 | 25 | Student Drive List UI (Basic) | Not Started | — | — |
 
 ### Milestone 4 — Eligibility Engine
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 23 complete; **Milestone 3 (Company & Drive Management) Phases 19–23 done**. Phase 24 (Public Drive List API, M3) is next.
-**File(s) touched in Phase 23:** _Modified_ — `server/src/services/drive.service.js` (added status transitions + clone), `server/src/controllers/drive.controller.js` (new endpoints), `server/src/routes/drive.routes.js` (new routes), `server/src/routes/drive.routes.test.js` (15 new tests).
-**Next action:** Begin Phase 24 — Public Drive List API (Basic) (M3). Traces to **FR-DRV-05, FR-SEA-01, FR-SEA-02**. Key tasks: Student-facing `GET /drives/student` already exists; verify it meets all acceptance criteria (pagination, filters, sort, no draft drives).
+**Active phase:** None active — Phase 24 complete; **Milestone 3 (Company & Drive Management) Phases 19–24 done**. Phase 25 (Student Drive List UI, M3) is next.
+**File(s) touched in Phase 24:** No new files — student-facing API (`GET /drives/student`, `GET /drives/student/:id`, `GET /drives/active-companies`) was implemented in Phase 21 and verified against all acceptance criteria.
+**Next action:** Begin Phase 25 — Student Drive List UI (Basic) (M3). Traces to **FR-DRV-05, FR-SEA-01**. Key tasks: Drive list page with cards per `design.md` reference layout; filter bar; search; uses existing `/drives/student` API.
 
 ---
 
@@ -224,6 +224,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.17) | Validation middleware throws `ApiError` for Zod validation errors (not plain Error). | Ensures error handler correctly returns 400 with `VALIDATION_ERROR` code instead of 500. |
 | 2026-09-11 (Ph.22) | Drive create/edit form uses a multi-section layout (Basic Info, Compensation, Eligibility Criteria, Department Scope) with checkbox groups for branches/batches instead of multi-select for better UX. Department scope field is displayed but disabled for coordinators (auto-scoped on server). TPO sees it as editable dropdown. | Matches FR-DRV-02 (structured eligibility criteria, tier, deadline). Field-level validation via Zod mirrors server-side schema. Branch/batch as checkboxes improves discoverability over multi-select. Coordinator department scoping enforced on server (Phase 21), so form reflects this by disabling scope for coordinators. |
 | 2026-09-11 (Ph.23) | Drive status lifecycle enforces forward-only transitions: draft→published→registration_open→registration_closed→in_progress→completed→results_declared. Illegal transitions (skipping stages, going backwards) return 400 with INVALID_STATUS_TRANSITION code. Clone creates new Draft with all fields copied except registrationDeadline (set to 30 days from now) and status (reset to draft). | Matches FR-DRV-03 (defined status lifecycle) and FR-DRV-04 (clone action). Forward-only transitions prevent accidental state corruption. Clone deadline reset ensures new drive has valid future deadline. Department scoping applies to both endpoints. |
+| 2026-09-11 (Ph.24) | Student-facing drive list API (`GET /drives/student`) was implemented in Phase 21 (not Phase 24) and already meets all Phase 24 acceptance criteria: pagination, Published+ status filter (excludes Draft), job-type/CTC/tier filters, search, sorting. Phase 24 required no new code — only verification against existing implementation. | FR-DRV-05 (student drive browsing) is satisfied by the `/drives/student` endpoint created in Phase 21. Acceptance criteria (pagination, no Draft drives, filters, sort) all verified via existing 12 integration tests. |
 
 ---
 
