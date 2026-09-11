@@ -1,5 +1,5 @@
 // Student Drive List Page: Students can browse published+ drives with filters and search.
-// Uses cards layout per design.md reference; no eligibility badge yet (Phase 28).
+// Uses cards layout per design.md reference; eligibility badge per design.md §7.
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Search,
@@ -16,6 +16,7 @@ import Button from '../components/ui/Button.jsx'
 import Input from '../components/ui/Input.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import Card from '../components/ui/Card.jsx'
+import EligibilityBadge from '../components/ui/EligibilityBadge.jsx'
 
 const JOB_TYPES = [
   { value: '', label: 'All Job Types' },
@@ -404,98 +405,121 @@ export default function StudentDriveListPage() {
         ) : (
           <div className="p-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {drives.map((drive) => (
-                <Card key={drive._id} className="hover:shadow-raised transition-shadow">
-                  <div className="p-4 space-y-3">
-                    {/* Header: Company + Status */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-body text-xs text-ink-500 uppercase tracking-wider mb-1">
-                          {drive.company?.name || 'Unknown Company'}
-                        </p>
-                        <h3 className="font-heading text-base font-semibold text-ink-900 truncate">
-                          {drive.title}
-                        </h3>
+              {drives.map((drive) => {
+                const isEligible = drive.eligibility?.eligible === true
+                const eligibilityReasons = drive.eligibility?.reasonMessages ?? []
+                return (
+                  <Card key={drive._id} className="hover:shadow-raised transition-shadow">
+                    <div className="p-4 space-y-3">
+                      {/* Header: Company + Status + Eligibility */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-body text-xs text-ink-500 uppercase tracking-wider mb-1">
+                            {drive.company?.name || 'Unknown Company'}
+                          </p>
+                          <h3 className="font-heading text-base font-semibold text-ink-900 truncate">
+                            {drive.title}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge tone={getStatusTone(drive.status)} size="sm">
+                            {drive.status.replace('_', ' ')}
+                          </Badge>
+                          <EligibilityBadge
+                            eligible={drive.eligibility?.eligible ?? null}
+                            reasons={drive.eligibility?.reasons ?? []}
+                            reasonMessages={drive.eligibility?.reasonMessages ?? []}
+                            size="sm"
+                          />
+                        </div>
                       </div>
-                      <Badge tone={getStatusTone(drive.status)} size="sm">
-                        {drive.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
 
-                    {/* Job Type + Tier */}
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="inline-flex items-center gap-1 font-body text-ink-600">
-                        <Briefcase className="w-3.5 h-3.5" />
-                        {drive.jobType?.replace('-', ' ').replace('+', ' + ')}
-                      </span>
-                      <span className="inline-flex items-center gap-1 font-body text-ink-600">
-                        <Target className="w-3.5 h-3.5" />
-                        Tier {drive.tier}
-                      </span>
-                    </div>
-
-                    {/* CTC */}
-                    <div className="flex items-center gap-1 font-body text-sm font-semibold text-primary-700">
-                      <DollarSign className="w-3.5 h-3.5" />
-                      {formatCTC(drive.compensation?.ctcLpa)}
-                      {drive.compensation?.stipend && drive.jobType === 'internship' && (
-                        <span className="font-normal text-ink-500">
-                          (Stipend: ₹{drive.compensation.stipend} LPA)
+                      {/* Job Type + Tier */}
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="inline-flex items-center gap-1 font-body text-ink-600">
+                          <Briefcase className="w-3.5 h-3.5" />
+                          {drive.jobType?.replace('-', ' ').replace('+', ' + ')}
                         </span>
-                      )}
-                    </div>
-
-                    {/* Meta: Deadline, Branches, Batches */}
-                    <div className="border-t border-border pt-3 space-y-2">
-                      <div className="flex items-center gap-1 font-body text-xs text-ink-500">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>Apply by: {formatDate(drive.registrationDeadline)}</span>
-                      </div>
-
-                      {drive.eligibilityCriteria?.branches?.length > 0 && (
-                        <div className="flex items-center gap-1 font-body text-xs text-ink-500 flex-wrap">
-                          <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span className="truncate">
-                            {drive.eligibilityCriteria.branches.slice(0, 2).join(', ')}
-                            {drive.eligibilityCriteria.branches.length > 2 && (
-                              <span> +{drive.eligibilityCriteria.branches.length - 2} more</span>
-                            )}
-                          </span>
-                        </div>
-                      )}
-
-                      {drive.eligibilityCriteria?.batches?.length > 0 && (
-                        <div className="flex items-center gap-1 font-body text-xs text-ink-500">
+                        <span className="inline-flex items-center gap-1 font-body text-ink-600">
                           <Target className="w-3.5 h-3.5" />
-                          <span>Batches: {drive.eligibilityCriteria.batches.join(', ')}</span>
-                        </div>
-                      )}
+                          Tier {drive.tier}
+                        </span>
+                      </div>
 
-                      <div className="flex items-center gap-1 font-body text-xs text-ink-500 flex-wrap">
-                        <span>CGPA ≥ {drive.eligibilityCriteria?.minCgpa ?? '-'}</span>
-                        <span className="text-ink-300">|</span>
-                        <span>Backlogs ≤ {drive.eligibilityCriteria?.maxBacklogs ?? '-'}</span>
-                        <span className="text-ink-300">|</span>
-                        <span>10th ≥ {drive.eligibilityCriteria?.min10th ?? '-'}%</span>
-                        <span className="text-ink-300">|</span>
-                        <span>12th ≥ {drive.eligibilityCriteria?.min12th ?? '-'}%</span>
+                      {/* CTC */}
+                      <div className="flex items-center gap-1 font-body text-sm font-semibold text-primary-700">
+                        <DollarSign className="w-3.5 h-3.5" />
+                        {formatCTC(drive.compensation?.ctcLpa)}
+                        {drive.compensation?.stipend && drive.jobType === 'internship' && (
+                          <span className="font-normal text-ink-500">
+                            (Stipend: ₹{drive.compensation.stipend} LPA)
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Meta: Deadline, Branches, Batches */}
+                      <div className="border-t border-border pt-3 space-y-2">
+                        <div className="flex items-center gap-1 font-body text-xs text-ink-500">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Apply by: {formatDate(drive.registrationDeadline)}</span>
+                        </div>
+
+                        {drive.eligibilityCriteria?.branches?.length > 0 && (
+                          <div className="flex items-center gap-1 font-body text-xs text-ink-500 flex-wrap">
+                            <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate">
+                              {drive.eligibilityCriteria.branches.slice(0, 2).join(', ')}
+                              {drive.eligibilityCriteria.branches.length > 2 && (
+                                <span> +{drive.eligibilityCriteria.branches.length - 2} more</span>
+                              )}
+                            </span>
+                          </div>
+                        )}
+
+                        {drive.eligibilityCriteria?.batches?.length > 0 && (
+                          <div className="flex items-center gap-1 font-body text-xs text-ink-500">
+                            <Target className="w-3.5 h-3.5" />
+                            <span>Batches: {drive.eligibilityCriteria.batches.join(', ')}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1 font-body text-xs text-ink-500 flex-wrap">
+                          <span>CGPA ≥ {drive.eligibilityCriteria?.minCgpa ?? '-'}</span>
+                          <span className="text-ink-300">|</span>
+                          <span>Backlogs ≤ {drive.eligibilityCriteria?.maxBacklogs ?? '-'}</span>
+                          <span className="text-ink-300">|</span>
+                          <span>10th ≥ {drive.eligibilityCriteria?.min10th ?? '-'}%</span>
+                          <span className="text-ink-300">|</span>
+                          <span>12th ≥ {drive.eligibilityCriteria?.min12th ?? '-'}%</span>
+                        </div>
+                      </div>
+
+                      {/* Action */}
+                      <div className="pt-2 border-t border-border">
+                        <Button
+                          variant={isEligible ? 'outline' : 'outline'}
+                          fullWidth
+                          icon={<ChevronRight className="w-4 h-4" />}
+                          onClick={
+                            isEligible
+                              ? () => (window.location.href = `/drives/${drive._id}`)
+                              : undefined
+                          }
+                          disabled={!isEligible}
+                          aria-disabled={!isEligible}
+                        >
+                          {isEligible ? 'View Details' : 'Not Eligible'}
+                        </Button>
+                        {!isEligible && eligibilityReasons.length > 0 && (
+                          <p className="mt-2 text-xs text-danger text-center">
+                            {eligibilityReasons.join(', ')}
+                          </p>
+                        )}
                       </div>
                     </div>
-
-                    {/* Action */}
-                    <div className="pt-2 border-t border-border">
-                      <Button
-                        variant="outline"
-                        fullWidth
-                        icon={<ChevronRight className="w-4 h-4" />}
-                        onClick={() => (window.location.href = `/drives/${drive._id}`)}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                )
+              })}
             </div>
 
             {/* Pagination */}

@@ -3,9 +3,11 @@
 // Traces to FR-DRV-02, FR-DRV-03, FR-DRV-04.
 import Drive from '../models/Drive.model.js'
 import Company from '../models/Company.model.js'
+import SeasonConfig from '../models/SeasonConfig.model.js'
 import { ApiError } from '../utils/api-error.js'
 import mongoose from 'mongoose'
 import { ROLES } from '../constants/roles.js'
+import eligibilitySvc from './eligibility.service.js'
 
 // Fields allowed for create/update by coordinators/TPO
 const ALLOWED_FIELDS = [
@@ -147,78 +149,6 @@ export async function getDrives(queryParams, user) {
   }
 }
 
-// Get drives for students (published+ only, with eligibility annotations added later)
-// This is a simplified list without department scoping restriction
-export async function getDrivesForStudents(queryParams) {
-  const {
-    search,
-    jobType,
-    tier,
-    ctcMin,
-    ctcMax,
-    status,
-    page = 1,
-    limit = 20,
-    sortBy = 'registrationDeadline',
-    sortOrder = 'asc',
-  } = queryParams
-
-  const filter = {
-    status: {
-      $in: [
-        'published',
-        'registration_open',
-        'registration_closed',
-        'in_progress',
-        'completed',
-        'results_declared',
-      ],
-    },
-  }
-
-  if (search) {
-    filter.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } },
-    ]
-  }
-  if (jobType) filter.jobType = jobType
-  if (tier) filter.tier = Number(tier)
-  if (status) filter.status = status
-  if (ctcMin || ctcMax) {
-    filter['compensation.ctcLpa'] = {}
-    if (ctcMin) filter['compensation.ctcLpa'].$gte = Number(ctcMin)
-    if (ctcMax) filter['compensation.ctcLpa'].$lte = Number(ctcMax)
-  }
-
-  const sort = {}
-  sort[sortBy] = sortOrder === 'asc' ? 1 : -1
-
-  const pageNum = Math.max(1, Number(page))
-  const limitNum = Math.min(100, Math.max(1, Number(limit)))
-  const skip = (pageNum - 1) * limitNum
-
-  const [drives, total] = await Promise.all([
-    Drive.find(filter)
-      .populate('company', 'name sector')
-      .sort(sort)
-      .skip(skip)
-      .limit(limitNum)
-      .lean({ virtuals: true }),
-    Drive.countDocuments(filter),
-  ])
-
-  return {
-    drives,
-    pagination: {
-      page: pageNum,
-      limit: limitNum,
-      total,
-      totalPages: Math.ceil(total / limitNum),
-    },
-  }
-}
-
 // Get single drive by ID (coordinator/TPO - department scoped)
 export async function getDriveById(driveId, user) {
   const filter = { _id: driveId }
@@ -231,30 +161,6 @@ export async function getDriveById(driveId, user) {
   const drive = await Drive.findOne(filter)
     .populate('company', 'name sector hrContact')
     .lean({ virtuals: true })
-  if (!drive) {
-    throw new ApiError(404, 'Drive not found', 'DRIVE_NOT_FOUND')
-  }
-  return drive
-}
-
-// Get single drive by ID for students (published+ only)
-export async function getDriveByIdForStudent(driveId) {
-  const drive = await Drive.findOne({
-    _id: driveId,
-    status: {
-      $in: [
-        'published',
-        'registration_open',
-        'registration_closed',
-        'in_progress',
-        'completed',
-        'results_declared',
-      ],
-    },
-  })
-    .populate('company', 'name sector hrContact')
-    .lean({ virtuals: true })
-
   if (!drive) {
     throw new ApiError(404, 'Drive not found', 'DRIVE_NOT_FOUND')
   }
@@ -333,6 +239,139 @@ export async function getActiveCompaniesForDrive() {
     .sort({ name: 1 })
     .lean()
   return companies
+}
+
+// Get active season configuration for eligibility business rules
+async function getActiveSeasonConfig() {
+  const config = await SeasonConfig.findOne({ isActive: true }).lean()
+  return config || {}
+}
+
+// Annotate drives with eligibility for a specific student
+async function annotateDrivesWithEligibility(drives, student) {
+  if (!student) {
+    return drives.map((drive) => ({ ...drive, eligibility: { eligible: null, reasons: [] } }))
+  }
+
+  const seasonConfig = await getActiveSeasonConfig()
+
+  return drives.map((drive) => {
+    const rawEligibility = eligibilitySvc.checkEligibility(student, drive)
+    const finalEligibility = eligibilitySvc.applyBusinessRules(
+      rawEligibility,
+      student,
+      drive,
+      seasonConfig
+    )
+    return {
+      ...drive,
+      eligibility: {
+        eligible: finalEligibility.eligible,
+        reasons: finalEligibility.reasons,
+        reasonMessages: eligibilitySvc.getReasonMessages(finalEligibility.reasons),
+      },
+    }
+  })
+}
+
+// Get drives for students (published+ only) with eligibility annotations
+export async function getDrivesForStudents(queryParams, student) {
+  const {
+    search,
+    jobType,
+    tier,
+    ctcMin,
+    ctcMax,
+    status,
+    page = 1,
+    limit = 20,
+    sortBy = 'registrationDeadline',
+    sortOrder = 'asc',
+  } = queryParams
+
+  const filter = {
+    status: {
+      $in: [
+        'published',
+        'registration_open',
+        'registration_closed',
+        'in_progress',
+        'completed',
+        'results_declared',
+      ],
+    },
+  }
+
+  if (search) {
+    filter.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+    ]
+  }
+  if (jobType) filter.jobType = jobType
+  if (tier) filter.tier = Number(tier)
+  if (status) filter.status = status
+  if (ctcMin || ctcMax) {
+    filter['compensation.ctcLpa'] = {}
+    if (ctcMin) filter['compensation.ctcLpa'].$gte = Number(ctcMin)
+    if (ctcMax) filter['compensation.ctcLpa'].$lte = Number(ctcMax)
+  }
+
+  const sort = {}
+  sort[sortBy] = sortOrder === 'asc' ? 1 : -1
+
+  const pageNum = Math.max(1, Number(page))
+  const limitNum = Math.min(100, Math.max(1, Number(limit)))
+  const skip = (pageNum - 1) * limitNum
+
+  const [drives, total] = await Promise.all([
+    Drive.find(filter)
+      .populate('company', 'name sector')
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNum)
+      .lean({ virtuals: true }),
+    Drive.countDocuments(filter),
+  ])
+
+  // Annotate with eligibility
+  const annotatedDrives = await annotateDrivesWithEligibility(drives, student)
+
+  return {
+    drives: annotatedDrives,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+    },
+  }
+}
+
+// Get single drive by ID for students (published+ only) with eligibility annotation
+export async function getDriveByIdForStudent(driveId, student) {
+  const drive = await Drive.findOne({
+    _id: driveId,
+    status: {
+      $in: [
+        'published',
+        'registration_open',
+        'registration_closed',
+        'in_progress',
+        'completed',
+        'results_declared',
+      ],
+    },
+  })
+    .populate('company', 'name sector hrContact')
+    .lean({ virtuals: true })
+
+  if (!drive) {
+    return null
+  }
+
+  const annotatedDrives = await annotateDrivesWithEligibility([drive], student)
+  return annotatedDrives[0]
 }
 
 // Update drive status with transition validation (coordinator/TPO with department scoping)

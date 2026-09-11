@@ -66,7 +66,6 @@ const seasonConfigSchema = new mongoose.Schema(
   }
 )
 
-seasonConfigSchema.index({ season: 1 }, { unique: true })
 seasonConfigSchema.index({ isActive: 1 })
 
 export const SeasonConfig = mongoose.model('SeasonConfig', seasonConfigSchema)

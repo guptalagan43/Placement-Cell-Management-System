@@ -3,6 +3,31 @@ import { z } from 'zod'
 import { asyncHandler } from '../utils/async-handler.js'
 import * as driveSvc from '../services/drive.service.js'
 import { DEPARTMENTS } from '../constants/departments.js'
+import StudentProfile from '../models/StudentProfile.model.js'
+
+// Helper to get student profile for eligibility computation
+async function getStudentProfileForEligibility(user) {
+  if (!user || user.role !== 'student') {
+    return null
+  }
+  const profile = await StudentProfile.findOne({ user: user._id }).lean()
+  if (!profile) {
+    return null
+  }
+  return {
+    branch: profile.branch,
+    batch: profile.batch,
+    cgpaOverall: profile.cgpaOverall,
+    backlogsActive: profile.backlogsActive,
+    tenthPercent: profile.tenthPercent,
+    twelfthPercent: profile.twelfthPercent,
+    tenthDetails: profile.tenthDetails,
+    twelfthDetails: profile.twelfthDetails,
+    isBlacklisted: profile.isBlacklisted,
+    placementStatus: profile.placementStatus,
+    currentTier: profile.currentTier,
+  }
+}
 
 // Validation schemas
 const eligibilityCriteriaSchema = z.object({
@@ -182,11 +207,12 @@ export const getDrives = [
   }),
 ]
 
-// GET /drives/student — list drives for students (published+ only)
+// GET /drives/student — list drives for students (published+ only) with eligibility
 export const getDrivesForStudents = [
   asyncHandler(async (req, res) => {
     const queryParams = studentListQuerySchema.parse({ query: req.query }).query
-    const result = await driveSvc.getDrivesForStudents(queryParams)
+    const student = await getStudentProfileForEligibility(req.user)
+    const result = await driveSvc.getDrivesForStudents(queryParams, student)
     res.json({ success: true, ...result })
   }),
 ]
@@ -208,11 +234,19 @@ export const getDriveById = [
   }),
 ]
 
-// GET /drives/student/:id — get single drive for students
+// GET /drives/student/:id — get single drive for students with eligibility
 export const getDriveByIdForStudent = [
   asyncHandler(async (req, res) => {
     const { params } = idParamSchema.parse({ params: req.params })
-    const drive = await driveSvc.getDriveByIdForStudent(params.id)
+    const student = await getStudentProfileForEligibility(req.user)
+    const drive = await driveSvc.getDriveByIdForStudent(params.id, student)
+    if (!drive) {
+      throw new (await import('../utils/api-error.js')).ApiError(
+        404,
+        'Drive not found',
+        'DRIVE_NOT_FOUND'
+      )
+    }
     res.json({ success: true, drive })
   }),
 ]
