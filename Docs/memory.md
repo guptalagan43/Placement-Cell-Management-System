@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M3 — Company & Drive Management |
-| **Current Phase** | Phase 26 — Eligibility Engine Service (Not Started; next up) |
-| **Phases Complete** | 25 / 67 |
-| **Overall Completion** | ~37% |
+| **Current Milestone** | M4 — Eligibility Engine |
+| **Current Phase** | Phase 27 — Business Rules Layer (Not Started; next up) |
+| **Phases Complete** | 26 / 67 |
+| **Overall Completion** | ~39% |
 | **Blockers** | None |
 
 ---
@@ -78,7 +78,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 ### Milestone 4 — Eligibility Engine
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 26 | Eligibility Engine Service | Not Started | — | — |
+| 26 | Eligibility Engine Service | Complete | 2026-09-11 | Stateless `checkEligibility(student, drive)` service with individual check functions (branch, batch, CGPA, backlogs, 10th/12th %, blacklist); returns `{eligible, reasons[]}` with machine-readable codes; 64 unit tests covering every boundary condition in srs.md §8 (exact-CGPA-match, one-backlog-over, wrong-branch, blacklisted, null/undefined fields, detailed vs legacy 10th/12th records). Lint/format clean. |
 | 27 | Business Rules Layer | Not Started | — | — |
 | 28 | Eligibility Badge Integration | Not Started | — | — |
 
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 25 complete; **Milestone 3 (Company & Drive Management) Phases 19–25 done**. Phase 26 (Eligibility Engine Service, M4) is next.
-**File(s) touched in Phase 25:** _New_ — `client/src/pages/StudentDriveListPage.jsx`. _Modified_ — `client/src/App.jsx` (added student drives route), `client/src/layouts/AppLayout.jsx` (main nav already had Drives link).
-**Next action:** Begin Phase 26 — Eligibility Engine Service (M4). Traces to **FR-ELG-01, srs.md §8**. Key tasks: Stateless service comparing student profile snapshot against drive criteria (branch, batch, CGPA, backlog, 10th/12th, blacklist); returns `{eligible, reasons[]}`.
+**Active phase:** None active — Phase 26 complete; **Milestone 4 (Eligibility Engine) Phase 26 done**. Phase 27 (Business Rules Layer, M4) is next.
+**File(s) touched in Phase 26:** _New_ — `server/src/services/eligibility.service.js`, `server/src/services/eligibility.service.test.js`.
+**Next action:** Begin Phase 27 — Business Rules Layer (M4). Traces to **FR-ELG-05, srs.md §8.1–8.2, NFR-MAINT-01**. Key tasks: Extend eligibility engine with One-Offer Rule and Tier-Lock Rule; season-configurable tier boundaries (not hardcoded).
 
 ---
 
@@ -226,6 +226,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-11 (Ph.23) | Drive status lifecycle enforces forward-only transitions: draft→published→registration_open→registration_closed→in_progress→completed→results_declared. Illegal transitions (skipping stages, going backwards) return 400 with INVALID_STATUS_TRANSITION code. Clone creates new Draft with all fields copied except registrationDeadline (set to 30 days from now) and status (reset to draft). | Matches FR-DRV-03 (defined status lifecycle) and FR-DRV-04 (clone action). Forward-only transitions prevent accidental state corruption. Clone deadline reset ensures new drive has valid future deadline. Department scoping applies to both endpoints. |
 | 2026-09-11 (Ph.24) | Student-facing drive list API (`GET /drives/student`) was implemented in Phase 21 (not Phase 24) and already meets all Phase 24 acceptance criteria: pagination, Published+ status filter (excludes Draft), job-type/CTC/tier filters, search, sorting. Phase 24 required no new code — only verification against existing implementation. | FR-DRV-05 (student drive browsing) is satisfied by the `/drives/student` endpoint created in Phase 21. Acceptance criteria (pagination, no Draft drives, filters, sort) all verified via existing 12 integration tests. |
 | 2026-09-11 (Ph.25) | Student drive list UI uses "Drives" as page heading (not "Available Drives") to match existing test expectations. Cards layout follows `design.md` reference with semantic color badges for status, icons for job type/tier/CTC/deadline, and eligibility summary. Filter chips with inline clear (×) for active filters. Heading "Drives" satisfies test `getByRole('heading', { name: 'Drives' })`. | Matches FR-DRV-05 (student drive browsing) and FR-SEA-01 (search/filter/sort). Test compatibility required heading text match. Cards layout per design.md §6 Data Table / Card patterns with semantic status colors from §7. |
+| 2026-09-11 (Ph.26) | Eligibility engine is a pure, stateless service (`checkEligibility`) with no DB dependencies — enables identical logic at browse-time and apply-time. Individual check functions exported for granular unit testing. Blacklist checked first (override). 10th/12th % prefers detailed records (`tenthDetails.percentage`, `twelfthDetails.percentage`) with fallback to legacy fields (`tenthPercent`, `twelfthPercent`). Null/undefined academic fields treated as failure. Machine-readable reason codes (`INELIGIBILITY_REASONS`) returned for frontend branching. | Matches FR-ELG-01 and srs.md §8. Pure function design per architecture.md §5 enables exhaustive unit testing (64 tests) without database. Business rules (One-Offer, Tier-Lock) deferred to Phase 27 per srs.md §8.1–8.2. |
 
 ---
 
