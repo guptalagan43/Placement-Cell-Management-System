@@ -8,6 +8,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import ActivatePage from './pages/ActivatePage.jsx'
 import StudentProfilePage from './pages/StudentProfilePage.jsx'
 import CompanyListPage from './pages/CompanyListPage.jsx'
+import DriveListPage from './pages/DriveListPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import DrivesPage from './pages/DrivesPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
@@ -94,6 +95,18 @@ function AppRoutes() {
             <ProtectedRoute>
               <RoleRoute allowedRoles={['coordinator', 'tpo']}>
                 <CompanyListPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Drive Management (Coordinator/TPO only) */}
+        <Route
+          path="/drives-admin"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={['coordinator', 'tpo']}>
+                <DriveListPage />
               </RoleRoute>
             </ProtectedRoute>
           }

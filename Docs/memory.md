@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M3 — Company & Drive Management |
-| **Current Phase** | Phase 22 — Drive Create/Edit Admin Form (Not Started; next up) |
-| **Phases Complete** | 21 / 67 |
-| **Overall Completion** | ~31% |
+| **Current Phase** | Phase 23 — Drive Status Lifecycle + Clone (Not Started; next up) |
+| **Phases Complete** | 22 / 67 |
+| **Overall Completion** | ~33% |
 | **Blockers** | None |
 
 ---
@@ -70,7 +70,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 19 | Company Schema & CRUD API | Complete | 2026-09-09 | Company schema (DR-03) with name, sector, about, HR contact, website, isActive; CRUD routes (POST/GET/PUT/DELETE /companies) RBAC-restricted to coordinator/TPO; GET /companies/active for all authenticated users (students for drive dropdowns); search, filter (sector, isActive), pagination, sorting. **36** integration tests pass. Lint/format clean. |
 | 20 | Company Admin UI | Complete | 2026-09-10 | Company list page at `/companies` with search, filter (sector, status), pagination, sorting; create/edit modal with Zod validation (name, sector, about, HR contact, website, isActive); delete with confirmation; RBAC via RoleRoute (coordinator/TPO only). Nav link added to admin header. **43** client tests pass, build successful. Lint/format clean. |
 | 21 | Drive Schema & CRUD API | Complete | 2026-09-10 | Drive schema (DR-04) with nested eligibility criteria, tier, department scope, status; CRUD routes with department scoping; registration deadline validation; 59 integration tests pass. Lint/format clean. |
-| 22 | Drive Create/Edit Admin Form | Not Started | — | — |
+| 22 | Drive Create/Edit Admin Form | Complete | 2026-09-11 | Drive list page at `/drives-admin` with search, filter (status, job type, tier), pagination, sorting; create/edit modal with multi-section form (basic info, compensation, eligibility criteria, department scope) with Zod validation; field-level error display; company dropdown from active companies; branch/batch checkboxes; delete with confirmation; RBAC via RoleRoute (coordinator/TPO only). Nav link added to admin header. **All client tests pass**, build successful. Lint/format clean. |
 | 23 | Drive Status Lifecycle + Clone | Not Started | — | — |
 | 24 | Public Drive List API (Basic) | Not Started | — | — |
 | 25 | Student Drive List UI (Basic) | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 21 complete; **Milestone 3 (Company & Drive Management) Phases 19–21 done**. Phase 22 (Drive Create/Edit Admin Form, M3) is next.
-**File(s) touched in Phase 21:** _New_ — `server/src/models/Drive.model.js`, `server/src/services/drive.service.js`, `server/src/controllers/drive.controller.js`, `server/src/routes/drive.routes.js`, `server/src/routes/drive.routes.test.js`. _Modified_ — `server/src/app.js` (added drives routes).
-**Next action:** Begin Phase 22 — Drive Create/Edit Admin Form (M3). Traces to **FR-DRV-02**. Key tasks: Multi-section drive form (basic info, compensation, eligibility criteria, deadline) with validation.
+**Active phase:** None active — Phase 22 complete; **Milestone 3 (Company & Drive Management) Phases 19–22 done**. Phase 23 (Drive Status Lifecycle + Clone, M3) is next.
+**File(s) touched in Phase 22:** _New_ — `client/src/api/drive.api.js`, `client/src/pages/DriveListPage.jsx`. _Modified_ — `client/src/App.jsx` (added drives-admin route), `client/src/layouts/AppLayout.jsx` (added Drives nav link to admin header).
+**Next action:** Begin Phase 23 — Drive Status Lifecycle + Clone (M3). Traces to **FR-DRV-03, FR-DRV-04**. Key tasks: `PATCH /drives/:id/status` enforcing legal transitions only; `POST /drives/:id/clone`.
 
 ---
 
@@ -222,7 +222,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-06 (Ph.17) | Resume upload uses **direct client-to-Cloudinary upload** with signed parameters; server never touches file bytes. | Satisfies NFR-PERF-02 (files never touch app server) and keeps server stateless. Signed upload params generated server-side with short expiry. |
 | 2026-09-06 (Ph.17) | Resume metadata stored in StudentProfile `resumes` array with `cloudinaryPublicId`, `cloudinarySecureUrl`, `isDefault` flag. | Keeps resume metadata with profile for easy querying. `isDefault` ensures only one default resume per student. |
 | 2026-09-06 (Ph.17) | Validation middleware throws `ApiError` for Zod validation errors (not plain Error). | Ensures error handler correctly returns 400 with `VALIDATION_ERROR` code instead of 500. |
-| 2026-09-10 (Ph.21) | Drive model uses `registrationDeadline` validator to ensure future dates; coordinator write access enforces department scope at creation time (forced to coordinator's department); TPO can create institute-wide drives (no departmentScope) or department-scoped drives. | Matches FR-DRV-02 (structured eligibility criteria, tier, deadline) and FR-DRV-03 (status lifecycle starting at draft). Department scoping on write per NFR-SEC-05. Future-date validation added because SRS implies deadlines must be in the future (registration deadline). |
+| 2026-09-11 (Ph.22) | Drive create/edit form uses a multi-section layout (Basic Info, Compensation, Eligibility Criteria, Department Scope) with checkbox groups for branches/batches instead of multi-select for better UX. Department scope field is displayed but disabled for coordinators (auto-scoped on server). TPO sees it as editable dropdown. | Matches FR-DRV-02 (structured eligibility criteria, tier, deadline). Field-level validation via Zod mirrors server-side schema. Branch/batch as checkboxes improves discoverability over multi-select. Coordinator department scoping enforced on server (Phase 21), so form reflects this by disabling scope for coordinators. |
 
 ---
 

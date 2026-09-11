@@ -12,6 +12,7 @@ const navItems = [
 ]
 
 const adminNavItems = [
+  { to: '/drives-admin', label: 'Drives' },
   { to: '/companies', label: 'Companies' },
   { to: '/admin', label: 'Admin' },
 ]
