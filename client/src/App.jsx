@@ -9,8 +9,8 @@ import ActivatePage from './pages/ActivatePage.jsx'
 import StudentProfilePage from './pages/StudentProfilePage.jsx'
 import CompanyListPage from './pages/CompanyListPage.jsx'
 import DriveListPage from './pages/DriveListPage.jsx'
+import StudentDriveListPage from './pages/StudentDriveListPage.jsx'
 import HomePage from './pages/HomePage.jsx'
-import DrivesPage from './pages/DrivesPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
@@ -54,14 +54,6 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/drives"
-          element={
-            <ProtectedRoute>
-              <DrivesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/about"
           element={
             <ProtectedRoute>
@@ -84,6 +76,16 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <StudentProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Student Drive List (all authenticated users) */}
+        <Route
+          path="/drives"
+          element={
+            <ProtectedRoute>
+              <StudentDriveListPage />
             </ProtectedRoute>
           }
         />
