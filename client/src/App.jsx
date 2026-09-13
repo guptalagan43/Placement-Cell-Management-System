@@ -10,6 +10,7 @@ import StudentProfilePage from './pages/StudentProfilePage.jsx'
 import CompanyListPage from './pages/CompanyListPage.jsx'
 import DriveListPage from './pages/DriveListPage.jsx'
 import StudentDriveListPage from './pages/StudentDriveListPage.jsx'
+import DriveDetailPage from './pages/DriveDetailPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
@@ -86,6 +87,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <StudentDriveListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drives/:id"
+          element={
+            <ProtectedRoute>
+              <DriveDetailPage />
             </ProtectedRoute>
           }
         />
