@@ -11,6 +11,7 @@ import resumeRoutes from './routes/resume.routes.js'
 import companyRoutes from './routes/company.routes.js'
 import driveRoutes from './routes/drive.routes.js'
 import roundRoutes from './routes/round.routes.js'
+import infoSessionRoutes from './routes/infoSession.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -43,6 +44,9 @@ export function createApp() {
 
   // Round routes (coordinator/TPO write with department scoping, student read)
   app.use('/', roundRoutes)
+
+  // InfoSession routes (coordinator/TPO write with department scoping, student read)
+  app.use('/', infoSessionRoutes)
 
   // Unmatched routes -> consistent 404 error contract.
   app.use(notFound)
