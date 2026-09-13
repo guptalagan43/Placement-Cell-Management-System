@@ -15,9 +15,11 @@ import {
   Calendar,
   Target,
   Layers,
+  List,
 } from 'lucide-react'
 import * as driveApi from '../api/drive.api.js'
 import * as companyApi from '../api/company.api.js'
+import * as roundApi from '../api/round.api.js'
 import Button from '../components/ui/Button.jsx'
 import Input from '../components/ui/Input.jsx'
 import Badge from '../components/ui/Badge.jsx'
@@ -118,6 +120,158 @@ const getDefaultValues = () => ({
 const getBatchYears = () => {
   const currentYear = new Date().getFullYear()
   return Array.from({ length: 5 }, (_, i) => currentYear + i)
+}
+
+// Round schema with Zod validation
+const roundSchema = z.object({
+  roundNumber: z
+    .number()
+    .int()
+    .min(1, 'Round number must be >= 1')
+    .max(20, 'Round number must be <= 20'),
+  name: z.string().min(1, 'Round name is required').max(100),
+  dateTime: z.string().min(1, 'Date and time is required'),
+  mode: z.enum(['online', 'offline']),
+  venue: z.string().max(500).optional(),
+  meetingLink: z.string().max(500).optional(),
+  instructions: z.string().max(2000).optional(),
+})
+
+const getDefaultRoundValues = () => ({
+  roundNumber: 1,
+  name: '',
+  dateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // YYYY-MM-DDTHH:MM
+  mode: 'online',
+  venue: '',
+  meetingLink: '',
+  instructions: '',
+})
+
+const RoundForm = ({ isOpen, onClose, onSubmit, initialData, isLoading, title }) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(roundSchema),
+    defaultValues: getDefaultRoundValues(),
+  })
+
+  const watchedValues = watch()
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        // Convert dateTime to YYYY-MM-DDTHH:MM format for datetime-local input
+        const dateTime = initialData.dateTime
+          ? new Date(initialData.dateTime).toISOString().slice(0, 16)
+          : getDefaultRoundValues().dateTime
+
+        reset({
+          ...getDefaultRoundValues(),
+          ...initialData,
+          dateTime,
+        })
+      } else {
+        reset(getDefaultRoundValues())
+      }
+    }
+  }, [isOpen, initialData, reset])
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-surface rounded-xl shadow-raised w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="font-heading text-lg font-semibold text-ink-900">{title}</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          <div className="space-y-4">
+            <h3 className="font-body text-sm font-semibold text-ink-900 mb-4 flex items-center gap-2">
+              <List className="w-4 h-4" />
+              Round Details
+            </h3>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Round Number *"
+                type="number"
+                min="1"
+                max="20"
+                {...register('roundNumber', { valueAsNumber: true })}
+                error={errors.roundNumber?.message}
+              />
+              <Input
+                label="Round Name *"
+                {...register('name')}
+                error={errors.name?.message}
+                placeholder="e.g., Online Assessment, Technical Interview"
+              />
+            </div>
+
+            <Input
+              label="Date & Time *"
+              type="datetime-local"
+              {...register('dateTime')}
+              error={errors.dateTime?.message}
+            />
+
+            <Input label="Mode *" error={errors.mode?.message}>
+              <select
+                {...register('mode')}
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700"
+              >
+                <option value="online">Online</option>
+                <option value="offline">Offline</option>
+              </select>
+            </Input>
+
+            {watchedValues.mode === 'offline' && (
+              <Input
+                label="Venue *"
+                {...register('venue')}
+                error={errors.venue?.message}
+                placeholder="e.g., Conference Room A, Block 2"
+              />
+            )}
+
+            {watchedValues.mode === 'online' && (
+              <Input
+                label="Meeting Link *"
+                {...register('meetingLink')}
+                error={errors.meetingLink?.message}
+                placeholder="https://meet.google.com/abc-defg-hij"
+              />
+            )}
+
+            <Input
+              label="Instructions"
+              {...register('instructions')}
+              error={errors.instructions?.message}
+              placeholder="Optional instructions for candidates..."
+            />
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }
 
 const DriveForm = ({ isOpen, onClose, onSubmit, initialData, isLoading, title, companies }) => {
@@ -485,6 +639,16 @@ export default function DriveListPage() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
 
+  // Round management state
+  const [roundModalOpen, setRoundModalOpen] = useState(false)
+  const [editingRound, setEditingRound] = useState(null)
+  const [roundsDriveId, setRoundsDriveId] = useState(null)
+  const [rounds, setRounds] = useState([])
+  const [roundsLoading, setRoundsLoading] = useState(false)
+  const [roundSubmitLoading, setRoundSubmitLoading] = useState(false)
+  const [roundError, setRoundError] = useState(null)
+  const [roundSuccess, setRoundSuccess] = useState(null)
+
   const fetchDrives = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -599,6 +763,92 @@ export default function DriveListPage() {
   const clearMessages = () => {
     setError(null)
     setSuccess(null)
+  }
+
+  // Round management functions
+  const fetchRounds = useCallback(async () => {
+    if (!roundsDriveId) return
+    setRoundsLoading(true)
+    setRoundError(null)
+    try {
+      const res = await roundApi.getRounds(roundsDriveId)
+      setRounds(res.rounds)
+    } catch (err) {
+      setRoundError(err.message || 'Failed to fetch rounds')
+    } finally {
+      setRoundsLoading(false)
+    }
+  }, [roundsDriveId])
+
+  const openRoundsModal = (drive) => {
+    setRoundsDriveId(drive._id)
+    setRounds([])
+    setRoundModalOpen(true)
+    fetchRounds()
+  }
+
+  const closeRoundsModal = () => {
+    setRoundModalOpen(false)
+    setRoundsDriveId(null)
+    setRounds([])
+    setEditingRound(null)
+    setRoundError(null)
+    setRoundSuccess(null)
+  }
+
+  const openCreateRoundModal = () => {
+    setEditingRound(null)
+  }
+
+  const openEditRoundModal = (round) => {
+    setEditingRound(round)
+  }
+
+  const handleRoundFormSubmit = async (data) => {
+    setRoundSubmitLoading(true)
+    setRoundError(null)
+    try {
+      if (editingRound) {
+        await roundApi.updateRound(editingRound._id, data)
+        setRoundSuccess('Round updated successfully')
+      } else {
+        await roundApi.createRound(roundsDriveId, data)
+        setRoundSuccess('Round created successfully')
+      }
+      fetchRounds()
+    } catch (err) {
+      setRoundError(err.message || 'Failed to save round')
+    } finally {
+      setRoundSubmitLoading(false)
+    }
+  }
+
+  const handleRoundDelete = async (round) => {
+    if (!window.confirm(`Are you sure you want to delete "${round.name}"?`)) return
+    setRoundError(null)
+    try {
+      await roundApi.deleteRound(round._id)
+      setRoundSuccess('Round deleted successfully')
+      fetchRounds()
+    } catch (err) {
+      setRoundError(err.message || 'Failed to delete round')
+    }
+  }
+
+  const clearRoundMessages = () => {
+    setRoundError(null)
+    setRoundSuccess(null)
+  }
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '-'
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
   }
 
   // Status badge tone mapping
@@ -804,6 +1054,14 @@ export default function DriveListPage() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => openRoundsModal(drive)}
+                              aria-label={`Manage rounds for ${drive.title}`}
+                            >
+                              <List className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => openEditModal(drive)}
                               aria-label={`Edit ${drive.title}`}
                             >
@@ -866,6 +1124,149 @@ export default function DriveListPage() {
         isLoading={submitLoading}
         title={editingDrive ? 'Edit Drive' : 'Add Drive'}
         companies={companies}
+      />
+
+      {/* Round Management Modal */}
+      {roundModalOpen && roundsDriveId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface rounded-xl shadow-raised w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="font-heading text-lg font-semibold text-ink-900">Manage Rounds</h2>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openCreateRoundModal}
+                  icon={<Plus className="w-4 h-4" />}
+                >
+                  Add Round
+                </Button>
+                <Button variant="ghost" size="icon" onClick={closeRoundsModal} aria-label="Close">
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
+            {roundError && (
+              <div
+                className="bg-danger bg-opacity-10 border-b border-danger text-danger px-6 py-3 flex items-center justify-between"
+                role="alert"
+              >
+                <span className="font-body text-sm">{roundError}</span>
+                <Button variant="ghost" size="sm" onClick={clearRoundMessages}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            {roundSuccess && (
+              <div
+                className="bg-success bg-opacity-10 border-b border-success text-success px-6 py-3 flex items-center justify-between"
+                role="status"
+              >
+                <span className="font-body text-sm">{roundSuccess}</span>
+                <Button variant="ghost" size="sm" onClick={clearRoundMessages}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {roundsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary-700" />
+                </div>
+              ) : rounds.length === 0 ? (
+                <div className="text-center py-12 text-ink-500">
+                  <List className="w-12 h-12 mx-auto mb-4 text-ink-300" />
+                  <p className="font-body">No rounds scheduled for this drive</p>
+                  <p className="font-body text-sm text-ink-400 mt-1">
+                    Click "Add Round" to create the first round
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full" role="table">
+                    <thead>
+                      <tr className="bg-primary-50 border-b border-border">
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Round #
+                        </th>
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Date & Time
+                        </th>
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Mode
+                        </th>
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Venue / Link
+                        </th>
+                        <th className="px-4 py-3 text-right font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {rounds.map((round) => (
+                        <tr key={round._id} className="hover:bg-primary-50/50">
+                          <td className="px-4 py-4 font-body text-sm text-ink-900 font-semibold">
+                            {round.roundNumber}
+                          </td>
+                          <td className="px-4 py-4 font-body text-sm text-ink-900">{round.name}</td>
+                          <td className="px-4 py-4 font-body text-sm text-ink-600">
+                            {formatDateTime(round.dateTime)}
+                          </td>
+                          <td className="px-4 py-4">
+                            <Badge tone={round.mode === 'online' ? 'info' : 'warning'} size="sm">
+                              {round.mode}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-4 font-body text-sm text-ink-600 max-w-xs truncate">
+                            {round.mode === 'online' ? round.meetingLink : round.venue || '-'}
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditRoundModal(round)}
+                                aria-label={`Edit ${round.name}`}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRoundDelete(round)}
+                                aria-label={`Delete ${round.name}`}
+                                className="text-danger hover:bg-danger/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Round Form Modal */}
+      <RoundForm
+        isOpen={roundModalOpen && editingRound !== undefined}
+        onClose={() => setEditingRound(null)}
+        onSubmit={handleRoundFormSubmit}
+        initialData={editingRound}
+        isLoading={roundSubmitLoading}
+        title={editingRound ? 'Edit Round' : 'Add Round'}
       />
     </div>
   )
