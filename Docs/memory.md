@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-10 — Phase 21 (Drive Schema & CRUD API) complete |
+| **Last Updated** | 2026-09-13 — Phase 29 (Round Schema & CRUD API) complete |
 
 ---
 
@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M4 — Eligibility Engine |
-| **Current Phase** | Phase 29 — Round Schema & CRUD API (Not Started; next up) |
-| **Phases Complete** | 28 / 67 |
-| **Overall Completion** | ~42% |
+| **Current Milestone** | M5 — Round & Info Session Scheduling |
+| **Current Phase** | Phase 30 — Round Management UI (Not Started; next up) |
+| **Phases Complete** | 29 / 67 |
+| **Overall Completion** | ~43% |
 | **Blockers** | None |
 
 ---
@@ -85,7 +85,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 ### Milestone 5 — Round & Info Session Scheduling
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 29 | Round Schema & CRUD API | Not Started | — | — |
+| 29 | Round Schema & CRUD API | Complete | 2026-09-13 | Round schema (DR-05) nested under Drive; CRUD routes with department scoping via parent drive; 45 integration tests pass. Lint/format clean. |
 | 30 | Round Management UI | Not Started | — | — |
 | 31 | Drive Detail Page | Not Started | — | — |
 | 32 | InfoSession Schema & CRUD API | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 28 complete; **Milestone 4 (Eligibility Engine) Phases 26–28 done**. Phase 29 (Round Schema & CRUD API, M5) is next.
-**File(s) touched in Phase 28:** _New_ — `client/src/components/ui/EligibilityBadge.jsx`. _Modified_ — `server/src/services/drive.service.js` (eligibility annotation), `server/src/controllers/drive.controller.js` (student profile fetch), `client/src/pages/StudentDriveListPage.jsx` (badge display, disabled action).
-**Next action:** Begin Phase 29 — Round Schema & CRUD API (M5). Traces to **FR-SCH-01**. Key tasks: Round schema (DR-05, nested under Drive); CRUD routes restricted to drive's owning coordinator/admin.
+**Active phase:** None active — Phase 29 complete; **Milestone 5 (Round & Info Session Scheduling) Phase 29 done**. Phase 30 (Round Management UI, M5) is next.
+**File(s) touched in Phase 29:** _New_ — `server/src/models/Round.model.js`, `server/src/services/round.service.js`, `server/src/controllers/round.controller.js`, `server/src/routes/round.routes.js`, `server/src/routes/round.routes.test.js`. _Modified_ — `server/src/app.js` (round routes registration).
+**Next action:** Begin Phase 30 — Round Management UI (M5). Traces to **FR-SCH-01**. Key tasks: Round list + add/edit form nested inside the drive-edit view.
 
 ---
 

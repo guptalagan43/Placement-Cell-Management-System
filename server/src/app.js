@@ -10,6 +10,7 @@ import studentProfileRoutes from './routes/studentProfile.routes.js'
 import resumeRoutes from './routes/resume.routes.js'
 import companyRoutes from './routes/company.routes.js'
 import driveRoutes from './routes/drive.routes.js'
+import roundRoutes from './routes/round.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -39,6 +40,9 @@ export function createApp() {
 
   // Drive routes (coordinator/TPO write with department scoping, student read)
   app.use('/drives', driveRoutes)
+
+  // Round routes (coordinator/TPO write with department scoping, student read)
+  app.use('/', roundRoutes)
 
   // Unmatched routes -> consistent 404 error contract.
   app.use(notFound)
