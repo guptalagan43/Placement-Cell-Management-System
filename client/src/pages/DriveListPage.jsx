@@ -16,10 +16,13 @@ import {
   Target,
   Layers,
   List,
+  Megaphone,
+  AlertCircle,
 } from 'lucide-react'
 import * as driveApi from '../api/drive.api.js'
 import * as companyApi from '../api/company.api.js'
 import * as roundApi from '../api/round.api.js'
+import * as infoSessionApi from '../api/infoSession.api.js'
 import Button from '../components/ui/Button.jsx'
 import Input from '../components/ui/Input.jsx'
 import Badge from '../components/ui/Badge.jsx'
@@ -147,6 +150,27 @@ const getDefaultRoundValues = () => ({
   instructions: '',
 })
 
+// InfoSession schema with Zod validation
+const infoSessionSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200),
+  dateTime: z.string().min(1, 'Date and time is required'),
+  mode: z.enum(['online', 'offline']),
+  venue: z.string().max(500).optional(),
+  meetingLink: z.string().max(500).optional(),
+  mandatory: z.boolean().optional(),
+  description: z.string().max(2000).optional(),
+})
+
+const getDefaultInfoSessionValues = () => ({
+  title: '',
+  dateTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // YYYY-MM-DDTHH:MM
+  mode: 'online',
+  venue: '',
+  meetingLink: '',
+  mandatory: false,
+  description: '',
+})
+
 const RoundForm = ({ isOpen, onClose, onSubmit, initialData, isLoading, title }) => {
   const {
     register,
@@ -256,6 +280,134 @@ const RoundForm = ({ isOpen, onClose, onSubmit, initialData, isLoading, title })
               {...register('instructions')}
               error={errors.instructions?.message}
               placeholder="Optional instructions for candidates..."
+            />
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+const InfoSessionForm = ({ isOpen, onClose, onSubmit, initialData, isLoading, title }) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(infoSessionSchema),
+    defaultValues: getDefaultInfoSessionValues(),
+  })
+
+  const watchedValues = watch()
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        // Convert dateTime to YYYY-MM-DDTHH:MM format for datetime-local input
+        const dateTime = initialData.dateTime
+          ? new Date(initialData.dateTime).toISOString().slice(0, 16)
+          : getDefaultInfoSessionValues().dateTime
+
+        reset({
+          ...getDefaultInfoSessionValues(),
+          ...initialData,
+          dateTime,
+        })
+      } else {
+        reset(getDefaultInfoSessionValues())
+      }
+    }
+  }, [isOpen, initialData, reset])
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-surface rounded-xl shadow-raised w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="font-heading text-lg font-semibold text-ink-900">{title}</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          <div className="space-y-4">
+            <h3 className="font-body text-sm font-semibold text-ink-900 mb-4 flex items-center gap-2">
+              <Megaphone className="w-4 h-4" />
+              Info Session Details
+            </h3>
+
+            <Input
+              label="Title *"
+              {...register('title')}
+              error={errors.title?.message}
+              placeholder="e.g., Pre-Placement Talk, Company Overview"
+            />
+
+            <Input
+              label="Date & Time *"
+              type="datetime-local"
+              {...register('dateTime')}
+              error={errors.dateTime?.message}
+            />
+
+            <Input label="Mode *" error={errors.mode?.message}>
+              <select
+                {...register('mode')}
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700"
+              >
+                <option value="online">Online</option>
+                <option value="offline">Offline</option>
+              </select>
+            </Input>
+
+            {watchedValues.mode === 'offline' && (
+              <Input
+                label="Venue *"
+                {...register('venue')}
+                error={errors.venue?.message}
+                placeholder="e.g., Auditorium, Main Block"
+              />
+            )}
+
+            {watchedValues.mode === 'online' && (
+              <Input
+                label="Meeting Link *"
+                {...register('meetingLink')}
+                error={errors.meetingLink?.message}
+                placeholder="https://meet.google.com/ppt-abc-defg"
+              />
+            )}
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register('mandatory')}
+                className="w-4 h-4 rounded border-border text-primary-700 focus:ring-primary-700"
+              />
+              <label className="font-body text-sm text-ink-900 cursor-pointer">
+                Mandatory attendance
+              </label>
+            </div>
+
+            <Input
+              label="Description"
+              {...register('description')}
+              error={errors.description?.message}
+              placeholder="Optional description..."
             />
           </div>
 
@@ -649,6 +801,16 @@ export default function DriveListPage() {
   const [roundError, setRoundError] = useState(null)
   const [roundSuccess, setRoundSuccess] = useState(null)
 
+  // InfoSession management state
+  const [infoSessionModalOpen, setInfoSessionModalOpen] = useState(false)
+  const [editingInfoSession, setEditingInfoSession] = useState(null)
+  const [infoSessionsDriveId, setInfoSessionsDriveId] = useState(null)
+  const [infoSessions, setInfoSessions] = useState([])
+  const [infoSessionsLoading, setInfoSessionsLoading] = useState(false)
+  const [infoSessionSubmitLoading, setInfoSessionSubmitLoading] = useState(false)
+  const [infoSessionError, setInfoSessionError] = useState(null)
+  const [infoSessionSuccess, setInfoSessionSuccess] = useState(null)
+
   const fetchDrives = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -838,6 +1000,81 @@ export default function DriveListPage() {
   const clearRoundMessages = () => {
     setRoundError(null)
     setRoundSuccess(null)
+  }
+
+  // InfoSession management functions
+  const fetchInfoSessions = useCallback(async () => {
+    if (!infoSessionsDriveId) return
+    setInfoSessionsLoading(true)
+    setInfoSessionError(null)
+    try {
+      const res = await infoSessionApi.getInfoSessions(infoSessionsDriveId)
+      setInfoSessions(res.infoSessions)
+    } catch (err) {
+      setInfoSessionError(err.message || 'Failed to fetch info sessions')
+    } finally {
+      setInfoSessionsLoading(false)
+    }
+  }, [infoSessionsDriveId])
+
+  const openInfoSessionsModal = (drive) => {
+    setInfoSessionsDriveId(drive._id)
+    setInfoSessions([])
+    setInfoSessionModalOpen(true)
+    fetchInfoSessions()
+  }
+
+  const closeInfoSessionsModal = () => {
+    setInfoSessionModalOpen(false)
+    setInfoSessionsDriveId(null)
+    setInfoSessions([])
+    setEditingInfoSession(null)
+    setInfoSessionError(null)
+    setInfoSessionSuccess(null)
+  }
+
+  const openCreateInfoSessionModal = () => {
+    setEditingInfoSession(null)
+  }
+
+  const openEditInfoSessionModal = (infoSession) => {
+    setEditingInfoSession(infoSession)
+  }
+
+  const handleInfoSessionFormSubmit = async (data) => {
+    setInfoSessionSubmitLoading(true)
+    setInfoSessionError(null)
+    try {
+      if (editingInfoSession) {
+        await infoSessionApi.updateInfoSession(editingInfoSession._id, data)
+        setInfoSessionSuccess('Info session updated successfully')
+      } else {
+        await infoSessionApi.createInfoSession(infoSessionsDriveId, data)
+        setInfoSessionSuccess('Info session created successfully')
+      }
+      fetchInfoSessions()
+    } catch (err) {
+      setInfoSessionError(err.message || 'Failed to save info session')
+    } finally {
+      setInfoSessionSubmitLoading(false)
+    }
+  }
+
+  const handleInfoSessionDelete = async (infoSession) => {
+    if (!window.confirm(`Are you sure you want to delete "${infoSession.title}"?`)) return
+    setInfoSessionError(null)
+    try {
+      await infoSessionApi.deleteInfoSession(infoSession._id)
+      setInfoSessionSuccess('Info session deleted successfully')
+      fetchInfoSessions()
+    } catch (err) {
+      setInfoSessionError(err.message || 'Failed to delete info session')
+    }
+  }
+
+  const clearInfoSessionMessages = () => {
+    setInfoSessionError(null)
+    setInfoSessionSuccess(null)
   }
 
   const formatDateTime = (dateStr) => {
@@ -1054,6 +1291,14 @@ export default function DriveListPage() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => openInfoSessionsModal(drive)}
+                              aria-label={`Manage info sessions for ${drive.title}`}
+                            >
+                              <Megaphone className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => openRoundsModal(drive)}
                               aria-label={`Manage rounds for ${drive.title}`}
                             >
@@ -1267,6 +1512,165 @@ export default function DriveListPage() {
         initialData={editingRound}
         isLoading={roundSubmitLoading}
         title={editingRound ? 'Edit Round' : 'Add Round'}
+      />
+
+      {/* InfoSession Management Modal */}
+      {infoSessionModalOpen && infoSessionsDriveId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface rounded-xl shadow-raised w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="font-heading text-lg font-semibold text-ink-900">
+                Manage Pre-Placement Talks
+              </h2>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openCreateInfoSessionModal}
+                  icon={<Plus className="w-4 h-4" />}
+                >
+                  Add Info Session
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeInfoSessionsModal}
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
+            {infoSessionError && (
+              <div
+                className="bg-danger bg-opacity-10 border-b border-danger text-danger px-6 py-3 flex items-center justify-between"
+                role="alert"
+              >
+                <span className="font-body text-sm">{infoSessionError}</span>
+                <Button variant="ghost" size="sm" onClick={clearInfoSessionMessages}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            {infoSessionSuccess && (
+              <div
+                className="bg-success bg-opacity-10 border-b border-success text-success px-6 py-3 flex items-center justify-between"
+                role="status"
+              >
+                <span className="font-body text-sm">{infoSessionSuccess}</span>
+                <Button variant="ghost" size="sm" onClick={clearInfoSessionMessages}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {infoSessionsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary-700" />
+                </div>
+              ) : infoSessions.length === 0 ? (
+                <div className="text-center py-12">
+                  <Megaphone className="w-12 h-12 text-ink-300 mx-auto mb-4" />
+                  <p className="font-body">No pre-placement talks scheduled for this drive</p>
+                  <p className="font-body text-sm text-ink-400 mt-1">
+                    Click "Add Info Session" to create the first one
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full" role="table">
+                    <thead>
+                      <tr className="bg-primary-50 border-b border-border">
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Title
+                        </th>
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Date & Time
+                        </th>
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Mode
+                        </th>
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Venue / Link
+                        </th>
+                        <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Mandatory
+                        </th>
+                        <th className="px-4 py-3 text-right font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {infoSessions.map((session) => (
+                        <tr key={session._id} className="hover:bg-purple-50/50 transition-colors">
+                          <td className="px-4 py-4 font-body text-sm text-ink-900">
+                            {session.title}
+                          </td>
+                          <td className="px-4 py-4 font-body text-sm text-ink-600">
+                            {formatDateTime(session.dateTime)}
+                          </td>
+                          <td className="px-4 py-4">
+                            <Badge tone={session.mode === 'online' ? 'info' : 'warning'} size="sm">
+                              {session.mode}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-4 font-body text-sm text-ink-600 max-w-xs truncate">
+                            {session.mode === 'online' ? session.meetingLink : session.venue || '-'}
+                          </td>
+                          <td className="px-4 py-4">
+                            {session.mandatory ? (
+                              <Badge tone="danger" size="xs" className="flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                Yes
+                              </Badge>
+                            ) : (
+                              <span className="font-body text-sm text-ink-400">No</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditInfoSessionModal(session)}
+                                aria-label={`Edit ${session.title}`}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleInfoSessionDelete(session)}
+                                aria-label={`Delete ${session.title}`}
+                                className="text-danger hover:bg-danger/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* InfoSession Form Modal */}
+      <InfoSessionForm
+        isOpen={infoSessionModalOpen && editingInfoSession !== undefined}
+        onClose={() => setEditingInfoSession(null)}
+        onSubmit={handleInfoSessionFormSubmit}
+        initialData={editingInfoSession}
+        isLoading={infoSessionSubmitLoading}
+        title={editingInfoSession ? 'Edit Info Session' : 'Add Info Session'}
       />
     </div>
   )

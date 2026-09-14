@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-13 — Phase 32 (InfoSession Schema & CRUD API) complete |
+| **Last Updated** | 2026-09-13 — Phase 33 (InfoSession UI) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M5 — Round & Info Session Scheduling |
-| **Current Phase** | Phase 33 — InfoSession UI (Not Started; next up) |
-| **Phases Complete** | 32 / 67 |
-| **Overall Completion** | ~48% |
+| **Current Phase** | Phase 34 — Application Schema & Apply Endpoint (Not Started; next up) |
+| **Phases Complete** | 33 / 67 |
+| **Overall Completion** | ~49% |
 | **Blockers** | None |
 
 ---
@@ -89,7 +89,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 30 | Round Management UI | Complete | 2026-09-13 | Round list + add/edit form nested in drive list page; "Manage Rounds" action opens modal with round table and form; creates/updates/deletes rounds via API. Client lint/format clean, build successful. |
 | 31 | Drive Detail Page | Complete | 2026-09-13 | Student-facing detail page at `/drives/:id` with company info, eligibility badge, criteria, compensation, JD download placeholder, rounds list with mode/venue/link, Apply action placeholder. Uses existing APIs. Client lint/format clean, build successful. |
 | 32 | InfoSession Schema & CRUD API | Complete | 2026-09-13 | InfoSession schema (DR-06) nested under Drive; CRUD routes with department scoping via parent drive; 43 integration tests pass. Lint/format clean. |
-| 33 | InfoSession UI | Not Started | — | — |
+| 33 | InfoSession UI | Complete | 2026-09-13 | Admin scheduling UI in drive list page ("Manage PPTs" action); student-facing display on drive detail page visually distinct from rounds with purple theme; mandatory flag shown with danger badge. Client lint/format clean, build successful. |
 
 ### Milestone 6 — Application Workflow
 | # | Phase | Status | Completed | Notes |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 32 complete; **Milestone 5 (Round & Info Session Scheduling) Phase 32 done**. Phase 33 (InfoSession UI, M5) is next.
-**File(s) touched in Phase 32:** _New_ — `server/src/models/InfoSession.model.js`, `server/src/services/infoSession.service.js`, `server/src/controllers/infoSession.controller.js`, `server/src/routes/infoSession.routes.js`, `server/src/routes/infoSession.routes.test.js`. _Modified_ — `server/src/app.js` (info session routes registration).
-**Next action:** Begin Phase 33 — InfoSession UI (M5). Traces to **FR-SCH-02**. Key tasks: Admin scheduling UI; display block on the drive detail page (Phase 31), visually distinct from Rounds.
+**Active phase:** None active — Phase 33 complete; **Milestone 5 (Round & Info Session Scheduling) complete**. Phase 34 (Application Schema & Apply Endpoint, M6) is next.
+**File(s) touched in Phase 33:** _New_ — `client/src/api/infoSession.api.js`. _Modified_ — `client/src/pages/DriveListPage.jsx` (added InfoSessionForm, info session management modal, info session list table, "Manage PPTs" action button), `client/src/pages/DriveDetailPage.jsx` (added info session display section with purple theme, mandatory badge).
+**Next action:** Begin Phase 34 — Application Schema & Apply Endpoint (M6). Traces to **FR-APP-01, FR-ELG-03**. Key tasks: Application schema (DR-07, unique per student+drive); POST /applications re-running eligibility engine before insert; rejects if ineligible and no override exists.
 
 ---
 

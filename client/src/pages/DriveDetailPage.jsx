@@ -1,5 +1,5 @@
-// Drive Detail Page (Student-Facing): Shows full drive details, eligibility, rounds, and apply action.
-// Traces to FR-DRV-05, FR-SCH-01.
+// Drive Detail Page (Student-Facing): Shows full drive details, eligibility, rounds, info sessions, and apply action.
+// Traces to FR-DRV-05, FR-SCH-01, FR-SCH-02.
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
@@ -15,9 +15,12 @@ import {
   Video,
   AlertCircle,
   CheckCircle,
+  Users,
+  Megaphone,
 } from 'lucide-react'
 import * as driveApi from '../api/drive.api.js'
 import * as roundApi from '../api/round.api.js'
+import * as infoSessionApi from '../api/infoSession.api.js'
 import Button from '../components/ui/Button.jsx'
 import Card from '../components/ui/Card.jsx'
 import Badge from '../components/ui/Badge.jsx'
@@ -85,6 +88,7 @@ export default function DriveDetailPage() {
   const navigate = useNavigate()
   const [drive, setDrive] = useState(null)
   const [rounds, setRounds] = useState([])
+  const [infoSessions, setInfoSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -93,12 +97,14 @@ export default function DriveDetailPage() {
       setLoading(true)
       setError(null)
       try {
-        const [driveRes, roundsRes] = await Promise.all([
+        const [driveRes, roundsRes, infoSessionsRes] = await Promise.all([
           driveApi.getDriveByIdForStudent(id),
           roundApi.getRoundsForStudent(id),
+          infoSessionApi.getInfoSessionsForStudent(id),
         ])
         setDrive(driveRes.drive)
         setRounds(roundsRes.rounds ?? [])
+        setInfoSessions(infoSessionsRes.infoSessions ?? [])
       } catch (err) {
         if (err.status === 404) {
           setError('Drive not found')
@@ -455,6 +461,86 @@ export default function DriveDetailPage() {
                       <div className="mt-3 pt-3 border-t border-border">
                         <p className="font-body text-xs text-ink-500 mb-1">Instructions:</p>
                         <p className="font-body text-sm text-ink-700">{round.instructions}</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Info Sessions (Pre-Placement Talks) */}
+      <Card>
+        <div className="p-6">
+          <h2 className="font-heading text-lg font-semibold text-ink-900 mb-4 flex items-center gap-2">
+            <Megaphone className="w-5 h-5 text-purple-700" />
+            Pre-Placement Talks (PPTs)
+          </h2>
+          {infoSessions.length === 0 ? (
+            <div className="text-center py-8">
+              <Megaphone className="w-12 h-12 text-ink-300 mx-auto mb-4" />
+              <h3 className="font-heading text-base font-semibold text-ink-900 mb-1">
+                No Pre-Placement Talks Scheduled
+              </h3>
+              <p className="font-body text-ink-500">
+                PPTs will appear here once scheduled by the placement cell.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {infoSessions.map((session) => {
+                const ModeIcon = MODE_ICONS[session.mode] || Clock
+                return (
+                  <div
+                    key={session._id}
+                    className="border border-border rounded-lg p-4 hover:bg-purple-50/50 transition-colors relative"
+                  >
+                    {session.mandatory && (
+                      <div className="absolute top-2 right-2">
+                        <Badge tone="danger" size="xs" className="flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Mandatory
+                        </Badge>
+                      </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center font-heading text-lg font-bold text-purple-700 flex-shrink-0">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-heading text-base font-semibold text-ink-900">
+                            {session.title}
+                          </h3>
+                          <p className="font-body text-sm text-ink-500">
+                            {MODE_LABELS[session.mode] || session.mode}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 sm:ml-auto">
+                        <div className="flex items-center gap-2 font-body text-sm text-ink-600">
+                          <Clock className="w-4 h-4" />
+                          <span>{formatDateTime(session.dateTime)}</span>
+                        </div>
+                        <Badge tone={session.mode === 'online' ? 'info' : 'warning'} size="sm">
+                          {MODE_LABELS[session.mode] || session.mode}
+                        </Badge>
+                      </div>
+                    </div>
+                    {(session.venue || session.meetingLink) && (
+                      <div className="mt-3 pt-3 border-t border-border flex items-center gap-2 font-body text-sm text-ink-600">
+                        <ModeIcon className="w-4 h-4" />
+                        <span className="truncate">
+                          {session.mode === 'online' ? session.meetingLink : session.venue}
+                        </span>
+                      </div>
+                    )}
+                    {session.description && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <p className="font-body text-xs text-ink-500 mb-1">Details:</p>
+                        <p className="font-body text-sm text-ink-700">{session.description}</p>
                       </div>
                     )}
                   </div>
