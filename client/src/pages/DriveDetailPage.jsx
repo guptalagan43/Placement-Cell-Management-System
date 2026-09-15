@@ -1,5 +1,5 @@
 // Drive Detail Page (Student-Facing): Shows full drive details, eligibility, rounds, info sessions, and apply action.
-// Traces to FR-DRV-05, FR-SCH-01, FR-SCH-02.
+// Traces to FR-DRV-05, FR-SCH-01, FR-SCH-02, FR-APP-01.
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
@@ -17,10 +17,13 @@ import {
   CheckCircle,
   Users,
   Megaphone,
+  Loader2,
+  FileText,
 } from 'lucide-react'
 import * as driveApi from '../api/drive.api.js'
 import * as roundApi from '../api/round.api.js'
 import * as infoSessionApi from '../api/infoSession.api.js'
+import * as applicationApi from '../api/application.api.js'
 import Button from '../components/ui/Button.jsx'
 import Card from '../components/ui/Card.jsx'
 import Badge from '../components/ui/Badge.jsx'
@@ -92,6 +95,12 @@ export default function DriveDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Apply functionality state
+  const [applyLoading, setApplyLoading] = useState(false)
+  const [applyError, setApplyError] = useState(null)
+  const [applySuccess, setApplySuccess] = useState(false)
+  const [selectedResumeLabel, setSelectedResumeLabel] = useState('')
+
   useEffect(() => {
     const fetchDriveDetails = async () => {
       setLoading(true)
@@ -105,6 +114,14 @@ export default function DriveDetailPage() {
         setDrive(driveRes.drive)
         setRounds(roundsRes.rounds ?? [])
         setInfoSessions(infoSessionsRes.infoSessions ?? [])
+
+        // Set default resume label if available
+        if (driveRes.drive?.studentResumes?.length > 0) {
+          const defaultResume = driveRes.drive.studentResumes.find((r) => r.isDefault)
+          setSelectedResumeLabel(
+            defaultResume?.label || driveRes.drive.studentResumes[0]?.label || ''
+          )
+        }
       } catch (err) {
         if (err.status === 404) {
           setError('Drive not found')
@@ -122,6 +139,35 @@ export default function DriveDetailPage() {
   const isEligible = drive?.eligibility?.eligible === true
   const eligibilityReasons = drive?.eligibility?.reasonMessages ?? []
   const registrationOpen = drive?.status === 'registration_open'
+  const studentResumes = drive?.studentResumes ?? []
+
+  const handleApply = async () => {
+    if (!selectedResumeLabel) {
+      setApplyError('Please select a resume version')
+      return
+    }
+
+    setApplyLoading(true)
+    setApplyError(null)
+    setApplySuccess(false)
+
+    try {
+      await applicationApi.createApplication({
+        driveId: id,
+        resumeLabel: selectedResumeLabel,
+      })
+      setApplySuccess(true)
+      // Refresh drive data to update eligibility/application status
+      const driveRes = await driveApi.getDriveByIdForStudent(id)
+      setDrive(driveRes.drive)
+    } catch (err) {
+      setApplyError(
+        err.details?.reasonMessages?.join(', ') || err.message || 'Failed to submit application'
+      )
+    } finally {
+      setApplyLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -553,10 +599,10 @@ export default function DriveDetailPage() {
 
       {/* Apply Action */}
       <Card>
-        <div className="p-6 text-center">
+        <div className="p-6">
           <h2 className="font-heading text-lg font-semibold text-ink-900 mb-4">Ready to Apply?</h2>
           {drive.eligibility?.eligible === null ? (
-            <div className="space-y-3">
+            <div className="space-y-3 text-center">
               <p className="font-body text-ink-600">
                 Please complete your profile to check eligibility.
               </p>
@@ -565,14 +611,14 @@ export default function DriveDetailPage() {
               </Button>
             </div>
           ) : !isEligible ? (
-            <div className="space-y-3">
+            <div className="space-y-3 text-center">
               <p className="font-body text-ink-600">You are not eligible for this drive.</p>
               <p className="font-body text-sm text-ink-500">
                 Please review the eligibility criteria above.
               </p>
             </div>
           ) : !registrationOpen ? (
-            <div className="space-y-3">
+            <div className="space-y-3 text-center">
               <Badge tone="warning" size="lg" className="mb-2">
                 Registrations Not Open
               </Badge>
@@ -584,27 +630,121 @@ export default function DriveDetailPage() {
                 Current status: {drive.status.replace('_', ' ')}
               </p>
             </div>
+          ) : applySuccess ? (
+            <div className="space-y-3 text-center">
+              <CheckCircle className="w-12 h-12 text-success mx-auto mb-2" />
+              <h3 className="font-heading text-lg font-semibold text-success">
+                Application Submitted Successfully!
+              </h3>
+              <p className="font-body text-ink-600">
+                Your application has been submitted for this drive.
+              </p>
+              <Button variant="primary" onClick={() => navigate('/applications/my')}>
+                View My Applications
+              </Button>
+            </div>
           ) : (
-            <div className="space-y-3">
-              <p className="font-body text-ink-600">You are eligible to apply for this drive.</p>
+            <div className="space-y-4">
+              <p className="font-body text-ink-600 text-center">
+                You are eligible to apply for this drive.
+              </p>
+
+              {studentResumes.length > 0 && (
+                <div className="space-y-3">
+                  <label className="font-body text-sm font-medium text-ink-900 block">
+                    Select Resume Version *
+                  </label>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {studentResumes.map((resume) => (
+                      <label
+                        key={resume.label}
+                        className={`relative cursor-pointer border-2 rounded-lg p-3 transition-colors ${
+                          selectedResumeLabel === resume.label
+                            ? 'border-primary-700 bg-primary-50'
+                            : 'border-border hover:border-primary-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="resumeVersion"
+                          value={resume.label}
+                          checked={selectedResumeLabel === resume.label}
+                          onChange={() => setSelectedResumeLabel(resume.label)}
+                          className="sr-only"
+                        />
+                        <div className="flex items-center gap-3">
+                          <FileText className="w-5 h-5 text-primary-700" />
+                          <div className="flex-1 text-left min-w-0">
+                            <p className="font-body text-sm font-medium text-ink-900 truncate">
+                              {resume.label}
+                            </p>
+                            <p className="font-body text-xs text-ink-500">
+                              {resume.originalFilename} · {formatFileSize(resume.fileSize)}
+                            </p>
+                            {resume.isDefault && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-700">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          {selectedResumeLabel === resume.label && (
+                            <CheckCircle className="w-5 h-5 text-primary-700" />
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {applyError && (
+                    <p className="font-body text-sm text-danger" role="alert">
+                      {applyError}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <Button
                 variant="primary"
                 size="lg"
                 fullWidth
-                onClick={() => {
-                  // Placeholder for Phase 35 - Apply action
-                  alert('Apply functionality will be implemented in Phase 35')
-                }}
+                onClick={handleApply}
+                disabled={applyLoading || studentResumes.length === 0 || !selectedResumeLabel}
+                aria-busy={applyLoading}
               >
-                Apply Now
+                {applyLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Apply Now'
+                )}
               </Button>
-              <p className="font-body text-xs text-ink-500">
-                Apply action will be fully implemented in Phase 35
-              </p>
+
+              {studentResumes.length === 0 && (
+                <p className="font-body text-xs text-ink-500 text-center">
+                  No resume versions found. Please upload a resume in your profile first.
+                </p>
+              )}
+
+              {applyError && !applyLoading && (
+                <div className="p-3 bg-danger bg-opacity-5 rounded-lg border border-danger/20">
+                  <p className="font-body text-sm text-danger" role="alert">
+                    {applyError}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
       </Card>
     </div>
   )
+}
+
+// Helper to format file size
+function formatFileSize(bytes) {
+  if (!bytes) return 'Unknown size'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }

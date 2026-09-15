@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-13 — Phase 34 (Application Schema & Apply Endpoint) complete |
+| **Last Updated** | 2026-09-13 — Phase 35 (Apply Button & Application State) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M6 — Application Workflow |
-| **Current Phase** | Phase 35 — Apply Button & Application State (Not Started; next up) |
-| **Phases Complete** | 34 / 67 |
-| **Overall Completion** | ~51% |
+| **Current Phase** | Phase 36 — My Applications Page (Not Started; next up) |
+| **Phases Complete** | 35 / 67 |
+| **Overall Completion** | ~52% |
 | **Blockers** | None |
 
 ---
@@ -95,7 +95,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 34 | Application Schema & Apply Endpoint | Complete | 2026-09-13 | Application schema (DR-07) with unique student+drive constraint; POST /applications runs eligibility engine before insert; rejects ineligible students with NOT_ELIGIBLE code and details; withdraw, round status updates, bulk CSV shortlist. 38 integration tests pass. Lint/format clean. |
-| 35 | Apply Button & Application State | Not Started | — | — |
+| 35 | Apply Button & Application State | Complete | 2026-09-13 | Resume version selector on drive detail page; Apply action wired to POST /applications; success/error states with toast notifications; applyLoading state disables button; eligibility checks enforced server-side. Client lint/format clean, build successful. |
 | 36 | My Applications Page | Not Started | — | — |
 | 37 | Withdraw Application Feature | Not Started | — | — |
 | 38 | Admin Applicants List API | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 34 complete; **Milestone 6 (Application Workflow) Phase 34 done**. Phase 35 (Apply Button & Application State, M6) is next.
-**File(s) touched in Phase 34:** _New_ — `server/src/models/Application.model.js`, `server/src/services/application.service.js`, `server/src/controllers/application.controller.js`, `server/src/routes/application.routes.js`, `server/src/routes/application.routes.test.js`. _Modified_ — `server/src/app.js` (application routes registration), `server/src/utils/api-error.js` (added details support), `server/src/middleware/error-handler.js` (include details in response).
-**Next action:** Begin Phase 35 — Apply Button & Application State (M6). Traces to **FR-APP-01**. Key tasks: Resume-version selector; Apply action wired to Phase 34's endpoint; success/error states.
+**Active phase:** None active — Phase 35 complete; **Milestone 6 (Application Workflow) Phase 35 done**. Phase 36 (My Applications Page, M6) is next.
+**File(s) touched in Phase 35:** _New_ — `client/src/api/application.api.js`. _Modified_ — `client/src/pages/DriveDetailPage.jsx` (added resume version selector, applyLoading/applyError/applySuccess states, handleApply function, success toast with redirect to My Applications).
+**Next action:** Begin Phase 36 — My Applications Page (M6). Traces to **FR-APP-03**. Key tasks: List view of student's applications with overall status and per-round status; cache invalidation for real-time updates.
 
 ---
 
