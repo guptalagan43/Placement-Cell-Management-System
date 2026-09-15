@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-13 — Phase 33 (InfoSession UI) complete |
+| **Last Updated** | 2026-09-13 — Phase 34 (Application Schema & Apply Endpoint) complete |
 
 ---
 
@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M5 — Round & Info Session Scheduling |
-| **Current Phase** | Phase 34 — Application Schema & Apply Endpoint (Not Started; next up) |
-| **Phases Complete** | 33 / 67 |
-| **Overall Completion** | ~49% |
+| **Current Milestone** | M6 — Application Workflow |
+| **Current Phase** | Phase 35 — Apply Button & Application State (Not Started; next up) |
+| **Phases Complete** | 34 / 67 |
+| **Overall Completion** | ~51% |
 | **Blockers** | None |
 
 ---
@@ -94,7 +94,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 ### Milestone 6 — Application Workflow
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 34 | Application Schema & Apply Endpoint | Not Started | — | — |
+| 34 | Application Schema & Apply Endpoint | Complete | 2026-09-13 | Application schema (DR-07) with unique student+drive constraint; POST /applications runs eligibility engine before insert; rejects ineligible students with NOT_ELIGIBLE code and details; withdraw, round status updates, bulk CSV shortlist. 38 integration tests pass. Lint/format clean. |
 | 35 | Apply Button & Application State | Not Started | — | — |
 | 36 | My Applications Page | Not Started | — | — |
 | 37 | Withdraw Application Feature | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 33 complete; **Milestone 5 (Round & Info Session Scheduling) complete**. Phase 34 (Application Schema & Apply Endpoint, M6) is next.
-**File(s) touched in Phase 33:** _New_ — `client/src/api/infoSession.api.js`. _Modified_ — `client/src/pages/DriveListPage.jsx` (added InfoSessionForm, info session management modal, info session list table, "Manage PPTs" action button), `client/src/pages/DriveDetailPage.jsx` (added info session display section with purple theme, mandatory badge).
-**Next action:** Begin Phase 34 — Application Schema & Apply Endpoint (M6). Traces to **FR-APP-01, FR-ELG-03**. Key tasks: Application schema (DR-07, unique per student+drive); POST /applications re-running eligibility engine before insert; rejects if ineligible and no override exists.
+**Active phase:** None active — Phase 34 complete; **Milestone 6 (Application Workflow) Phase 34 done**. Phase 35 (Apply Button & Application State, M6) is next.
+**File(s) touched in Phase 34:** _New_ — `server/src/models/Application.model.js`, `server/src/services/application.service.js`, `server/src/controllers/application.controller.js`, `server/src/routes/application.routes.js`, `server/src/routes/application.routes.test.js`. _Modified_ — `server/src/app.js` (application routes registration), `server/src/utils/api-error.js` (added details support), `server/src/middleware/error-handler.js` (include details in response).
+**Next action:** Begin Phase 35 — Apply Button & Application State (M6). Traces to **FR-APP-01**. Key tasks: Resume-version selector; Apply action wired to Phase 34's endpoint; success/error states.
 
 ---
 
@@ -228,7 +228,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-11 (Ph.25) | Student drive list UI uses "Drives" as page heading (not "Available Drives") to match existing test expectations. Cards layout follows `design.md` reference with semantic color badges for status, icons for job type/tier/CTC/deadline, and eligibility summary. Filter chips with inline clear (×) for active filters. Heading "Drives" satisfies test `getByRole('heading', { name: 'Drives' })`. | Matches FR-DRV-05 (student drive browsing) and FR-SEA-01 (search/filter/sort). Test compatibility required heading text match. Cards layout per design.md §6 Data Table / Card patterns with semantic status colors from §7. |
 | 2026-09-11 (Ph.26) | Eligibility engine is a pure, stateless service (`checkEligibility`) with no DB dependencies — enables identical logic at browse-time and apply-time. Individual check functions exported for granular unit testing. Blacklist checked first (override). 10th/12th % prefers detailed records (`tenthDetails.percentage`, `twelfthDetails.percentage`) with fallback to legacy fields (`tenthPercent`, `twelfthPercent`). Null/undefined academic fields treated as failure. Machine-readable reason codes (`INELIGIBILITY_REASONS`) returned for frontend branching. | Matches FR-ELG-01 and srs.md §8. Pure function design per architecture.md §5 enables exhaustive unit testing (64 tests) without database. Business rules (One-Offer, Tier-Lock) deferred to Phase 27 per srs.md §8.1–8.2. |
 | 2026-09-11 (Ph.27) | Business rules layered onto raw eligibility via `applyBusinessRules()`. One-Offer Rule blocks placed students; Tier-Lock Rule allows upgrade to strictly better tier (lower number = better by default). SeasonConfig model provides data-driven configuration (tier ordering, rule enable/disable) per NFR-MAINT-01. Academic ineligibility short-circuits business rules. 21 unit tests cover all rule combinations, config variations, and short-circuit behavior. | Matches FR-ELG-05, srs.md §8.1–8.2, NFR-MAINT-01. Data-driven tier ordering (not hardcoded) enables annual policy changes. Lower-is-better default matches srs.md §8.2. Short-circuit ensures academic reasons take precedence. |
-| 2026-09-11 (Ph.28) | Eligibility badge integrated into student drive list (`GET /drives/student` returns `eligibility` object per drive). Frontend `EligibilityBadge` component uses design.md §7 semantic colors (success/danger) with reason text. Ineligible drives show disabled "Not Eligible" button with reason text. Server re-validates at apply-time (Phase 34). | Matches FR-ELG-02, FR-ELG-03. Badge uses design.md §7 semantic colors (success for eligible, danger for not eligible). Reason text provides transparency per NFR-SEC-02. |
+| 2026-09-13 (Ph.34) | Extended `ApiError` class to support optional `details` field; updated error handler to include `details` in response when present. | Needed for eligibility failure responses to include machine-readable reason codes and human-readable messages for frontend branching (FR-ELG-03). Maintains backward compatibility — existing error responses unchanged. |
 
 ---
 

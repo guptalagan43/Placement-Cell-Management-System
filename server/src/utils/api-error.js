@@ -2,11 +2,12 @@
 // so the centralized error handler can emit the { success, message, code }
 // contract defined in rules.md §6.
 export class ApiError extends Error {
-  constructor(statusCode, message, code = 'ERROR') {
+  constructor(statusCode, message, code = 'ERROR', details) {
     super(message)
     this.name = 'ApiError'
     this.statusCode = statusCode
     this.code = code
+    this.details = details
     this.isOperational = true
   }
 }
