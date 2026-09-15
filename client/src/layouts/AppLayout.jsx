@@ -7,6 +7,7 @@ import Button from '../components/ui/Button.jsx'
 const navItems = [
   { to: '/', label: 'Home', end: true },
   { to: '/drives', label: 'Drives' },
+  { to: '/applications/my', label: 'My Applications' },
   { to: '/about', label: 'About' },
   { to: '/preview', label: 'Components' },
 ]
