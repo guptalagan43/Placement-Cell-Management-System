@@ -628,7 +628,7 @@ describe('Application API', () => {
 
     it('returns applications for coordinator in same department', async () => {
       const res = await request(app)
-        .get(`/applications/drives/${drive._id}/applications`)
+        .get(`/drives/${drive._id}/applications`)
         .set('Authorization', `Bearer ${coordinatorToken}`)
 
       expect(res.status).toBe(200)
@@ -639,7 +639,7 @@ describe('Application API', () => {
 
     it('returns applications for TPO', async () => {
       const res = await request(app)
-        .get(`/applications/drives/${drive._id}/applications`)
+        .get(`/drives/${drive._id}/applications`)
         .set('Authorization', `Bearer ${tpoToken}`)
 
       expect(res.status).toBe(200)
@@ -648,7 +648,7 @@ describe('Application API', () => {
 
     it('rejects coordinator from different department', async () => {
       const res = await request(app)
-        .get(`/applications/drives/${drive._id}/applications`)
+        .get(`/drives/${drive._id}/applications`)
         .set('Authorization', `Bearer ${coordinatorToken2}`)
 
       expect(res.status).toBe(404)
@@ -657,7 +657,7 @@ describe('Application API', () => {
 
     it('rejects student access', async () => {
       const res = await request(app)
-        .get(`/applications/drives/${drive._id}/applications`)
+        .get(`/drives/${drive._id}/applications`)
         .set('Authorization', `Bearer ${studentToken}`)
 
       expect(res.status).toBe(403)
@@ -666,7 +666,7 @@ describe('Application API', () => {
 
     it('filters by status', async () => {
       const res = await request(app)
-        .get(`/applications/drives/${drive._id}/applications?status=shortlisted`)
+        .get(`/drives/${drive._id}/applications?status=shortlisted`)
         .set('Authorization', `Bearer ${coordinatorToken}`)
 
       expect(res.status).toBe(200)
@@ -676,7 +676,7 @@ describe('Application API', () => {
 
     it('filters by round', async () => {
       const res = await request(app)
-        .get(`/applications/drives/${drive._id}/applications?round=${round1._id}`)
+        .get(`/drives/${drive._id}/applications?round=${round1._id}`)
         .set('Authorization', `Bearer ${coordinatorToken}`)
 
       expect(res.status).toBe(200)
@@ -833,7 +833,7 @@ describe('Application API', () => {
 
     it('bulk updates round statuses via roll numbers', async () => {
       const res = await request(app)
-        .post(`/applications/drives/${drive._id}/applications/bulk-update`)
+        .post(`/drives/${drive._id}/applications/bulk-update`)
         .set('Authorization', `Bearer ${coordinatorToken}`)
         .send({
           roundId: round1._id.toString(),
@@ -851,7 +851,7 @@ describe('Application API', () => {
 
     it('reports errors for non-existent roll numbers', async () => {
       const res = await request(app)
-        .post(`/applications/drives/${drive._id}/applications/bulk-update`)
+        .post(`/drives/${drive._id}/applications/bulk-update`)
         .set('Authorization', `Bearer ${coordinatorToken}`)
         .send({
           roundId: round1._id.toString(),
@@ -894,7 +894,7 @@ describe('Application API', () => {
       })
 
       const res = await request(app)
-        .post(`/applications/drives/${drive._id}/applications/bulk-update`)
+        .post(`/drives/${drive._id}/applications/bulk-update`)
         .set('Authorization', `Bearer ${coordinatorToken}`)
         .send({
           roundId: round1._id.toString(),
@@ -909,7 +909,7 @@ describe('Application API', () => {
 
     it('rejects student access', async () => {
       const res = await request(app)
-        .post(`/applications/drives/${drive._id}/applications/bulk-update`)
+        .post(`/drives/${drive._id}/applications/bulk-update`)
         .set('Authorization', `Bearer ${studentToken}`)
         .send({
           roundId: round1._id.toString(),
