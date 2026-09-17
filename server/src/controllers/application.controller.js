@@ -56,6 +56,7 @@ const driveApplicationsQuerySchema = z.object({
         'offer_declined',
       ])
       .optional(),
+    includeWithdrawn: z.coerce.boolean().default(false),
   }),
   params: z.object({
     driveId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid drive ID'),

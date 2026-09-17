@@ -192,13 +192,18 @@ export async function getDriveApplications(driveId, queryParams, user) {
     sortOrder = 'desc',
     round,
     status,
+    includeWithdrawn = false,
   } = queryParams
 
   // Verify user has access to this drive (department scoping)
   const _drive = await getDriveAndValidateAccess(driveId, user)
 
   const filter = { drive: driveId }
-  if (status) filter.overallStatus = status
+  if (status) {
+    filter.overallStatus = status
+  } else if (!includeWithdrawn) {
+    filter.overallStatus = { $ne: 'withdrawn' }
+  }
   if (round) {
     filter['roundStatuses.round'] = round
   }

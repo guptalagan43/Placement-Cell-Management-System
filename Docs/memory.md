@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M6 — Application Workflow |
-| **Current Phase** | Phase 37 — Withdraw Application Feature (Not Started; next up) |
-| **Phases Complete** | 36 / 67 |
-| **Overall Completion** | ~54% |
+| **Current Phase** | Phase 38 — Admin Applicants List API (Not Started; next up) |
+| **Phases Complete** | 37 / 67 |
+| **Overall Completion** | ~55% |
 | **Blockers** | None |
 
 ---
@@ -97,7 +97,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 34 | Application Schema & Apply Endpoint | Complete | 2026-09-13 | Application schema (DR-07) with unique student+drive constraint; POST /applications runs eligibility engine before insert; rejects ineligible students with NOT_ELIGIBLE code and details; withdraw, round status updates, bulk CSV shortlist. 38 integration tests pass. Lint/format clean. |
 | 35 | Apply Button & Application State | Complete | 2026-09-13 | Resume version selector on drive detail page; Apply action wired to POST /applications; success/error states with toast notifications; applyLoading state disables button; eligibility checks enforced server-side. Client lint/format clean, build successful. |
 | 36 | My Applications Page | Complete | 2026-09-13 | Student-facing page at `/applications/my` with paginated table showing drive, company, job type, CTC, applied date, overall status, per-round status badges; status filter; withdraw action with confirmation modal (deadline-checked). Client lint/format clean, build successful. |
-| 37 | Withdraw Application Feature | Not Started | — | — |
+| 37 | Withdraw Application Feature | Complete | 2026-09-17 | Backend POST /applications/:id/withdraw with deadline check already existed; added default exclusion of withdrawn apps from admin drive-applications list (includeWithdrawn query param). Frontend MyApplicationsPage already had withdraw modal and action. Lint/format clean. |
 | 38 | Admin Applicants List API | Not Started | — | — |
 | 39 | Admin Applicants Table UI + Status Update | Not Started | — | — |
 | 40 | Bulk CSV Shortlist Upload | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 36 complete; **Milestone 6 (Application Workflow) Phase 36 done**. Phase 37 (Withdraw Application Feature, M6) is next.
-**File(s) touched in Phase 36:** _New_ — `client/src/pages/MyApplicationsPage.jsx`. _Modified_ — `client/src/App.jsx` (added route), `client/src/layouts/AppLayout.jsx` (added "My Applications" nav link), `client/src/api/application.api.js` (existing).
-**Next action:** Begin Phase 37 — Withdraw Application Feature (M6). Traces to **FR-APP-02**. Key tasks: POST /applications/:id/withdraw (deadline-checked server-side); confirmation modal in the UI.
+**Active phase:** None active — Phase 37 complete; **Milestone 6 (Application Workflow) Phase 37 done**. Phase 38 (Admin Applicants List API, M6) is next.
+**File(s) touched in Phase 37:** _Modified_ — `server/src/services/application.service.js` (added includeWithdrawn default filter), `server/src/controllers/application.controller.js` (added includeWithdrawn query validation).
+**Next action:** Begin Phase 38 — Admin Applicants List API (M6). Traces to **FR-APP-06, FR-SEA-01**. Key tasks: `GET /drives/:id/applications` with round and status filters, department-scoped.
 
 ---
 
