@@ -160,7 +160,11 @@ export async function getStudentApplications(studentId, queryParams) {
 
   const [applications, total] = await Promise.all([
     Application.find(filter)
-      .populate('drive', 'title company status jobType compensation tier registrationDeadline')
+      .populate({
+        path: 'drive',
+        select: 'title company status jobType compensation tier registrationDeadline',
+        populate: { path: 'company', select: 'name sector' },
+      })
       .sort(sort)
       .skip(skip)
       .limit(limitNum)

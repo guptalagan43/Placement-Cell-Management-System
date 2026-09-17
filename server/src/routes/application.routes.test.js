@@ -482,6 +482,34 @@ describe('Application API', () => {
       expect(res.body.application.drive).toHaveProperty('title')
       expect(res.body.application.drive).toHaveProperty('eligibilityCriteria')
     })
+
+    it('returns 404 for other student (not owner)', async () => {
+      const res = await request(app)
+        .get(`/applications/student/${application._id}`)
+        .set('Authorization', `Bearer ${studentToken2}`)
+
+      expect(res.status).toBe(404)
+      expect(res.body.code).toBe('APPLICATION_NOT_FOUND')
+    })
+
+    it('returns 404 for non-existent application', async () => {
+      const fakeId = new mongoose.Types.ObjectId()
+      const res = await request(app)
+        .get(`/applications/student/${fakeId}`)
+        .set('Authorization', `Bearer ${studentToken}`)
+
+      expect(res.status).toBe(404)
+      expect(res.body.code).toBe('APPLICATION_NOT_FOUND')
+    })
+
+    it('rejects coordinator access', async () => {
+      const res = await request(app)
+        .get(`/applications/student/${application._id}`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+
+      expect(res.status).toBe(403)
+      expect(res.body.code).toBe('FORBIDDEN')
+    })
   })
 
   describe('POST /applications/:applicationId/withdraw (withdraw application)', () => {

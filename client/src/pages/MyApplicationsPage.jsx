@@ -2,26 +2,11 @@
 // Traces to FR-APP-03.
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Briefcase,
-  DollarSign,
-  Calendar,
-  Target,
-  Building2,
-  ArrowLeft,
-  Filter,
-  ChevronRight,
-  X,
-  Loader2,
-  Download,
-  AlertTriangle,
-} from 'lucide-react'
+import { Briefcase, Filter, X, Loader2, AlertTriangle } from 'lucide-react'
 import * as applicationApi from '../api/application.api.js'
 import Button from '../components/ui/Button.jsx'
-import Input from '../components/ui/Input.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import Card from '../components/ui/Card.jsx'
-import EligibilityBadge from '../components/ui/EligibilityBadge.jsx'
 
 const STATUS_LABELS = {
   applied: 'Applied',
@@ -87,26 +72,13 @@ export default function MyApplicationsPage() {
   const [withdrawingApp, setWithdrawingApp] = useState(null)
   const [withdrawLoading, setWithdrawLoading] = useState(false)
   const [withdrawError, setWithdrawError] = useState(null)
-  const fetchApplications = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const params = {
-        page: pagination.page,
-        limit: pagination.limit,
-        sortBy: sort.sortBy,
-        sortOrder: sort.sortOrder,
-        ...filters,
-      }
-      const res = await applicationApi.getMyApplications(params)
-      setApplications(res.applications)
-      setPagination(res.pagination)
-    } catch (err) {
-      setError(err.message || 'Failed to fetch applications')
-    } finally {
-      setLoading(false)
-    }
-  }, [pagination.page, pagination.limit, sort, filters])
+
+  // Ref-stable fetch trigger: bump to re-run the effect after withdraw
+  const [fetchTrigger, setFetchTrigger] = useState(0)
+
+  const fetchApplications = useCallback(() => {
+    setFetchTrigger((n) => n + 1)
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -140,7 +112,7 @@ export default function MyApplicationsPage() {
     return () => {
       mounted = false
     }
-  }, [pagination.page, pagination.limit, sort, filters])
+  }, [pagination.page, pagination.limit, sort, filters, fetchTrigger])
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }))
@@ -194,8 +166,10 @@ export default function MyApplicationsPage() {
       'offer_accepted',
       'offer_declined',
     ]
+    const withdrawableStatuses = ['registration_open', 'published']
     return (
-      app.drive?.status === 'registration_open' && !terminalStatuses.includes(app.overallStatus)
+      withdrawableStatuses.includes(app.drive?.status) &&
+      !terminalStatuses.includes(app.overallStatus)
     )
   }
 

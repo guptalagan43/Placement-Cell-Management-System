@@ -1,6 +1,8 @@
 // Application controller: handles application routes with validation.
 import { z } from 'zod'
 import { asyncHandler } from '../utils/async-handler.js'
+import { ApiError } from '../utils/api-error.js'
+import StudentProfile from '../models/StudentProfile.model.js'
 import * as applicationSvc from '../services/application.service.js'
 
 // Validation schemas
@@ -99,14 +101,9 @@ export const createApplication = [
     const { body } = createApplicationSchema.parse({ body: req.body })
 
     // Find student profile for the current user
-    const StudentProfile = (await import('../models/StudentProfile.model.js')).default
     const studentProfile = await StudentProfile.findOne({ user: req.user._id }).lean()
     if (!studentProfile) {
-      throw new (await import('../utils/api-error.js')).ApiError(
-        404,
-        'Student profile not found',
-        'STUDENT_PROFILE_NOT_FOUND'
-      )
+      throw new ApiError(404, 'Student profile not found', 'STUDENT_PROFILE_NOT_FOUND')
     }
 
     const application = await applicationSvc.createApplication(
@@ -124,14 +121,9 @@ export const getMyApplications = [
   asyncHandler(async (req, res) => {
     const { query } = getApplicationsQuerySchema.parse({ query: req.query })
 
-    const StudentProfile = (await import('../models/StudentProfile.model.js')).default
     const studentProfile = await StudentProfile.findOne({ user: req.user._id }).lean()
     if (!studentProfile) {
-      throw new (await import('../utils/api-error.js')).ApiError(
-        404,
-        'Student profile not found',
-        'STUDENT_PROFILE_NOT_FOUND'
-      )
+      throw new ApiError(404, 'Student profile not found', 'STUDENT_PROFILE_NOT_FOUND')
     }
 
     const result = await applicationSvc.getStudentApplications(studentProfile._id.toString(), query)
