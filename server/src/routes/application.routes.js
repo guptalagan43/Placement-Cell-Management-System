@@ -1,6 +1,6 @@
 // Application routes: CRUD for applications.
 // Student can apply, view own applications, withdraw.
-// Coordinator/TPO can view drive applications, update round statuses, bulk update.
+// Coordinator/TPO can update round statuses.
 import { Router } from 'express'
 import { authenticate } from '../middleware/auth.middleware.js'
 import {
@@ -14,10 +14,8 @@ import {
   getMyApplications,
   getApplicationById,
   getApplicationForStudent,
-  getDriveApplications,
   updateRoundStatus,
   withdrawApplication,
-  bulkUpdateRoundStatus,
 } from '../controllers/application.controller.js'
 
 const router = Router()
@@ -33,29 +31,13 @@ router.get('/:applicationId', authenticate, requireAnyRole, getApplicationById)
 
 router.post('/:applicationId/withdraw', authenticate, requireStudent, withdrawApplication)
 
-// Coordinator/TPO routes (department scoped)
-router.get(
-  '/drives/:driveId/applications',
-  authenticate,
-  requireCoordinatorOrTPO,
-  departmentScope,
-  getDriveApplications
-)
-
+// Coordinator/TPO routes (department scoped) - note: GET /drives/:driveId/applications and bulk-update are in drive.routes.js
 router.put(
   '/:applicationId/round-status',
   authenticate,
   requireCoordinatorOrTPO,
   departmentScope,
   updateRoundStatus
-)
-
-router.post(
-  '/drives/:driveId/applications/bulk-update',
-  authenticate,
-  requireCoordinatorOrTPO,
-  departmentScope,
-  bulkUpdateRoundStatus
 )
 
 export default router

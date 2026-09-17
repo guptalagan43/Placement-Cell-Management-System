@@ -1,4 +1,4 @@
-// Drive routes: CRUD for drives.
+// Drive routes: CRUD for drives and drive-scoped resources.
 // Coordinator/TPO can write (with department scoping); all authenticated users can read.
 import { Router } from 'express'
 import { authenticate } from '../middleware/auth.middleware.js'
@@ -16,6 +16,10 @@ import {
   updateDriveStatus,
   cloneDrive,
 } from '../controllers/drive.controller.js'
+import {
+  getDriveApplications,
+  bulkUpdateRoundStatus,
+} from '../controllers/application.controller.js'
 
 const router = Router()
 
@@ -43,5 +47,23 @@ router.patch(
 
 // Clone drive
 router.post('/:id/clone', authenticate, requireCoordinatorOrTPO, departmentScope, cloneDrive)
+
+// Coordinator/TPO: Get applications for a drive (department-scoped)
+router.get(
+  '/:driveId/applications',
+  authenticate,
+  requireCoordinatorOrTPO,
+  departmentScope,
+  getDriveApplications
+)
+
+// Coordinator/TPO: Bulk update round statuses via CSV
+router.post(
+  '/:driveId/applications/bulk-update',
+  authenticate,
+  requireCoordinatorOrTPO,
+  departmentScope,
+  bulkUpdateRoundStatus
+)
 
 export default router

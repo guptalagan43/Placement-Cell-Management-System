@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-13 — Phase 36 (My Applications Page) complete |
+| **Last Updated** | 2026-09-17 — Phase 38 (Admin Applicants List API) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M6 — Application Workflow |
-| **Current Phase** | Phase 38 — Admin Applicants List API (Not Started; next up) |
-| **Phases Complete** | 37 / 67 |
-| **Overall Completion** | ~55% |
+| **Current Phase** | Phase 39 — Admin Applicants Table UI + Status Update (Not Started; next up) |
+| **Phases Complete** | 38 / 67 |
+| **Overall Completion** | ~57% |
 | **Blockers** | None |
 
 ---
@@ -98,7 +98,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 35 | Apply Button & Application State | Complete | 2026-09-13 | Resume version selector on drive detail page; Apply action wired to POST /applications; success/error states with toast notifications; applyLoading state disables button; eligibility checks enforced server-side. Client lint/format clean, build successful. |
 | 36 | My Applications Page | Complete | 2026-09-13 | Student-facing page at `/applications/my` with paginated table showing drive, company, job type, CTC, applied date, overall status, per-round status badges; status filter; withdraw action with confirmation modal (deadline-checked). Client lint/format clean, build successful. |
 | 37 | Withdraw Application Feature | Complete | 2026-09-17 | Backend POST /applications/:id/withdraw with deadline check already existed; added default exclusion of withdrawn apps from admin drive-applications list (includeWithdrawn query param). Frontend MyApplicationsPage already had withdraw modal and action. Lint/format clean. |
-| 38 | Admin Applicants List API | Not Started | — | — |
+| 38 | Admin Applicants List API | Complete | 2026-09-17 | `GET /drives/:driveId/applications` with pagination, sorting, round/status filters, department-scoped; moved from `/applications/drives/:driveId/applications` to `/drives/:driveId/applications` per phase spec; bulk-update endpoint also moved. 41 integration tests pass. Lint/format clean. |
 | 39 | Admin Applicants Table UI + Status Update | Not Started | — | — |
 | 40 | Bulk CSV Shortlist Upload | Not Started | — | — |
 
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 37 complete; **Milestone 6 (Application Workflow) Phase 37 done**. Phase 38 (Admin Applicants List API, M6) is next.
-**File(s) touched in Phase 37:** _Modified_ — `server/src/services/application.service.js` (added includeWithdrawn default filter), `server/src/controllers/application.controller.js` (added includeWithdrawn query validation).
-**Next action:** Begin Phase 38 — Admin Applicants List API (M6). Traces to **FR-APP-06, FR-SEA-01**. Key tasks: `GET /drives/:id/applications` with round and status filters, department-scoped.
+**Active phase:** None active — Phase 38 complete; **Milestone 6 (Application Workflow) Phase 38 done**. Phase 39 (Admin Applicants Table UI + Status Update, M6) is next.
+**File(s) touched in Phase 38:** _Modified_ — `server/src/routes/drive.routes.js` (added GET /:driveId/applications and POST /:driveId/applications/bulk-update), `server/src/routes/application.routes.js` (removed duplicate routes), `server/src/routes/application.routes.test.js` (updated endpoint paths). Tests: 41 integration tests pass.
+**Next action:** Begin Phase 39 — Admin Applicants Table UI + Status Update (M6). Traces to **FR-APP-04**. Key tasks: Applicant data table with per-row round-status update action.
 
 ---
 
