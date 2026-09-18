@@ -9,6 +9,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: false,
+    // MongoMemoryServer can take >10s on first use (binary extraction + mongod startup).
+    // 60s gives plenty of headroom without masking genuine hangs.
+    hookTimeout: 60000,
     pool: 'forks',
     poolOptions: {
       forks: {
