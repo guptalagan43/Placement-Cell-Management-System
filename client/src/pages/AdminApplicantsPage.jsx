@@ -1,8 +1,20 @@
 // Admin Applicants Page: Coordinator/TPO can view and update applicant round statuses for a drive.
-// Traces to FR-APP-04, FR-APP-06.
+// Traces to FR-APP-04, FR-APP-05, FR-APP-06.
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Search, Filter, X, Loader2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
+import {
+  Search,
+  Filter,
+  X,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Upload,
+  FileText,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react'
 import * as applicationApi from '../api/application.api.js'
 import * as driveApi from '../api/drive.api.js'
 import * as roundApi from '../api/round.api.js'
@@ -97,6 +109,14 @@ export default function AdminApplicantsPage() {
   const [success, setSuccess] = useState(null)
   const [updatingRow, setUpdatingRow] = useState(null)
 
+  // Bulk CSV upload state
+  const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false)
+  const [bulkUploadLoading, setBulkUploadLoading] = useState(false)
+  const [bulkUploadResult, setBulkUploadResult] = useState(null)
+  const [bulkUploadError, setBulkUploadError] = useState(null)
+  const [selectedRoundForBulk, setSelectedRoundForBulk] = useState('')
+  const [csvFile, setCsvFile] = useState(null)
+
   const fetchDrive = useCallback(async () => {
     setDriveLoading(true)
     try {
@@ -189,6 +209,82 @@ export default function AdminApplicantsPage() {
   const clearMessages = () => {
     setError(null)
     setSuccess(null)
+  }
+
+  const handleBulkUpload = async () => {
+    if (!csvFile || !selectedRoundForBulk) {
+      setBulkUploadError('Please select a CSV file and a round')
+      return
+    }
+
+    setBulkUploadLoading(true)
+    setBulkUploadError(null)
+    setBulkUploadResult(null)
+
+    try {
+      // Parse CSV file
+      const text = await csvFile.text()
+      const lines = text.trim().split('\n')
+      if (lines.length < 2) {
+        throw new Error('CSV must have at least a header row and one data row')
+      }
+
+      const headers = lines[0].split(',').map((h) => h.trim().toLowerCase())
+      const rollNumberIndex = headers.indexOf('rollnumber')
+      const statusIndex = headers.indexOf('status')
+
+      if (rollNumberIndex === -1 || statusIndex === -1) {
+        throw new Error('CSV must have "rollNumber" and "status" columns')
+      }
+
+      const updates = []
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map((c) => c.trim())
+        if (cols.length > Math.max(rollNumberIndex, statusIndex)) {
+          updates.push({
+            rollNumber: cols[rollNumberIndex],
+            status: cols[statusIndex],
+          })
+        }
+      }
+
+      if (updates.length === 0) {
+        throw new Error('No valid rows found in CSV')
+      }
+
+      const result = await applicationApi.bulkUpdateRoundStatus(
+        driveId,
+        selectedRoundForBulk,
+        updates
+      )
+      setBulkUploadResult(result)
+      // Refresh applications to reflect changes
+      fetchApplications()
+    } catch (err) {
+      setBulkUploadError(err.message || 'Failed to process bulk upload')
+    } finally {
+      setBulkUploadLoading(false)
+    }
+  }
+
+  const closeBulkUploadModal = () => {
+    setBulkUploadModalOpen(false)
+    setSelectedRoundForBulk('')
+    setCsvFile(null)
+    setBulkUploadResult(null)
+    setBulkUploadError(null)
+  }
+
+  const handleCsvFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+        setBulkUploadError('Please select a CSV file')
+        return
+      }
+      setCsvFile(file)
+      setBulkUploadError(null)
+    }
   }
 
   if (driveLoading) {
@@ -335,6 +431,14 @@ export default function AdminApplicantsPage() {
                   Clear Filters
                 </Button>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBulkUploadModalOpen(true)}
+                icon={<Upload className="w-4 h-4" />}
+              >
+                Bulk Upload CSV
+              </Button>
             </div>
           </div>
         </div>
@@ -474,6 +578,169 @@ export default function AdminApplicantsPage() {
           </>
         )}
       </Card>
+
+      {/* Bulk Upload CSV Modal */}
+      {bulkUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface rounded-xl shadow-raised w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="font-heading text-lg font-semibold text-ink-900">
+                Bulk Upload Round Status (CSV)
+              </h2>
+              <Button variant="ghost" size="icon" onClick={closeBulkUploadModal} aria-label="Close">
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="bg-primary-50 border border-primary-100 rounded-lg p-4">
+                <h3 className="font-body text-sm font-semibold text-ink-900 mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  CSV Format
+                </h3>
+                <p className="font-body text-sm text-ink-600 mb-2">
+                  CSV must have columns:{' '}
+                  <code className="bg-surface px-1.5 py-0.5 rounded text-primary-700">
+                    rollNumber,status
+                  </code>
+                </p>
+                <pre className="bg-surface/50 p-2 rounded text-xs font-mono text-ink-600 overflow-x-auto">
+                  {`rollNumber,status
+21CS001,shortlisted
+21CS002,shortlisted
+21CS003,cleared`}
+                </pre>
+                <p className="font-body text-xs text-ink-500 mt-2">
+                  Valid statuses: {ROUND_STATUS_OPTIONS.map((o) => o.value).join(', ')}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="font-body text-sm font-medium text-ink-900 block mb-2">
+                    Select Round *
+                  </label>
+                  <select
+                    value={selectedRoundForBulk}
+                    onChange={(e) => setSelectedRoundForBulk(e.target.value)}
+                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700"
+                    disabled={roundsLoading || rounds.length === 0}
+                  >
+                    <option value="">Select Round</option>
+                    {rounds.map((r) => (
+                      <option key={r._id} value={r._id}>
+                        Round {r.roundNumber}: {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-body text-sm font-medium text-ink-900 block mb-2">
+                    CSV File *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCsvFileChange}
+                      disabled={bulkUploadLoading}
+                      className="sr-only"
+                      id="csv-upload"
+                    />
+                    <label
+                      htmlFor="csv-upload"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition-colors"
+                    >
+                      <Upload className="w-8 h-8 text-ink-400 mb-2" />
+                      <span className="font-body text-sm text-ink-600">
+                        {csvFile ? csvFile.name : 'Drag & drop or click to select a CSV file'}
+                      </span>
+                      <span className="font-body text-xs text-ink-400">
+                        Max 100 rows recommended
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {bulkUploadError && (
+                <div
+                  className="bg-danger bg-opacity-10 border border-danger text-danger rounded-lg p-3"
+                  role="alert"
+                >
+                  <span className="font-body text-sm">{bulkUploadError}</span>
+                </div>
+              )}
+
+              {bulkUploadResult && (
+                <div className="bg-surface border border-border rounded-lg p-4">
+                  <h4 className="font-body text-sm font-semibold text-ink-900 mb-3">
+                    Upload Results
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between font-body text-sm">
+                      <span className="text-ink-600">Total rows processed:</span>
+                      <span className="font-medium text-ink-900">
+                        {bulkUploadResult.updated + bulkUploadResult.errors.length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-body text-sm text-success">
+                      <span>Successfully updated:</span>
+                      <span className="font-medium">{bulkUploadResult.updated}</span>
+                    </div>
+                    <div className="flex justify-between font-body text-sm text-danger">
+                      <span>Errors:</span>
+                      <span className="font-medium">{bulkUploadResult.errors.length}</span>
+                    </div>
+                    {bulkUploadResult.errors.length > 0 && (
+                      <details className="mt-3">
+                        <summary className="font-body text-sm text-ink-600 cursor-pointer">
+                          View error details ({bulkUploadResult.errors.length})
+                        </summary>
+                        <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                          {bulkUploadResult.errors.map((err, idx) => (
+                            <li
+                              key={idx}
+                              className="font-body text-xs text-danger flex items-center gap-1"
+                            >
+                              <XCircle className="w-3 h-3 flex-shrink-0" />
+                              Roll: {err.rollNumber} - {err.error}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  onClick={closeBulkUploadModal}
+                  disabled={bulkUploadLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleBulkUpload}
+                  disabled={bulkUploadLoading || !csvFile || !selectedRoundForBulk}
+                >
+                  {bulkUploadLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Upload & Update'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

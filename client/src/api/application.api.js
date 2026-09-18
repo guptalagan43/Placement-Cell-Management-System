@@ -51,6 +51,17 @@ export async function updateRoundStatus(applicationId, data) {
   return handleResponse(res)
 }
 
+// Bulk update round statuses via CSV (coordinator/TPO)
+export async function bulkUpdateRoundStatus(driveId, roundId, updates) {
+  const res = await fetch(`${API_BASE}/drives/${driveId}/applications/bulk-update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ roundId, updates }),
+  })
+  return handleResponse(res)
+}
+
 // Get student's own applications
 export async function getMyApplications(params = {}) {
   const searchParams = new URLSearchParams()
@@ -103,4 +114,7 @@ export default {
   getApplicationById,
   getApplicationForStudent,
   withdrawApplication,
+  getDriveApplications,
+  updateRoundStatus,
+  bulkUpdateRoundStatus,
 }

@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M6 — Application Workflow |
-| **Current Phase** | Phase 40 — Bulk CSV Shortlist Upload (Not Started; next up) |
-| **Phases Complete** | 39 / 67 |
-| **Overall Completion** | ~58% |
+| **Current Phase** | Phase 41 — Eligibility Override + AuditLog (Not Started; next up) |
+| **Phases Complete** | 40 / 67 |
+| **Overall Completion** | ~60% |
 | **Blockers** | None |
 
 ---
@@ -100,7 +100,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 37 | Withdraw Application Feature | Complete | 2026-09-17 | Backend POST /applications/:id/withdraw with deadline check already existed; added default exclusion of withdrawn apps from admin drive-applications list (includeWithdrawn query param). Frontend MyApplicationsPage already had withdraw modal and action. Lint/format clean. |
 | 38 | Admin Applicants List API | Complete | 2026-09-17 | `GET /drives/:driveId/applications` with pagination, sorting, round/status filters, department-scoped; moved from `/applications/drives/:driveId/applications` to `/drives/:driveId/applications` per phase spec; bulk-update endpoint also moved. 41 integration tests pass. Lint/format clean. |
 | 39 | Admin Applicants Table UI + Status Update | Complete | 2026-09-18 | Admin applicants page at `/drives-admin/:driveId/applicants` with paginated data table, search, status/round filters, per-row round-status dropdowns; real-time status updates via PUT /applications/:id/round-status; RBAC via RoleRoute (coordinator/TPO only); "View Applicants" button added to DriveListPage. 12 client tests pass. Lint/format clean. |
-| 40 | Bulk CSV Shortlist Upload | Not Started | — | — |
+| 40 | Bulk CSV Shortlist Upload | Complete | 2026-09-18 | Bulk CSV upload modal in AdminApplicantsPage with drag-and-drop file selection, round selector, CSV format guide; parses rollNumber/status columns, calls POST /drives/:driveId/applications/bulk-update; per-row result report showing updated count and errors with details; refreshes applicant table after upload. Lint/format clean, build passes.
 
 ### Milestone 7 — Governance: Overrides, Audit, Offers
 | # | Phase | Status | Completed | Notes |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 39 complete; **Milestone 6 (Application Workflow) Phase 39 done**. Phase 40 (Bulk CSV Shortlist Upload, M6) is next.
-**File(s) touched in Phase 39:** _Created_ — `client/src/pages/AdminApplicantsPage.jsx`, `client/src/pages/AdminApplicantsPage.test.jsx`; _Modified_ — `client/src/api/application.api.js` (added getDriveApplications, updateRoundStatus), `client/src/App.jsx` (added route), `client/src/pages/DriveListPage.jsx` (added "View Applicants" action button). Tests: 12 client tests pass, all lint/format clean.
-**Next action:** Begin Phase 40 — Bulk CSV Shortlist Upload (M6). Traces to **FR-APP-05**. Key tasks: CSV upload for bulk round-status updates with per-row result report.
+**Active phase:** None active — Phase 40 complete; **Milestone 6 (Application Workflow) Phase 40 done**. Phase 41 (Eligibility Override + AuditLog, M7) is next.
+**File(s) touched in Phase 40:** _Modified_ — `client/src/pages/AdminApplicantsPage.jsx` (added bulk CSV upload modal), `client/src/api/application.api.js` (added bulkUpdateRoundStatus). Tests: 67 client tests pass, all lint/format clean, build successful.
+**Next action:** Begin Phase 41 — Eligibility Override + AuditLog (M7). Traces to **FR-ELG-04, FR-AUD-01, NFR-AUD-01**. Key tasks: AuditLog schema, POST /applications/:id/eligibility-override endpoint with mandatory reason.
 
 ---
 
