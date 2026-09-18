@@ -1,5 +1,6 @@
 // Drive List Page: Coordinator/TPO can view, create, edit, delete drives.
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -18,6 +19,7 @@ import {
   List,
   Megaphone,
   AlertCircle,
+  Users,
 } from 'lucide-react'
 import * as driveApi from '../api/drive.api.js'
 import * as companyApi from '../api/company.api.js'
@@ -779,6 +781,7 @@ const DriveForm = ({ isOpen, onClose, onSubmit, initialData, isLoading, title, c
 }
 
 export default function DriveListPage() {
+  const navigate = useNavigate()
   const [drives, setDrives] = useState([])
   const [companies, setCompanies] = useState([])
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 })
@@ -1303,6 +1306,14 @@ export default function DriveListPage() {
                               aria-label={`Manage rounds for ${drive.title}`}
                             >
                               <List className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => navigate(`/drives-admin/${drive._id}/applicants`)}
+                              aria-label={`View applicants for ${drive.title}`}
+                            >
+                              <Users className="w-4 h-4" />
                             </Button>
                             <Button
                               variant="ghost"

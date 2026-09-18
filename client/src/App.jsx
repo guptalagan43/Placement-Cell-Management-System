@@ -12,6 +12,7 @@ import DriveListPage from './pages/DriveListPage.jsx'
 import StudentDriveListPage from './pages/StudentDriveListPage.jsx'
 import DriveDetailPage from './pages/DriveDetailPage.jsx'
 import MyApplicationsPage from './pages/MyApplicationsPage.jsx'
+import AdminApplicantsPage from './pages/AdminApplicantsPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
@@ -127,6 +128,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <RoleRoute allowedRoles={['coordinator', 'tpo']}>
                 <DriveListPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drives-admin/:driveId/applicants"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={['coordinator', 'tpo']}>
+                <AdminApplicantsPage />
               </RoleRoute>
             </ProtectedRoute>
           }

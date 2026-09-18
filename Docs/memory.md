@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M6 — Application Workflow |
-| **Current Phase** | Phase 39 — Admin Applicants Table UI + Status Update (Not Started; next up) |
-| **Phases Complete** | 38 / 67 |
-| **Overall Completion** | ~57% |
+| **Current Phase** | Phase 40 — Bulk CSV Shortlist Upload (Not Started; next up) |
+| **Phases Complete** | 39 / 67 |
+| **Overall Completion** | ~58% |
 | **Blockers** | None |
 
 ---
@@ -99,7 +99,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 36 | My Applications Page | Complete | 2026-09-13 | Student-facing page at `/applications/my` with paginated table showing drive, company, job type, CTC, applied date, overall status, per-round status badges; status filter; withdraw action with confirmation modal (deadline-checked). Client lint/format clean, build successful. |
 | 37 | Withdraw Application Feature | Complete | 2026-09-17 | Backend POST /applications/:id/withdraw with deadline check already existed; added default exclusion of withdrawn apps from admin drive-applications list (includeWithdrawn query param). Frontend MyApplicationsPage already had withdraw modal and action. Lint/format clean. |
 | 38 | Admin Applicants List API | Complete | 2026-09-17 | `GET /drives/:driveId/applications` with pagination, sorting, round/status filters, department-scoped; moved from `/applications/drives/:driveId/applications` to `/drives/:driveId/applications` per phase spec; bulk-update endpoint also moved. 41 integration tests pass. Lint/format clean. |
-| 39 | Admin Applicants Table UI + Status Update | Not Started | — | — |
+| 39 | Admin Applicants Table UI + Status Update | Complete | 2026-09-18 | Admin applicants page at `/drives-admin/:driveId/applicants` with paginated data table, search, status/round filters, per-row round-status dropdowns; real-time status updates via PUT /applications/:id/round-status; RBAC via RoleRoute (coordinator/TPO only); "View Applicants" button added to DriveListPage. 12 client tests pass. Lint/format clean. |
 | 40 | Bulk CSV Shortlist Upload | Not Started | — | — |
 
 ### Milestone 7 — Governance: Overrides, Audit, Offers
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 38 complete; **Milestone 6 (Application Workflow) Phase 38 done**. Phase 39 (Admin Applicants Table UI + Status Update, M6) is next.
-**File(s) touched in Phase 38:** _Modified_ — `server/src/routes/drive.routes.js` (added GET /:driveId/applications and POST /:driveId/applications/bulk-update), `server/src/routes/application.routes.js` (removed duplicate routes), `server/src/routes/application.routes.test.js` (updated endpoint paths). Tests: 41 integration tests pass.
-**Next action:** Begin Phase 39 — Admin Applicants Table UI + Status Update (M6). Traces to **FR-APP-04**. Key tasks: Applicant data table with per-row round-status update action.
+**Active phase:** None active — Phase 39 complete; **Milestone 6 (Application Workflow) Phase 39 done**. Phase 40 (Bulk CSV Shortlist Upload, M6) is next.
+**File(s) touched in Phase 39:** _Created_ — `client/src/pages/AdminApplicantsPage.jsx`, `client/src/pages/AdminApplicantsPage.test.jsx`; _Modified_ — `client/src/api/application.api.js` (added getDriveApplications, updateRoundStatus), `client/src/App.jsx` (added route), `client/src/pages/DriveListPage.jsx` (added "View Applicants" action button). Tests: 12 client tests pass, all lint/format clean.
+**Next action:** Begin Phase 40 — Bulk CSV Shortlist Upload (M6). Traces to **FR-APP-05**. Key tasks: CSV upload for bulk round-status updates with per-row result report.
 
 ---
 

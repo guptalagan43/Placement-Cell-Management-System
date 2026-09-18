@@ -24,6 +24,33 @@ export async function createApplication(data) {
   return handleResponse(res)
 }
 
+// Get applications for a drive (coordinator/TPO)
+export async function getDriveApplications(driveId, params = {}) {
+  const searchParams = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.append(key, String(value))
+    }
+  })
+  const res = await fetch(`${API_BASE}/drives/${driveId}/applications?${searchParams.toString()}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  })
+  return handleResponse(res)
+}
+
+// Update round status for an application (coordinator/TPO)
+export async function updateRoundStatus(applicationId, data) {
+  const res = await fetch(`${API_BASE}/applications/${applicationId}/round-status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  })
+  return handleResponse(res)
+}
+
 // Get student's own applications
 export async function getMyApplications(params = {}) {
   const searchParams = new URLSearchParams()

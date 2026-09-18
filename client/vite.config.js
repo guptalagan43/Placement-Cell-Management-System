@@ -8,10 +8,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: false,
     setupFiles: './src/test/setup.js',
-    // jsdom v30 uses webidl.util.markAsUncloneable which is unavailable inside
-    // worker_threads; use forks (child processes) instead. This is vitest's
-    // default pool and works on Linux CI. On Windows with spaces in the path,
-    // run tests via WSL or a path without spaces if the forks pool errors.
-    pool: 'forks',
+    // Use threads pool instead of forks to avoid timeout issues on Windows
+    // with paths containing spaces (the repo path has "MERN Lab Project").
+    pool: 'threads',
   },
 })
