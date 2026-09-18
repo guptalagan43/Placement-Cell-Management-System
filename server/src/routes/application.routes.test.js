@@ -10,6 +10,7 @@ import Drive from '../models/Drive.model.js'
 import StudentProfile from '../models/StudentProfile.model.js'
 import Round from '../models/Round.model.js'
 import Application from '../models/Application.model.js'
+import AuditLog from '../models/AuditLog.model.js'
 import { generateAccessToken } from '../services/auth.service.js'
 import { DEPARTMENTS } from '../constants/departments.js'
 
@@ -918,6 +919,189 @@ describe('Application API', () => {
 
       expect(res.status).toBe(403)
       expect(res.body.code).toBe('FORBIDDEN')
+    })
+  })
+
+  describe('TPO: POST /applications/:applicationId/eligibility-override', () => {
+    let ineligibleApplication
+    let eligibleApplication
+
+    beforeEach(async () => {
+      // Create an application for an ineligible student (student2 has low CGPA)
+      ineligibleApplication = await Application.create({
+        student: studentProfile2._id,
+        drive: drive._id,
+        resumeSnapshot: {
+          label: 'Default Resume',
+          cloudinaryPublicId: 'resume2',
+          cloudinarySecureUrl: 'https://cloudinary.com/resume2.pdf',
+          originalFilename: 'resume2.pdf',
+          fileSize: 1024,
+          mimeType: 'application/pdf',
+        },
+        roundStatuses: [
+          { round: round1._id, status: 'pending' },
+          { round: round2._id, status: 'pending' },
+        ],
+        overallStatus: 'applied',
+        eligibilityOverride: { overridden: false },
+      })
+
+      // Create an application for an eligible student
+      eligibleApplication = await Application.create({
+        student: studentProfile._id,
+        drive: drive._id,
+        resumeSnapshot: {
+          label: 'Default Resume',
+          cloudinaryPublicId: 'resume1',
+          cloudinarySecureUrl: 'https://cloudinary.com/resume1.pdf',
+          originalFilename: 'resume1.pdf',
+          fileSize: 1024,
+          mimeType: 'application/pdf',
+        },
+        roundStatuses: [
+          { round: round1._id, status: 'pending' },
+          { round: round2._id, status: 'pending' },
+        ],
+        overallStatus: 'applied',
+        eligibilityOverride: { overridden: false },
+      })
+    })
+
+    it('allows TPO to override eligibility with a reason', async () => {
+      const res = await request(app)
+        .post(`/applications/${ineligibleApplication._id}/eligibility-override`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+        .send({
+          reason: 'Exceptional case: student has relevant industry experience',
+        })
+
+      expect(res.status).toBe(200)
+      expect(res.body.success).toBe(true)
+      expect(res.body.application.eligibilityOverride.overridden).toBe(true)
+      expect(res.body.application.eligibilityOverride.reason).toBe(
+        'Exceptional case: student has relevant industry experience'
+      )
+      expect(res.body.application.eligibilityOverride.overriddenBy.toString()).toBe(
+        tpoUser._id.toString()
+      )
+      expect(res.body.application.eligibilityOverride.overriddenAt).toBeDefined()
+    })
+
+    it('creates exactly one AuditLog entry on override', async () => {
+      await request(app)
+        .post(`/applications/${ineligibleApplication._id}/eligibility-override`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+        .send({
+          reason: 'Exceptional case: student has relevant industry experience',
+        })
+
+      const auditLogs = await AuditLog.find({ 'target.entityId': ineligibleApplication._id }).lean()
+      expect(auditLogs.length).toBe(1)
+      expect(auditLogs[0].action).toBe('eligibility_override')
+      expect(auditLogs[0].actor.toString()).toBe(tpoUser._id.toString())
+      expect(auditLogs[0].target.entityType).toBe('Application')
+      expect(auditLogs[0].target.entityId.toString()).toBe(ineligibleApplication._id.toString())
+      expect(auditLogs[0].reason).toBe('Exceptional case: student has relevant industry experience')
+      expect(auditLogs[0].metadata.drive.toString()).toBe(drive._id.toString())
+      expect(auditLogs[0].metadata.student.toString()).toBe(studentProfile2._id.toString())
+    })
+
+    it('rejects override without a reason', async () => {
+      const res = await request(app)
+        .post(`/applications/${ineligibleApplication._id}/eligibility-override`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+        .send({
+          reason: '',
+        })
+
+      expect(res.status).toBe(400)
+      expect(res.body.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('rejects override with reason exceeding max length', async () => {
+      const longReason = 'a'.repeat(2001)
+      const res = await request(app)
+        .post(`/applications/${ineligibleApplication._id}/eligibility-override`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+        .send({
+          reason: longReason,
+        })
+
+      expect(res.status).toBe(400)
+      expect(res.body.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('rejects coordinator access (TPO only)', async () => {
+      const res = await request(app)
+        .post(`/applications/${ineligibleApplication._id}/eligibility-override`)
+        .set('Authorization', `Bearer ${coordinatorToken}`)
+        .send({
+          reason: 'Exceptional case',
+        })
+
+      expect(res.status).toBe(403)
+      expect(res.body.code).toBe('FORBIDDEN')
+    })
+
+    it('rejects student access', async () => {
+      const res = await request(app)
+        .post(`/applications/${ineligibleApplication._id}/eligibility-override`)
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          reason: 'Exceptional case',
+        })
+
+      expect(res.status).toBe(403)
+      expect(res.body.code).toBe('FORBIDDEN')
+    })
+
+    it('rejects unauthenticated request', async () => {
+      const res = await request(app)
+        .post(`/applications/${ineligibleApplication._id}/eligibility-override`)
+        .send({
+          reason: 'Exceptional case',
+        })
+
+      expect(res.status).toBe(401)
+    })
+
+    it('returns 404 for non-existent application', async () => {
+      const fakeId = new mongoose.Types.ObjectId()
+      const res = await request(app)
+        .post(`/applications/${fakeId}/eligibility-override`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+        .send({
+          reason: 'Exceptional case',
+        })
+
+      expect(res.status).toBe(404)
+      expect(res.body.code).toBe('APPLICATION_NOT_FOUND')
+    })
+
+    it('does not create AuditLog entry when validation fails', async () => {
+      await request(app)
+        .post(`/applications/${ineligibleApplication._id}/eligibility-override`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+        .send({
+          reason: '',
+        })
+
+      const auditLogs = await AuditLog.find({ 'target.entityId': ineligibleApplication._id }).lean()
+      expect(auditLogs.length).toBe(0)
+    })
+
+    it('can override eligibility for already eligible student (admin discretion)', async () => {
+      const res = await request(app)
+        .post(`/applications/${eligibleApplication._id}/eligibility-override`)
+        .set('Authorization', `Bearer ${tpoToken}`)
+        .send({
+          reason: 'Administrative override for special consideration',
+        })
+
+      expect(res.status).toBe(200)
+      expect(res.body.success).toBe(true)
+      expect(res.body.application.eligibilityOverride.overridden).toBe(true)
     })
   })
 })

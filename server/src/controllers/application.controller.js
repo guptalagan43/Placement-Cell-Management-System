@@ -96,6 +96,18 @@ const bulkUpdateSchema = z.object({
   }),
 })
 
+const overrideEligibilitySchema = z.object({
+  body: z.object({
+    reason: z
+      .string()
+      .min(1, 'Reason is required')
+      .max(2000, 'Reason cannot exceed 2000 characters'),
+  }),
+  params: z.object({
+    applicationId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid application ID'),
+  }),
+})
+
 // POST /applications — create application (student)
 export const createApplication = [
   asyncHandler(async (req, res) => {
@@ -202,6 +214,19 @@ export const bulkUpdateRoundStatus = [
   }),
 ]
 
+// POST /applications/:applicationId/eligibility-override — override eligibility (TPO only)
+export const overrideEligibility = [
+  asyncHandler(async (req, res) => {
+    const { body, params } = overrideEligibilitySchema.parse({ body: req.body, params: req.params })
+    const application = await applicationSvc.overrideEligibility(
+      params.applicationId,
+      body.reason,
+      req.user._id
+    )
+    res.json({ success: true, application })
+  }),
+]
+
 export default {
   createApplication,
   getMyApplications,
@@ -211,4 +236,5 @@ export default {
   updateRoundStatus,
   withdrawApplication,
   bulkUpdateRoundStatus,
+  overrideEligibility,
 }

@@ -1,11 +1,13 @@
 // Application routes: CRUD for applications.
 // Student can apply, view own applications, withdraw.
 // Coordinator/TPO can update round statuses.
+// TPO can override eligibility.
 import { Router } from 'express'
 import { authenticate } from '../middleware/auth.middleware.js'
 import {
   requireStudent,
   requireCoordinatorOrTPO,
+  requireTPO,
   requireAnyRole,
 } from '../middleware/rbac.middleware.js'
 import { departmentScope } from '../middleware/scope.middleware.js'
@@ -16,6 +18,7 @@ import {
   getApplicationForStudent,
   updateRoundStatus,
   withdrawApplication,
+  overrideEligibility,
 } from '../controllers/application.controller.js'
 
 const router = Router()
@@ -39,5 +42,8 @@ router.put(
   departmentScope,
   updateRoundStatus
 )
+
+// TPO-only: Eligibility override with audit logging
+router.post('/:applicationId/eligibility-override', authenticate, requireTPO, overrideEligibility)
 
 export default router

@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M6 — Application Workflow |
-| **Current Phase** | Phase 41 — Eligibility Override + AuditLog (Not Started; next up) |
-| **Phases Complete** | 40 / 67 |
-| **Overall Completion** | ~60% |
+| **Current Milestone** | M7 — Governance: Overrides, Audit, Offers |
+| **Current Phase** | Phase 42 — Admin Audit Log Viewer UI (Not Started; next up) |
+| **Phases Complete** | 41 / 67 |
+| **Overall Completion** | ~61% |
 | **Blockers** | None |
 
 ---
@@ -105,7 +105,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 ### Milestone 7 — Governance: Overrides, Audit, Offers
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 41 | Eligibility Override + AuditLog | Not Started | — | — |
+| 41 | Eligibility Override + AuditLog | Complete | 2026-09-18 | AuditLog schema (DR-15) with immutable append-only enforcement; `POST /applications/:id/eligibility-override` endpoint (TPO-only) requiring mandatory reason; writes override flag on Application and creates AuditLog entry. **10 new integration tests pass** (override with reason, AuditLog creation, validation, RBAC). Lint/format clean. |
 | 42 | Admin Audit Log Viewer UI | Not Started | — | — |
 | 43 | OfferLetter Schema & Issue-Offer Endpoint | Not Started | — | — |
 | 44 | Offer Issuance Admin UI | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 40 complete; **Milestone 6 (Application Workflow) Phase 40 done**. Phase 41 (Eligibility Override + AuditLog, M7) is next.
-**File(s) touched in Phase 40:** _Modified_ — `client/src/pages/AdminApplicantsPage.jsx` (added bulk CSV upload modal), `client/src/api/application.api.js` (added bulkUpdateRoundStatus). Tests: 67 client tests pass, all lint/format clean, build successful.
-**Next action:** Begin Phase 41 — Eligibility Override + AuditLog (M7). Traces to **FR-ELG-04, FR-AUD-01, NFR-AUD-01**. Key tasks: AuditLog schema, POST /applications/:id/eligibility-override endpoint with mandatory reason.
+**Active phase:** None active — Phase 41 complete; **Milestone 7 (Governance: Overrides, Audit, Offers) Phase 41 done**. Phase 42 (Admin Audit Log Viewer UI, M7) is next.
+**File(s) touched in Phase 41:** _Created_ — `server/src/models/AuditLog.model.js`; _Modified_ — `server/src/services/application.service.js` (added overrideEligibility), `server/src/controllers/application.controller.js` (added overrideEligibility controller), `server/src/routes/application.routes.js` (added POST /applications/:id/eligibility-override route), `server/src/routes/application.routes.test.js` (added 10 integration tests for eligibility override). Tests: 52 application route tests pass, all lint/format clean.
+**Next action:** Begin Phase 42 — Admin Audit Log Viewer UI (M7). Traces to **FR-AUD-02**. Key tasks: Audit log list page, filterable by actor/action/date; Admin-only route.
 
 ---
 
@@ -229,6 +229,8 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-11 (Ph.26) | Eligibility engine is a pure, stateless service (`checkEligibility`) with no DB dependencies — enables identical logic at browse-time and apply-time. Individual check functions exported for granular unit testing. Blacklist checked first (override). 10th/12th % prefers detailed records (`tenthDetails.percentage`, `twelfthDetails.percentage`) with fallback to legacy fields (`tenthPercent`, `twelfthPercent`). Null/undefined academic fields treated as failure. Machine-readable reason codes (`INELIGIBILITY_REASONS`) returned for frontend branching. | Matches FR-ELG-01 and srs.md §8. Pure function design per architecture.md §5 enables exhaustive unit testing (64 tests) without database. Business rules (One-Offer, Tier-Lock) deferred to Phase 27 per srs.md §8.1–8.2. |
 | 2026-09-11 (Ph.27) | Business rules layered onto raw eligibility via `applyBusinessRules()`. One-Offer Rule blocks placed students; Tier-Lock Rule allows upgrade to strictly better tier (lower number = better by default). SeasonConfig model provides data-driven configuration (tier ordering, rule enable/disable) per NFR-MAINT-01. Academic ineligibility short-circuits business rules. 21 unit tests cover all rule combinations, config variations, and short-circuit behavior. | Matches FR-ELG-05, srs.md §8.1–8.2, NFR-MAINT-01. Data-driven tier ordering (not hardcoded) enables annual policy changes. Lower-is-better default matches srs.md §8.2. Short-circuit ensures academic reasons take precedence. |
 | 2026-09-13 (Ph.34) | Extended `ApiError` class to support optional `details` field; updated error handler to include `details` in response when present. | Needed for eligibility failure responses to include machine-readable reason codes and human-readable messages for frontend branching (FR-ELG-03). Maintains backward compatibility — existing error responses unchanged. |
+| 2026-09-18 (Ph.41) | Eligibility override endpoint restricted to **TPO only** (not coordinators). | FR-ELG-04 states "Admin shall be able to override"; in this system, TPO is the Super Admin with institute-wide scope, while coordinators are department-scoped. Override is a high-privilege action affecting eligibility rules, so restricted to TPO. Coordinators can still update round statuses. |
+| 2026-09-18 (Ph.41) | AuditLog model uses **pre-save and query middleware** to enforce immutability (NFR-AUD-01). Throws error on any modification/deletion attempt. | Per `srs.md` NFR-AUD-01: "Audit Log entries, once written, shall never be updated or deleted by application code." The middleware approach catches all write paths (save, findOneAndUpdate, updateOne, updateMany, deleteOne, deleteMany). |
 
 ---
 

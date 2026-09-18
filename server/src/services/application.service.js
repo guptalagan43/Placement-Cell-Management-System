@@ -1,9 +1,10 @@
 // Application service: handles application creation, retrieval, and management.
-// Traces to FR-APP-01, FR-APP-03.
+// Traces to FR-APP-01, FR-APP-03, FR-ELG-04, FR-AUD-01.
 import mongoose from 'mongoose'
 import Application from '../models/Application.model.js'
 import StudentProfile from '../models/StudentProfile.model.js'
 import Drive from '../models/Drive.model.js'
+import AuditLog from '../models/AuditLog.model.js'
 import { ApiError } from '../utils/api-error.js'
 import eligibilitySvc from './eligibility.service.js'
 import SeasonConfig from '../models/SeasonConfig.model.js'
@@ -403,6 +404,47 @@ export async function bulkUpdateRoundStatus(driveId, roundId, updates, user) {
   return results
 }
 
+// Eligibility override for an application (admin/TPO)
+// Sets eligibilityOverride flag on Application and creates AuditLog entry
+export async function overrideEligibility(applicationId, reason, overriddenBy) {
+  if (!reason || !reason.trim()) {
+    throw new ApiError(400, 'Reason is required for eligibility override', 'VALIDATION_ERROR')
+  }
+
+  const application = await Application.findById(applicationId)
+  if (!application) {
+    throw new ApiError(404, 'Application not found', 'APPLICATION_NOT_FOUND')
+  }
+
+  // Set eligibility override
+  application.eligibilityOverride = {
+    overridden: true,
+    reason: reason.trim(),
+    overriddenBy,
+    overriddenAt: new Date(),
+  }
+
+  await application.save()
+
+  // Create AuditLog entry
+  await AuditLog.create({
+    actor: overriddenBy,
+    action: 'eligibility_override',
+    target: {
+      entityType: 'Application',
+      entityId: application._id,
+    },
+    reason: reason.trim(),
+    metadata: {
+      drive: application.drive,
+      student: application.student,
+      previousOverrideState: false,
+    },
+  })
+
+  return application.toObject({ virtuals: true })
+}
+
 // Get single application for student (with eligibility info)
 export async function getApplicationForStudent(applicationId, user) {
   const studentProfile = await StudentProfile.findOne({ user: user._id }).lean()
@@ -452,4 +494,5 @@ export default {
   withdrawApplication,
   bulkUpdateRoundStatus,
   getApplicationForStudent,
+  overrideEligibility,
 }
