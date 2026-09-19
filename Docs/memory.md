@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-19 — Phase 44 (Offer Issuance Admin UI) complete |
+| **Last Updated** | 2026-09-19 — Phase 45 (Offer Response Flow) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M7 — Governance: Overrides, Audit, Offers |
-| **Current Phase** | Phase 45 — Offer Response Flow (Not Started; next up) |
-| **Phases Complete** | 44 / 67 |
-| **Overall Completion** | ~66% |
+| **Current Phase** | Phase 46 — RulesPage Schema & CMS API (Not Started; next up) |
+| **Phases Complete** | 45 / 67 |
+| **Overall Completion** | ~67% |
 | **Blockers** | None |
 
 ---
@@ -109,7 +109,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 42 | Admin Audit Log Viewer UI | Complete | 2026-09-19 | Audit log list page at `/admin/audit-log` with paginated table, filters (actor, action, date range, entity type, target entity ID), sorting, and detail modal; TPO-only route with RBAC; backend endpoints `GET /audit-logs`, `GET /audit-logs/:id`, `GET /audit-logs/actions/list`, `GET /audit-logs/actors/list`. **20 backend + 16 frontend tests pass**. Lint/format clean, build passes. |
 | 43 | OfferLetter Schema & Issue-Offer Endpoint | Complete | 2026-09-19 | OfferLetter schema (DR-08) with document metadata, deadline, status; `POST /offers/:applicationId` endpoint (coordinator/TPO) with Cloudinary document upload, department scoping, validation; `GET /offers/application/:applicationId` and `GET /offers/:offerId` for retrieval; `PATCH /offers/:offerId/respond` for student accept/decline with atomic placement status update. **22 backend tests pass**. Lint/format clean, build passes. |
 | 44 | Offer Issuance Admin UI | Complete | 2026-09-19 | "Issue Offer" button added to AdminApplicantsPage for applications with 'selected' status; modal with PDF upload (Cloudinary direct upload), deadline picker, upload progress; calls `POST /offers/:applicationId`; auto-refreshes applicant table after issuance. **12 frontend tests pass**. Lint/format clean, build passes. |
-| 45 | Offer Response Flow | Not Started | — | — |
+| 45 | Offer Response Flow | Complete | 2026-09-19 | Student-facing OfferResponsePage at `/offers/:offerId/respond` with offer details, document download, deadline countdown; accept/decline with confirmation modal; `PATCH /offers/:offerId/respond` updates placementStatus and currentTier atomically; "View Offer" button in MyApplicationsPage for offer_issued status. **22 backend + 83 frontend tests pass**. Lint/format clean, build passes. |
 
 ### Milestone 8 — Policy, Announcements & Notifications
 | # | Phase | Status | Completed | Notes |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 44 complete; **Milestone 7 (Governance: Overrides, Audit, Offers) Phase 44 done**. Phase 45 (Offer Response Flow, M7) is next.
-**File(s) touched in Phase 44:** _Created_ — `client/src/api/offer.api.js`; _Modified_ — `client/src/pages/AdminApplicantsPage.jsx` (added Issue Offer button, modal with PDF upload, deadline picker, upload progress); _Modified_ — `server/src/controllers/offer.controller.js` (added getUploadParams), `server/src/services/offer.service.js` (added getUploadParams), `server/src/routes/offer.routes.js` (added GET /offers/upload-params). Tests: 22 backend + 12 frontend tests pass, all lint/format clean, build passes.
-**Next action:** Begin Phase 45 — Offer Response Flow (M7). Traces to **FR-OFR-02, FR-OFR-04**. Key tasks: Student offer response page, `PATCH /offers/:id/respond` with placement status update.
+**Active phase:** None active — Phase 45 complete; **Milestone 7 (Governance: Overrides, Audit, Offers) Phase 45 done**. Phase 46 (RulesPage Schema & CMS API, M8) is next.
+**File(s) touched in Phase 45:** _Created_ — `client/src/pages/OfferResponsePage.jsx`; _Modified_ — `client/src/App.jsx` (added OfferResponsePage route), `client/src/pages/MyApplicationsPage.jsx` (added View Offer button for offer_issued status), `client/src/api/offer.api.js` (already existed from Phase 44). Tests: 22 backend + 83 frontend tests pass, all lint/format clean, build passes.
+**Next action:** Begin Phase 46 — RulesPage Schema & CMS API (M8). Traces to **FR-RUL-01, FR-AUD-01**. Key tasks: RulesPage schema (DR-11), `GET /rules` (public), `PUT /rules` (Admin-only, auto-increments version), AuditLog entry on edit.
 
 ---
 

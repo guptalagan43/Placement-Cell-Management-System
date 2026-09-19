@@ -2,8 +2,9 @@
 // Traces to FR-APP-03.
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, Filter, X, Loader2, AlertTriangle } from 'lucide-react'
+import { Briefcase, Filter, X, Loader2, AlertTriangle, FileText } from 'lucide-react'
 import * as applicationApi from '../api/application.api.js'
+import * as offerApi from '../api/offer.api.js'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import Card from '../components/ui/Card.jsx'
@@ -359,6 +360,17 @@ export default function MyApplicationsPage() {
                           >
                             <Briefcase className="w-4 h-4" />
                           </Button>
+                          {app.overallStatus === 'offer_issued' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => offerApi.getOfferByApplication(app._id).then(res => navigate(`/offers/${res.offer._id}/respond`))}
+                              aria-label={`View and respond to offer for ${app.drive?.title}`}
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              View Offer
+                            </Button>
+                          )}
                           {canWithdraw(app) && (
                             <Button
                               variant="ghost"

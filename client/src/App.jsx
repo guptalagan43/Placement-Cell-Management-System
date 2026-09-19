@@ -14,6 +14,7 @@ import DriveDetailPage from './pages/DriveDetailPage.jsx'
 import MyApplicationsPage from './pages/MyApplicationsPage.jsx'
 import AdminApplicantsPage from './pages/AdminApplicantsPage.jsx'
 import AuditLogPage from './pages/AuditLogPage.jsx'
+import OfferResponsePage from './pages/OfferResponsePage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
@@ -106,6 +107,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <MyApplicationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/offers/:offerId/respond"
+          element={
+            <ProtectedRoute>
+              <OfferResponsePage />
             </ProtectedRoute>
           }
         />
