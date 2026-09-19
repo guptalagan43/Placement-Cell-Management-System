@@ -69,7 +69,7 @@ const applicationSchema = new mongoose.Schema(
     },
     eligibilityOverride: {
       overridden: { type: Boolean, default: false },
-      reason: { type: String, trim: true, maxlength: 1000 },
+      reason: { type: String, trim: true, maxlength: 2000 },
       overriddenBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       overriddenAt: { type: Date },
     },
