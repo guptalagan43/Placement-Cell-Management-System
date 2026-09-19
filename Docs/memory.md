@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-19 — Phase 42 (Admin Audit Log Viewer UI) complete |
+| **Last Updated** | 2026-09-19 — Phase 43 (OfferLetter Schema & Issue-Offer Endpoint) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M7 — Governance: Overrides, Audit, Offers |
-| **Current Phase** | Phase 43 — OfferLetter Schema & Issue-Offer Endpoint (Not Started; next up) |
-| **Phases Complete** | 42 / 67 |
-| **Overall Completion** | ~63% |
+| **Current Phase** | Phase 44 — Offer Issuance Admin UI (Not Started; next up) |
+| **Phases Complete** | 43 / 67 |
+| **Overall Completion** | ~64% |
 | **Blockers** | None |
 
 ---
@@ -107,7 +107,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 |---|---|---|---|---|
 | 41 | Eligibility Override + AuditLog | Complete | 2026-09-18 | AuditLog schema (DR-15) with immutable append-only enforcement; `POST /applications/:id/eligibility-override` endpoint (TPO-only) requiring mandatory reason; writes override flag on Application and creates AuditLog entry. **10 new integration tests pass** (override with reason, AuditLog creation, validation, RBAC). Lint/format clean. |
 | 42 | Admin Audit Log Viewer UI | Complete | 2026-09-19 | Audit log list page at `/admin/audit-log` with paginated table, filters (actor, action, date range, entity type, target entity ID), sorting, and detail modal; TPO-only route with RBAC; backend endpoints `GET /audit-logs`, `GET /audit-logs/:id`, `GET /audit-logs/actions/list`, `GET /audit-logs/actors/list`. **20 backend + 16 frontend tests pass**. Lint/format clean, build passes. |
-| 43 | OfferLetter Schema & Issue-Offer Endpoint | Not Started | — | — |
+| 43 | OfferLetter Schema & Issue-Offer Endpoint | Complete | 2026-09-19 | OfferLetter schema (DR-08) with document metadata, deadline, status; `POST /offers/:applicationId` endpoint (coordinator/TPO) with Cloudinary document upload, department scoping, validation; `GET /offers/application/:applicationId` and `GET /offers/:offerId` for retrieval; `PATCH /offers/:offerId/respond` for student accept/decline with atomic placement status update. **22 backend tests pass**. Lint/format clean, build passes. |
 | 44 | Offer Issuance Admin UI | Not Started | — | — |
 | 45 | Offer Response Flow | Not Started | — | — |
 
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 42 complete; **Milestone 7 (Governance: Overrides, Audit, Offers) Phase 42 done**. Phase 43 (OfferLetter Schema & Issue-Offer Endpoint, M7) is next.
-**File(s) touched in Phase 42:** _Created_ — `server/src/controllers/auditLog.controller.js`, `server/src/routes/auditLog.routes.js`, `server/src/routes/auditLog.routes.test.js`, `client/src/api/auditLog.api.js`, `client/src/pages/AuditLogPage.jsx`, `client/src/pages/AuditLogPage.test.jsx`; _Modified_ — `server/src/app.js` (registered audit log routes), `client/src/App.jsx` (added audit log route), `client/src/layouts/AppLayout.jsx` (added Audit Log nav link). Tests: 20 backend + 16 frontend tests pass, all lint/format clean, build passes.
-**Next action:** Begin Phase 43 — OfferLetter Schema & Issue-Offer Endpoint (M7). Traces to **FR-OFR-01**. Key tasks: OfferLetter schema (DR-08), `POST /offers` endpoint with Cloudinary upload and response deadline.
+**Active phase:** None active — Phase 43 complete; **Milestone 7 (Governance: Overrides, Audit, Offers) Phase 43 done**. Phase 44 (Offer Issuance Admin UI, M7) is next.
+**File(s) touched in Phase 43:** _Created_ — `server/src/models/OfferLetter.model.js`, `server/src/services/offer.service.js`, `server/src/controllers/offer.controller.js`, `server/src/routes/offer.routes.js`, `server/src/routes/offer.routes.test.js`; _Modified_ — `server/src/app.js` (registered offer routes). Tests: 22 backend tests pass, all lint/format clean, build passes.
+**Next action:** Begin Phase 44 — Offer Issuance Admin UI (M7). Traces to **FR-OFR-01**. Key tasks: Offer-issuance form (document upload, deadline picker) accessible from the applicant table.
 
 ---
 
