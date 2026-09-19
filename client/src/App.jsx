@@ -13,6 +13,7 @@ import StudentDriveListPage from './pages/StudentDriveListPage.jsx'
 import DriveDetailPage from './pages/DriveDetailPage.jsx'
 import MyApplicationsPage from './pages/MyApplicationsPage.jsx'
 import AdminApplicantsPage from './pages/AdminApplicantsPage.jsx'
+import AuditLogPage from './pages/AuditLogPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
@@ -155,6 +156,18 @@ function AppRoutes() {
                     Coordinator/TPO only area (Phase 11 demo)
                   </p>
                 </div>
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Audit Log (TPO only) */}
+        <Route
+          path="/admin/audit-log"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={['tpo']}>
+                <AuditLogPage />
               </RoleRoute>
             </ProtectedRoute>
           }

@@ -13,6 +13,7 @@ import driveRoutes from './routes/drive.routes.js'
 import roundRoutes from './routes/round.routes.js'
 import infoSessionRoutes from './routes/infoSession.routes.js'
 import applicationRoutes from './routes/application.routes.js'
+import auditLogRoutes from './routes/auditLog.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -51,6 +52,9 @@ export function createApp() {
 
   // Application routes (student apply, admin manage)
   app.use('/applications', applicationRoutes)
+
+  // Audit log routes (TPO only)
+  app.use('/audit-logs', auditLogRoutes)
 
   // Unmatched routes -> consistent 404 error contract.
   app.use(notFound)

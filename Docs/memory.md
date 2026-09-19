@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-17 — Phase 38 (Admin Applicants List API) complete |
+| **Last Updated** | 2026-09-19 — Phase 42 (Admin Audit Log Viewer UI) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M7 — Governance: Overrides, Audit, Offers |
-| **Current Phase** | Phase 42 — Admin Audit Log Viewer UI (Not Started; next up) |
-| **Phases Complete** | 41 / 67 |
-| **Overall Completion** | ~61% |
+| **Current Phase** | Phase 43 — OfferLetter Schema & Issue-Offer Endpoint (Not Started; next up) |
+| **Phases Complete** | 42 / 67 |
+| **Overall Completion** | ~63% |
 | **Blockers** | None |
 
 ---
@@ -106,7 +106,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 41 | Eligibility Override + AuditLog | Complete | 2026-09-18 | AuditLog schema (DR-15) with immutable append-only enforcement; `POST /applications/:id/eligibility-override` endpoint (TPO-only) requiring mandatory reason; writes override flag on Application and creates AuditLog entry. **10 new integration tests pass** (override with reason, AuditLog creation, validation, RBAC). Lint/format clean. |
-| 42 | Admin Audit Log Viewer UI | Not Started | — | — |
+| 42 | Admin Audit Log Viewer UI | Complete | 2026-09-19 | Audit log list page at `/admin/audit-log` with paginated table, filters (actor, action, date range, entity type, target entity ID), sorting, and detail modal; TPO-only route with RBAC; backend endpoints `GET /audit-logs`, `GET /audit-logs/:id`, `GET /audit-logs/actions/list`, `GET /audit-logs/actors/list`. **20 backend + 16 frontend tests pass**. Lint/format clean, build passes. |
 | 43 | OfferLetter Schema & Issue-Offer Endpoint | Not Started | — | — |
 | 44 | Offer Issuance Admin UI | Not Started | — | — |
 | 45 | Offer Response Flow | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 41 complete; **Milestone 7 (Governance: Overrides, Audit, Offers) Phase 41 done**. Phase 42 (Admin Audit Log Viewer UI, M7) is next.
-**File(s) touched in Phase 41:** _Created_ — `server/src/models/AuditLog.model.js`; _Modified_ — `server/src/services/application.service.js` (added overrideEligibility), `server/src/controllers/application.controller.js` (added overrideEligibility controller), `server/src/routes/application.routes.js` (added POST /applications/:id/eligibility-override route), `server/src/routes/application.routes.test.js` (added 10 integration tests for eligibility override). Tests: 52 application route tests pass, all lint/format clean.
-**Next action:** Begin Phase 42 — Admin Audit Log Viewer UI (M7). Traces to **FR-AUD-02**. Key tasks: Audit log list page, filterable by actor/action/date; Admin-only route.
+**Active phase:** None active — Phase 42 complete; **Milestone 7 (Governance: Overrides, Audit, Offers) Phase 42 done**. Phase 43 (OfferLetter Schema & Issue-Offer Endpoint, M7) is next.
+**File(s) touched in Phase 42:** _Created_ — `server/src/controllers/auditLog.controller.js`, `server/src/routes/auditLog.routes.js`, `server/src/routes/auditLog.routes.test.js`, `client/src/api/auditLog.api.js`, `client/src/pages/AuditLogPage.jsx`, `client/src/pages/AuditLogPage.test.jsx`; _Modified_ — `server/src/app.js` (registered audit log routes), `client/src/App.jsx` (added audit log route), `client/src/layouts/AppLayout.jsx` (added Audit Log nav link). Tests: 20 backend + 16 frontend tests pass, all lint/format clean, build passes.
+**Next action:** Begin Phase 43 — OfferLetter Schema & Issue-Offer Endpoint (M7). Traces to **FR-OFR-01**. Key tasks: OfferLetter schema (DR-08), `POST /offers` endpoint with Cloudinary upload and response deadline.
 
 ---
 
