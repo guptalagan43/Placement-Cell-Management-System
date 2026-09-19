@@ -13,9 +13,18 @@ import {
   getOfferByApplication,
   getOfferById,
   respondToOffer,
+  getUploadParams,
 } from '../controllers/offer.controller.js'
 
 const router = Router()
+
+// Coordinator/TPO: Get signed upload parameters for offer documents
+router.get(
+  '/upload-params',
+  authenticate,
+  requireCoordinatorOrTPO,
+  getUploadParams
+)
 
 // Coordinator/TPO: Issue an offer against an application
 // Must verify the application is in 'selected' status

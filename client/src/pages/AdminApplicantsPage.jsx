@@ -1,5 +1,5 @@
 // Admin Applicants Page: Coordinator/TPO can view and update applicant round statuses for a drive.
-// Traces to FR-APP-04, FR-APP-05, FR-APP-06.
+// Traces to FR-APP-04, FR-APP-05, FR-APP-06, FR-OFR-01.
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
@@ -14,10 +14,14 @@ import {
   FileText,
   CheckCircle,
   XCircle,
+  FilePlus,
+  Calendar,
+  Send,
 } from 'lucide-react'
 import * as applicationApi from '../api/application.api.js'
 import * as driveApi from '../api/drive.api.js'
 import * as roundApi from '../api/round.api.js'
+import * as offerApi from '../api/offer.api.js'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import Card from '../components/ui/Card.jsx'
@@ -116,6 +120,21 @@ export default function AdminApplicantsPage() {
   const [bulkUploadError, setBulkUploadError] = useState(null)
   const [selectedRoundForBulk, setSelectedRoundForBulk] = useState('')
   const [csvFile, setCsvFile] = useState(null)
+
+  // Offer issuance state
+  const [offerModalOpen, setOfferModalOpen] = useState(false)
+  const [offerLoading, setOfferLoading] = useState(false)
+  const [offerError, setOfferError] = useState(null)
+  const [selectedApplication, setSelectedApplication] = useState(null)
+  const [offerFormData, setOfferFormData] = useState({
+    document: null,
+    documentName: '',
+    documentSize: 0,
+    documentType: '',
+    responseDeadline: '',
+    uploadParams: null,
+  })
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   const fetchDrive = useCallback(async () => {
     setDriveLoading(true)
@@ -284,6 +303,158 @@ export default function AdminApplicantsPage() {
       }
       setCsvFile(file)
       setBulkUploadError(null)
+    }
+  }
+
+  // Offer issuance functions
+  const openOfferModal = (application) => {
+    setSelectedApplication(application)
+    setOfferError(null)
+    setOfferFormData({
+      document: null,
+      documentName: '',
+      documentSize: 0,
+      documentType: '',
+      responseDeadline: '',
+      uploadParams: null,
+    })
+    setUploadProgress(0)
+    // Fetch upload params
+    offerApi.getOfferUploadParams().then((res) => {
+      setOfferFormData((prev) => ({ ...prev, uploadParams: res }))
+    }).catch(() => {
+      setOfferError('Failed to initialize upload service')
+    })
+    setOfferModalOpen(true)
+  }
+
+  const closeOfferModal = () => {
+    setOfferModalOpen(false)
+    setSelectedApplication(null)
+    setOfferError(null)
+    setOfferFormData({
+      document: null,
+      documentName: '',
+      documentSize: 0,
+      documentType: '',
+      responseDeadline: '',
+      uploadParams: null,
+    })
+    setUploadProgress(0)
+  }
+
+  const handleOfferDocumentChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      // Validate file type (PDF only for offer letters)
+      if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+        setOfferError('Please select a PDF file')
+        return
+      }
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setOfferError('File size must be less than 10MB')
+        return
+      }
+      setOfferFormData((prev) => ({
+        ...prev,
+        document: file,
+        documentName: file.name,
+        documentSize: file.size,
+        documentType: file.type,
+      }))
+      setOfferError(null)
+    }
+  }
+
+  const handleDeadlineChange = (e) => {
+    setOfferFormData((prev) => ({
+      ...prev,
+      responseDeadline: e.target.value,
+    }))
+  }
+
+  const uploadToCloudinary = async (file, params) => {
+    const formData = new FormData()
+    Object.entries(params).forEach(([key, value]) => {
+      formData.append(key, value)
+    })
+    formData.append('file', file)
+
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          setUploadProgress(Math.round((event.loaded / event.total) * 100))
+        }
+      })
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const response = JSON.parse(xhr.responseText)
+          resolve(response)
+        } else {
+          reject(new Error('Upload failed'))
+        }
+      })
+      xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${params.cloud_name}/raw/upload`)
+      xhr.send(formData)
+    })
+  }
+
+  const handleIssueOffer = async () => {
+    if (!selectedApplication) {
+      setOfferError('No application selected')
+      return
+    }
+    if (!offerFormData.document) {
+      setOfferError('Please select an offer document')
+      return
+    }
+    if (!offerFormData.responseDeadline) {
+      setOfferError('Please select a response deadline')
+      return
+    }
+    if (!offerFormData.uploadParams) {
+      setOfferError('Upload service not initialized')
+      return
+    }
+
+    // Validate deadline is in the future
+    const deadline = new Date(offerFormData.responseDeadline)
+    if (deadline <= new Date()) {
+      setOfferError('Response deadline must be in the future')
+      return
+    }
+
+    setOfferLoading(true)
+    setOfferError(null)
+    setUploadProgress(0)
+
+    try {
+      // Upload document to Cloudinary
+      const uploadResult = await uploadToCloudinary(offerFormData.document, offerFormData.uploadParams)
+
+      // Issue offer via API
+      await offerApi.issueOffer(selectedApplication._id, {
+        document: {
+          cloudinaryPublicId: uploadResult.public_id,
+          cloudinarySecureUrl: uploadResult.secure_url,
+          originalFilename: offerFormData.documentName,
+          fileSize: offerFormData.documentSize,
+          mimeType: offerFormData.documentType,
+        },
+        responseDeadline: offerFormData.responseDeadline,
+      })
+
+      setSuccess(`Offer issued for ${selectedApplication.student?.rollNumber || 'student'}`)
+      closeOfferModal()
+      fetchApplications()
+    } catch (err) {
+      setOfferError(err.message || 'Failed to issue offer')
+    } finally {
+      setOfferLoading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -488,6 +659,9 @@ export default function AdminApplicantsPage() {
                     <th className="px-4 py-3 text-right font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
                       Applied On
                     </th>
+                    <th className="px-4 py-3 text-center font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -541,6 +715,28 @@ export default function AdminApplicantsPage() {
                       })}
                       <td className="px-4 py-4 font-body text-sm text-ink-600 text-right">
                         {formatDate(app.appliedAt)}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        {app.overallStatus === 'selected' && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => openOfferModal(app)}
+                            disabled={updatingRow === app._id || offerLoading}
+                            icon={<FilePlus className="w-4 h-4" />}
+                          >
+                            Issue Offer
+                          </Button>
+                        )}
+                        {app.overallStatus === 'offer_issued' && (
+                          <Badge tone="warning" size="sm">Offer Issued</Badge>
+                        )}
+                        {app.overallStatus === 'offer_accepted' && (
+                          <Badge tone="success" size="sm">Offer Accepted</Badge>
+                        )}
+                        {app.overallStatus === 'offer_declined' && (
+                          <Badge tone="danger" size="sm">Offer Declined</Badge>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -734,6 +930,146 @@ export default function AdminApplicantsPage() {
                     </>
                   ) : (
                     'Upload & Update'
+                  )}
+                </Button>
+              </div>
+            </div>
+</div>
+        </div>
+      )}
+
+      {/* Issue Offer Modal */}
+      {offerModalOpen && selectedApplication && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface rounded-xl shadow-raised w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="font-heading text-lg font-semibold text-ink-900">Issue Offer Letter</h2>
+              <Button variant="ghost" size="icon" onClick={closeOfferModal} aria-label="Close">
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="bg-primary-50 border border-primary-100 rounded-lg p-4">
+                <h3 className="font-body text-sm font-semibold text-ink-900 mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Student Details
+                </h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="font-body text-ink-500">Roll Number:</span>
+                    <span className="font-medium text-ink-900 ml-2">{selectedApplication.student?.rollNumber}</span>
+                  </div>
+                  <div>
+                    <span className="font-body text-ink-500">Name:</span>
+                    <span className="font-medium text-ink-900 ml-2">{selectedApplication.student?.user?.name}</span>
+                  </div>
+                  <div>
+                    <span className="font-body text-ink-500">Branch:</span>
+                    <span className="font-medium text-ink-900 ml-2">{selectedApplication.student?.branch}</span>
+                  </div>
+                  <div>
+                    <span className="font-body text-ink-500">Batch:</span>
+                    <span className="font-medium text-ink-900 ml-2">{selectedApplication.student?.batch}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="font-body text-sm font-medium text-ink-900 block mb-2">
+                    Offer Document (PDF) *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleOfferDocumentChange}
+                      disabled={offerLoading}
+                      className="sr-only"
+                      id="offer-document-upload"
+                    />
+                    <label
+                      htmlFor="offer-document-upload"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition-colors"
+                    >
+                      <Upload className="w-8 h-8 text-ink-400 mb-2" />
+                      <span className="font-body text-sm text-ink-600">
+                        {offerFormData.documentName ? offerFormData.documentName : 'Drag & drop or click to select a PDF file'}
+                      </span>
+                      <span className="font-body text-xs text-ink-400">
+                        PDF only, max 10MB
+                      </span>
+                    </label>
+                  </div>
+                  {offerFormData.document && (
+                    <div className="mt-2 text-xs text-success">
+                      Selected: {offerFormData.documentName} ({(offerFormData.documentSize / 1024).toFixed(1)} KB)
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="font-body text-sm font-medium text-ink-900 block mb-2">
+                    Response Deadline *
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
+                    <input
+                      type="datetime-local"
+                      value={offerFormData.responseDeadline}
+                      onChange={handleDeadlineChange}
+                      className="w-full pl-10 pr-4 py-2 rounded-md border border-border bg-surface text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700"
+                      disabled={offerLoading}
+                    />
+                  </div>
+                  <p className="font-body text-xs text-ink-500 mt-1">Student must respond before this date/time</p>
+                </div>
+              </div>
+
+              {offerError && (
+                <div
+                  className="bg-danger bg-opacity-10 border border-danger text-danger rounded-lg p-3"
+                  role="alert"
+                >
+                  <span className="font-body text-sm">{offerError}</span>
+                </div>
+              )}
+
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="bg-primary-50 border border-primary-100 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-body text-sm font-medium text-ink-900">Uploading Document...</span>
+                    <span className="font-mono text-sm text-primary-700">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-primary-100 rounded-full h-2">
+                    <div
+                      className="bg-primary-700 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  onClick={closeOfferModal}
+                  disabled={offerLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleIssueOffer}
+                  disabled={offerLoading || !offerFormData.document || !offerFormData.responseDeadline}
+                >
+                  {offerLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Issuing...
+                    </>
+                  ) : (
+                    'Issue Offer'
                   )}
                 </Button>
               </div>

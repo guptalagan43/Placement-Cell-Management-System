@@ -1,6 +1,7 @@
 // Offer controller: handles offer routes with validation.
 import { z } from 'zod'
 import { asyncHandler } from '../utils/async-handler.js'
+import { ApiError } from '../utils/api-error.js'
 import * as offerSvc from '../services/offer.service.js'
 
 // Validation schemas
@@ -83,9 +84,26 @@ export const respondToOffer = [
   }),
 ]
 
+// GET /offers/upload-params — get signed upload parameters for offer documents
+export const getUploadParams = [
+  asyncHandler(async (req, res) => {
+    if (
+      !process.env.CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET
+    ) {
+      throw new ApiError(503, 'Upload service not configured', 'UPLOAD_SERVICE_UNAVAILABLE')
+    }
+
+    const params = offerSvc.getUploadParams()
+    res.json({ success: true, ...params })
+  }),
+]
+
 export default {
   issueOffer,
   getOfferByApplication,
   getOfferById,
   respondToOffer,
+  getUploadParams,
 }
