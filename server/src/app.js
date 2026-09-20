@@ -15,6 +15,7 @@ import infoSessionRoutes from './routes/infoSession.routes.js'
 import applicationRoutes from './routes/application.routes.js'
 import auditLogRoutes from './routes/auditLog.routes.js'
 import offerRoutes from './routes/offer.routes.js'
+import rulesPageRoutes from './routes/rulesPage.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -59,6 +60,9 @@ export function createApp() {
 
   // Offer routes (coordinator/TPO issue, student respond)
   app.use('/offers', offerRoutes)
+
+  // Rules page routes (public read, TPO-only write)
+  app.use('/rules', rulesPageRoutes)
 
   // Unmatched routes -> consistent 404 error contract.
   app.use(notFound)

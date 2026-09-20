@@ -40,9 +40,7 @@ const createTestUser = async (role, department = null, email = null) => {
 }
 
 const loginAndGetToken = async (email) => {
-  const res = await request(app)
-    .post('/auth/login')
-    .send({ email, password: 'TestPass123' })
+  const res = await request(app).post('/auth/login').send({ email, password: 'TestPass123' })
   return res.body.accessToken
 }
 
@@ -151,9 +149,7 @@ beforeEach(async () => {
       fileSize: 1024,
       mimeType: 'application/pdf',
     },
-    roundStatuses: [
-      { round: round._id, status: 'cleared' },
-    ],
+    roundStatuses: [{ round: round._id, status: 'cleared' }],
     overallStatus: 'selected',
   })
 })
@@ -313,7 +309,11 @@ describe('Offer routes', () => {
 
     it('rejects coordinator from other department', async () => {
       // Create coordinator in different department with unique email
-      const _otherCoordinator = await createTestUser(ROLES.COORDINATOR, 'Electronics & Communication Engineering', 'othercoordinator@test.com')
+      const _otherCoordinator = await createTestUser(
+        ROLES.COORDINATOR,
+        'Electronics & Communication Engineering',
+        'othercoordinator@test.com'
+      )
       const otherToken = await loginAndGetToken('othercoordinator@test.com')
 
       const res = await request(app)
@@ -377,7 +377,11 @@ describe('Offer routes', () => {
     })
 
     it('rejects coordinator from other department', async () => {
-      const _otherCoordinator = await createTestUser(ROLES.COORDINATOR, 'Electronics & Communication Engineering', 'othercoordinator2@test.com')
+      const _otherCoordinator = await createTestUser(
+        ROLES.COORDINATOR,
+        'Electronics & Communication Engineering',
+        'othercoordinator2@test.com'
+      )
       const otherToken = await loginAndGetToken('othercoordinator2@test.com')
 
       const res = await request(app)

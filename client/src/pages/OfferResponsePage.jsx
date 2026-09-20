@@ -2,7 +2,18 @@
 // Traces to FR-OFR-02, FR-OFR-04.
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle, XCircle, Clock, Briefcase, FileText, Calendar, Loader2, ChevronLeft, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Briefcase,
+  FileText,
+  Calendar,
+  Loader2,
+  ChevronLeft,
+  X,
+} from 'lucide-react'
 import * as offerApi from '../api/offer.api.js'
 import Button from '../components/ui/Button.jsx'
 import Badge from '../components/ui/Badge.jsx'
@@ -138,7 +149,9 @@ export default function OfferResponsePage() {
         <Card>
           <div className="p-12 text-center">
             <AlertTriangle className="w-12 h-12 text-ink-300 mx-auto mb-4" />
-            <h3 className="font-heading text-lg font-semibold text-ink-900 mb-2">Unable to Load Offer</h3>
+            <h3 className="font-heading text-lg font-semibold text-ink-900 mb-2">
+              Unable to Load Offer
+            </h3>
             <p className="font-body text-ink-500 mb-4">{error}</p>
             <Button variant="primary" onClick={() => navigate('/applications/my')}>
               Back to My Applications
@@ -157,7 +170,12 @@ export default function OfferResponsePage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/applications/my')} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/applications/my')}
+            aria-label="Back"
+          >
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div>
@@ -191,13 +209,17 @@ export default function OfferResponsePage() {
             {offer.status === 'pending' && !deadlineInfo.expired && (
               <div className="flex items-center gap-2 bg-primary-50 border border-primary-100 rounded-lg px-4 py-2">
                 <Clock className="w-5 h-5 text-primary-700" />
-                <span className="font-body text-sm font-medium text-primary-700">{deadlineInfo.text}</span>
+                <span className="font-body text-sm font-medium text-primary-700">
+                  {deadlineInfo.text}
+                </span>
               </div>
             )}
             {deadlineInfo.expired && offer.status === 'pending' && (
               <div className="flex items-center gap-2 bg-danger/10 border border-danger rounded-lg px-4 py-2">
                 <AlertTriangle className="w-5 h-5 text-danger" />
-                <span className="font-body text-sm font-medium text-danger">Response deadline has passed</span>
+                <span className="font-body text-sm font-medium text-danger">
+                  Response deadline has passed
+                </span>
               </div>
             )}
           </div>
@@ -206,20 +228,36 @@ export default function OfferResponsePage() {
           <div className="bg-primary-50 border border-primary-100 rounded-xl p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Drive</p>
-                <p className="font-heading text-lg font-semibold text-ink-900">{offer.application?.drive?.title || '-'}</p>
+                <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">
+                  Drive
+                </p>
+                <p className="font-heading text-lg font-semibold text-ink-900">
+                  {offer.application?.drive?.title || '-'}
+                </p>
               </div>
               <div>
-                <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Company</p>
-                <p className="font-heading text-lg font-semibold text-ink-900">{offer.application?.drive?.company?.name || '-'}</p>
+                <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">
+                  Company
+                </p>
+                <p className="font-heading text-lg font-semibold text-ink-900">
+                  {offer.application?.drive?.company?.name || '-'}
+                </p>
               </div>
               <div>
-                <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Tier</p>
-                <p className="font-body text-lg font-semibold text-ink-900">{offer.application?.drive?.tier ? `Tier ${offer.application.drive.tier}` : '-'}</p>
+                <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">
+                  Tier
+                </p>
+                <p className="font-body text-lg font-semibold text-ink-900">
+                  {offer.application?.drive?.tier ? `Tier ${offer.application.drive.tier}` : '-'}
+                </p>
               </div>
               <div>
-                <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">CTC</p>
-                <p className="font-heading text-lg font-semibold text-ink-900">{formatCTC(offer.application?.drive?.compensation?.ctcLpa)}</p>
+                <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">
+                  CTC
+                </p>
+                <p className="font-heading text-lg font-semibold text-ink-900">
+                  {formatCTC(offer.application?.drive?.compensation?.ctcLpa)}
+                </p>
               </div>
             </div>
           </div>
@@ -230,15 +268,21 @@ export default function OfferResponsePage() {
               <Calendar className="w-6 h-6 text-primary-700" />
             </div>
             <div>
-              <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Response Deadline</p>
-              <p className="font-body text-lg font-semibold text-ink-900">{formatDate(offer.responseDeadline)}</p>
+              <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">
+                Response Deadline
+              </p>
+              <p className="font-body text-lg font-semibold text-ink-900">
+                {formatDate(offer.responseDeadline)}
+              </p>
             </div>
           </div>
 
           {/* Offer Document */}
           <div className="bg-surface border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider">Offer Document</p>
+              <p className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider">
+                Offer Document
+              </p>
               <Button variant="outline" size="sm" icon={<FileText className="w-4 h-4" />}>
                 Download
               </Button>
@@ -246,8 +290,15 @@ export default function OfferResponsePage() {
             <div className="flex items-center gap-4 p-4 bg-primary-50 border border-primary-100 rounded-lg">
               <FileText className="w-10 h-10 text-primary-700 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-body text-sm font-medium text-ink-900">{offer.document?.originalFilename || 'Offer Letter.pdf'}</p>
-                <p className="font-body text-xs text-ink-500">PDF • {(offer.document?.fileSize ? (offer.document.fileSize / 1024).toFixed(1) + ' KB' : 'Unknown size')}</p>
+                <p className="font-body text-sm font-medium text-ink-900">
+                  {offer.document?.originalFilename || 'Offer Letter.pdf'}
+                </p>
+                <p className="font-body text-xs text-ink-500">
+                  PDF •{' '}
+                  {offer.document?.fileSize
+                    ? (offer.document.fileSize / 1024).toFixed(1) + ' KB'
+                    : 'Unknown size'}
+                </p>
               </div>
             </div>
           </div>
@@ -279,9 +330,19 @@ export default function OfferResponsePage() {
           ) : offer.status === 'accepted' ? (
             <div className="bg-success/10 border border-success rounded-xl p-6 text-center">
               <CheckCircle className="w-12 h-12 text-success mx-auto mb-3" />
-              <h3 className="font-heading text-lg font-semibold text-success mb-1">Offer Accepted</h3>
-              <p className="font-body text-success">You have accepted this offer on {formatDate(offer.respondedAt)}. Your placement status has been updated.</p>
-              <Button variant="outline" size="sm" onClick={() => navigate('/applications/my')} className="mt-4">
+              <h3 className="font-heading text-lg font-semibold text-success mb-1">
+                Offer Accepted
+              </h3>
+              <p className="font-body text-success">
+                You have accepted this offer on {formatDate(offer.respondedAt)}. Your placement
+                status has been updated.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/applications/my')}
+                className="mt-4"
+              >
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Back to My Applications
               </Button>
@@ -289,9 +350,19 @@ export default function OfferResponsePage() {
           ) : offer.status === 'declined' ? (
             <div className="bg-danger/10 border border-danger rounded-xl p-6 text-center">
               <XCircle className="w-12 h-12 text-danger mx-auto mb-3" />
-              <h3 className="font-heading text-lg font-semibold text-danger mb-1">Offer Declined</h3>
-              <p className="font-body text-danger">You declined this offer on {formatDate(offer.respondedAt)}. You can continue applying to other drives.</p>
-              <Button variant="outline" size="sm" onClick={() => navigate('/applications/my')} className="mt-4">
+              <h3 className="font-heading text-lg font-semibold text-danger mb-1">
+                Offer Declined
+              </h3>
+              <p className="font-body text-danger">
+                You declined this offer on {formatDate(offer.respondedAt)}. You can continue
+                applying to other drives.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/applications/my')}
+                className="mt-4"
+              >
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Back to My Applications
               </Button>
@@ -299,9 +370,19 @@ export default function OfferResponsePage() {
           ) : offer.status === 'expired' ? (
             <div className="bg-neutral/10 border border-neutral rounded-xl p-6 text-center">
               <Clock className="w-12 h-12 text-neutral mx-auto mb-3" />
-              <h3 className="font-heading text-lg font-semibold text-neutral mb-1">Offer Expired</h3>
-              <p className="font-body text-neutral">This offer expired on {formatDate(offer.responseDeadline)} without a response. You can continue applying to other drives.</p>
-              <Button variant="outline" size="sm" onClick={() => navigate('/applications/my')} className="mt-4">
+              <h3 className="font-heading text-lg font-semibold text-neutral mb-1">
+                Offer Expired
+              </h3>
+              <p className="font-body text-neutral">
+                This offer expired on {formatDate(offer.responseDeadline)} without a response. You
+                can continue applying to other drives.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/applications/my')}
+                className="mt-4"
+              >
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Back to My Applications
               </Button>
@@ -351,8 +432,10 @@ export default function OfferResponsePage() {
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Processing...
                     </>
+                  ) : response === 'accept' ? (
+                    'Confirm Accept'
                   ) : (
-                    response === 'accept' ? 'Confirm Accept' : 'Confirm Decline'
+                    'Confirm Decline'
                   )}
                 </Button>
               </div>

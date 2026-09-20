@@ -320,11 +320,14 @@ export default function AdminApplicantsPage() {
     })
     setUploadProgress(0)
     // Fetch upload params
-    offerApi.getOfferUploadParams().then((res) => {
-      setOfferFormData((prev) => ({ ...prev, uploadParams: res }))
-    }).catch(() => {
-      setOfferError('Failed to initialize upload service')
-    })
+    offerApi
+      .getOfferUploadParams()
+      .then((res) => {
+        setOfferFormData((prev) => ({ ...prev, uploadParams: res }))
+      })
+      .catch(() => {
+        setOfferError('Failed to initialize upload service')
+      })
     setOfferModalOpen(true)
   }
 
@@ -433,7 +436,10 @@ export default function AdminApplicantsPage() {
 
     try {
       // Upload document to Cloudinary
-      const uploadResult = await uploadToCloudinary(offerFormData.document, offerFormData.uploadParams)
+      const uploadResult = await uploadToCloudinary(
+        offerFormData.document,
+        offerFormData.uploadParams
+      )
 
       // Issue offer via API
       await offerApi.issueOffer(selectedApplication._id, {
@@ -729,13 +735,19 @@ export default function AdminApplicantsPage() {
                           </Button>
                         )}
                         {app.overallStatus === 'offer_issued' && (
-                          <Badge tone="warning" size="sm">Offer Issued</Badge>
+                          <Badge tone="warning" size="sm">
+                            Offer Issued
+                          </Badge>
                         )}
                         {app.overallStatus === 'offer_accepted' && (
-                          <Badge tone="success" size="sm">Offer Accepted</Badge>
+                          <Badge tone="success" size="sm">
+                            Offer Accepted
+                          </Badge>
                         )}
                         {app.overallStatus === 'offer_declined' && (
-                          <Badge tone="danger" size="sm">Offer Declined</Badge>
+                          <Badge tone="danger" size="sm">
+                            Offer Declined
+                          </Badge>
                         )}
                       </td>
                     </tr>
@@ -934,7 +946,7 @@ export default function AdminApplicantsPage() {
                 </Button>
               </div>
             </div>
-</div>
+          </div>
         </div>
       )}
 
@@ -943,7 +955,9 @@ export default function AdminApplicantsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-surface rounded-xl shadow-raised w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <h2 className="font-heading text-lg font-semibold text-ink-900">Issue Offer Letter</h2>
+              <h2 className="font-heading text-lg font-semibold text-ink-900">
+                Issue Offer Letter
+              </h2>
               <Button variant="ghost" size="icon" onClick={closeOfferModal} aria-label="Close">
                 <X className="w-5 h-5" />
               </Button>
@@ -957,19 +971,27 @@ export default function AdminApplicantsPage() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="font-body text-ink-500">Roll Number:</span>
-                    <span className="font-medium text-ink-900 ml-2">{selectedApplication.student?.rollNumber}</span>
+                    <span className="font-medium text-ink-900 ml-2">
+                      {selectedApplication.student?.rollNumber}
+                    </span>
                   </div>
                   <div>
                     <span className="font-body text-ink-500">Name:</span>
-                    <span className="font-medium text-ink-900 ml-2">{selectedApplication.student?.user?.name}</span>
+                    <span className="font-medium text-ink-900 ml-2">
+                      {selectedApplication.student?.user?.name}
+                    </span>
                   </div>
                   <div>
                     <span className="font-body text-ink-500">Branch:</span>
-                    <span className="font-medium text-ink-900 ml-2">{selectedApplication.student?.branch}</span>
+                    <span className="font-medium text-ink-900 ml-2">
+                      {selectedApplication.student?.branch}
+                    </span>
                   </div>
                   <div>
                     <span className="font-body text-ink-500">Batch:</span>
-                    <span className="font-medium text-ink-900 ml-2">{selectedApplication.student?.batch}</span>
+                    <span className="font-medium text-ink-900 ml-2">
+                      {selectedApplication.student?.batch}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -994,16 +1016,17 @@ export default function AdminApplicantsPage() {
                     >
                       <Upload className="w-8 h-8 text-ink-400 mb-2" />
                       <span className="font-body text-sm text-ink-600">
-                        {offerFormData.documentName ? offerFormData.documentName : 'Drag & drop or click to select a PDF file'}
+                        {offerFormData.documentName
+                          ? offerFormData.documentName
+                          : 'Drag & drop or click to select a PDF file'}
                       </span>
-                      <span className="font-body text-xs text-ink-400">
-                        PDF only, max 10MB
-                      </span>
+                      <span className="font-body text-xs text-ink-400">PDF only, max 10MB</span>
                     </label>
                   </div>
                   {offerFormData.document && (
                     <div className="mt-2 text-xs text-success">
-                      Selected: {offerFormData.documentName} ({(offerFormData.documentSize / 1024).toFixed(1)} KB)
+                      Selected: {offerFormData.documentName} (
+                      {(offerFormData.documentSize / 1024).toFixed(1)} KB)
                     </div>
                   )}
                 </div>
@@ -1022,7 +1045,9 @@ export default function AdminApplicantsPage() {
                       disabled={offerLoading}
                     />
                   </div>
-                  <p className="font-body text-xs text-ink-500 mt-1">Student must respond before this date/time</p>
+                  <p className="font-body text-xs text-ink-500 mt-1">
+                    Student must respond before this date/time
+                  </p>
                 </div>
               </div>
 
@@ -1038,7 +1063,9 @@ export default function AdminApplicantsPage() {
               {uploadProgress > 0 && uploadProgress < 100 && (
                 <div className="bg-primary-50 border border-primary-100 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-body text-sm font-medium text-ink-900">Uploading Document...</span>
+                    <span className="font-body text-sm font-medium text-ink-900">
+                      Uploading Document...
+                    </span>
                     <span className="font-mono text-sm text-primary-700">{uploadProgress}%</span>
                   </div>
                   <div className="w-full bg-primary-100 rounded-full h-2">
@@ -1051,17 +1078,15 @@ export default function AdminApplicantsPage() {
               )}
 
               <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  onClick={closeOfferModal}
-                  disabled={offerLoading}
-                >
+                <Button variant="outline" onClick={closeOfferModal} disabled={offerLoading}>
                   Cancel
                 </Button>
                 <Button
                   variant="primary"
                   onClick={handleIssueOffer}
-                  disabled={offerLoading || !offerFormData.document || !offerFormData.responseDeadline}
+                  disabled={
+                    offerLoading || !offerFormData.document || !offerFormData.responseDeadline
+                  }
                 >
                   {offerLoading ? (
                     <>

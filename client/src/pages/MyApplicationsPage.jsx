@@ -364,7 +364,11 @@ export default function MyApplicationsPage() {
                             <Button
                               variant="primary"
                               size="sm"
-                              onClick={() => offerApi.getOfferByApplication(app._id).then(res => navigate(`/offers/${res.offer._id}/respond`))}
+                              onClick={() =>
+                                offerApi
+                                  .getOfferByApplication(app._id)
+                                  .then((res) => navigate(`/offers/${res.offer._id}/respond`))
+                              }
                               aria-label={`View and respond to offer for ${app.drive?.title}`}
                             >
                               <FileText className="w-4 h-4 mr-1" />

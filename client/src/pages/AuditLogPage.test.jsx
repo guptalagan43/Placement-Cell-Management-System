@@ -25,11 +25,7 @@ const mockActors = [
   },
 ]
 
-const mockActionTypes = [
-  'eligibility_override',
-  'round_status_update',
-  'company_create',
-]
+const mockActionTypes = ['eligibility_override', 'round_status_update', 'company_create']
 
 const mockAuditLogs = [
   {

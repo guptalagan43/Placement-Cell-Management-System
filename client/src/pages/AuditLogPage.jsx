@@ -181,7 +181,12 @@ export default function AuditLogPage() {
   }
 
   const hasActiveFilters =
-    filters.actor || filters.action || filters.dateFrom || filters.dateTo || filters.targetEntityType || filters.targetEntityId
+    filters.actor ||
+    filters.action ||
+    filters.dateFrom ||
+    filters.dateTo ||
+    filters.targetEntityType ||
+    filters.targetEntityId
 
   if (loading && auditLogs.length === 0) {
     return (
@@ -311,7 +316,12 @@ export default function AuditLogPage() {
               </div>
 
               {hasActiveFilters && (
-                <Button variant="outline" size="sm" onClick={clearFilters} icon={<X className="w-4 h-4" />}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFilters}
+                  icon={<X className="w-4 h-4" />}
+                >
                   Clear Filters
                 </Button>
               )}
@@ -326,9 +336,13 @@ export default function AuditLogPage() {
         ) : auditLogs.length === 0 ? (
           <div className="p-12 text-center">
             <Activity className="w-12 h-12 text-ink-300 mx-auto mb-4" />
-            <h3 className="font-heading text-lg font-semibold text-ink-900 mb-2">No Audit Logs Found</h3>
+            <h3 className="font-heading text-lg font-semibold text-ink-900 mb-2">
+              No Audit Logs Found
+            </h3>
             <p className="font-body text-ink-500 mb-4">
-              {hasActiveFilters ? 'No audit logs match the current filters' : 'No administrative actions have been recorded yet'}
+              {hasActiveFilters
+                ? 'No audit logs match the current filters'
+                : 'No administrative actions have been recorded yet'}
             </p>
           </div>
         ) : (
@@ -337,23 +351,47 @@ export default function AuditLogPage() {
               <table className="w-full" role="table">
                 <thead>
                   <tr className="bg-primary-50 border-b border-border">
-                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">Timestamp</th>
-                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">Actor</th>
-                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">Action</th>
-                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">Target Entity</th>
-                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">Reason</th>
-                    <th className="px-4 py-3 text-right font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">Details</th>
+                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                      Timestamp
+                    </th>
+                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                      Actor
+                    </th>
+                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                      Action
+                    </th>
+                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                      Target Entity
+                    </th>
+                    <th className="px-4 py-3 text-left font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                      Reason
+                    </th>
+                    <th className="px-4 py-3 text-right font-body text-xs font-semibold text-ink-600 uppercase tracking-wider">
+                      Details
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {auditLogs.map((log) => (
-                    <tr key={log._id} className="hover:bg-primary-50/50 cursor-pointer" onClick={() => openDetailModal(log)}>
-                      <td className="px-4 py-4 font-body text-sm text-ink-900 whitespace-nowrap">{formatDate(log.timestamp)}</td>
+                    <tr
+                      key={log._id}
+                      className="hover:bg-primary-50/50 cursor-pointer"
+                      onClick={() => openDetailModal(log)}
+                    >
+                      <td className="px-4 py-4 font-body text-sm text-ink-900 whitespace-nowrap">
+                        {formatDate(log.timestamp)}
+                      </td>
                       <td className="px-4 py-4">
-                        <div className="font-body text-sm text-ink-900">{log.actor?.name || 'Unknown'}</div>
-                        <div className="font-body text-xs text-ink-500">{log.actor?.email || '-'}</div>
+                        <div className="font-body text-sm text-ink-900">
+                          {log.actor?.name || 'Unknown'}
+                        </div>
+                        <div className="font-body text-xs text-ink-500">
+                          {log.actor?.email || '-'}
+                        </div>
                         <div className="flex items-center gap-1 mt-0.5">
-                          <Badge tone="neutral" size="xs">{log.actor?.role || '-'}</Badge>
+                          <Badge tone="neutral" size="xs">
+                            {log.actor?.role || '-'}
+                          </Badge>
                         </div>
                       </td>
                       <td className="px-4 py-4">
@@ -367,11 +405,22 @@ export default function AuditLogPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-4 font-body text-sm text-ink-600 max-w-xs truncate" title={log.reason}>
+                      <td
+                        className="px-4 py-4 font-body text-sm text-ink-600 max-w-xs truncate"
+                        title={log.reason}
+                      >
                         {log.reason || '-'}
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openDetailModal(log); }} aria-label="View details">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDetailModal(log)
+                          }}
+                          aria-label="View details"
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
                       </td>
@@ -425,54 +474,84 @@ export default function AuditLogPage() {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">ID</label>
-                  <code className="font-mono text-xs text-ink-900 bg-primary-50 px-2 py-1 rounded break-all">{selectedLog._id}</code>
+                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">
+                    ID
+                  </label>
+                  <code className="font-mono text-xs text-ink-900 bg-primary-50 px-2 py-1 rounded break-all">
+                    {selectedLog._id}
+                  </code>
                 </div>
                 <div>
-                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">Timestamp</label>
-                  <div className="font-body text-sm text-ink-900">{formatDate(selectedLog.timestamp)}</div>
+                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">
+                    Timestamp
+                  </label>
+                  <div className="font-body text-sm text-ink-900">
+                    {formatDate(selectedLog.timestamp)}
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">Actor</label>
+                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">
+                    Actor
+                  </label>
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-ink-400" />
                     <div>
-                      <div className="font-body text-sm text-ink-900">{selectedLog.actor?.name || 'Unknown'}</div>
-                      <div className="font-body text-xs text-ink-500">{selectedLog.actor?.email || '-'}</div>
+                      <div className="font-body text-sm text-ink-900">
+                        {selectedLog.actor?.name || 'Unknown'}
+                      </div>
+                      <div className="font-body text-xs text-ink-500">
+                        {selectedLog.actor?.email || '-'}
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">Actor Role</label>
-                  <Badge tone="neutral" size="sm">{selectedLog.actor?.role || '-'}</Badge>
+                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">
+                    Actor Role
+                  </label>
+                  <Badge tone="neutral" size="sm">
+                    {selectedLog.actor?.role || '-'}
+                  </Badge>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">Action</label>
+                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">
+                    Action
+                  </label>
                   <ActionBadge action={selectedLog.action} />
                 </div>
                 <div>
-                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">Target Entity</label>
+                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">
+                    Target Entity
+                  </label>
                   <div className="flex items-center gap-2">
                     <EntityTypeBadge entityType={selectedLog.target?.entityType} />
-                    <code className="font-mono text-sm text-ink-600">{selectedLog.target?.entityId || '-'}</code>
+                    <code className="font-mono text-sm text-ink-600">
+                      {selectedLog.target?.entityId || '-'}
+                    </code>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">Reason</label>
-                <div className="font-body text-sm text-ink-900 bg-primary-50 p-3 rounded-md whitespace-pre-wrap">{selectedLog.reason || '-'}</div>
+                <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">
+                  Reason
+                </label>
+                <div className="font-body text-sm text-ink-900 bg-primary-50 p-3 rounded-md whitespace-pre-wrap">
+                  {selectedLog.reason || '-'}
+                </div>
               </div>
 
               {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
                 <div>
-                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">Metadata</label>
+                  <label className="font-body text-xs font-semibold text-ink-500 uppercase tracking-wider block mb-1">
+                    Metadata
+                  </label>
                   <pre className="font-mono text-xs text-ink-600 bg-primary-50 p-3 rounded-md overflow-x-auto max-h-64">
                     {JSON.stringify(selectedLog.metadata, null, 2)}
                   </pre>

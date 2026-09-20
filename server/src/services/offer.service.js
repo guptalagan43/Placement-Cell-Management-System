@@ -166,7 +166,11 @@ export async function respondToOffer(offerId, response, user) {
 
   // Check if offer is still pending
   if (offer.status !== 'pending') {
-    throw new ApiError(400, `Offer is no longer pending (current status: ${offer.status})`, 'INVALID_OFFER_STATUS')
+    throw new ApiError(
+      400,
+      `Offer is no longer pending (current status: ${offer.status})`,
+      'INVALID_OFFER_STATUS'
+    )
   }
 
   // Check if deadline has passed
@@ -259,7 +263,9 @@ export async function expireOffers() {
   const expiredOffers = await OfferLetter.find({
     status: 'pending',
     responseDeadline: { $lt: now },
-  }).populate('application').lean()
+  })
+    .populate('application')
+    .lean()
 
   const results = { expired: 0, errors: [] }
 

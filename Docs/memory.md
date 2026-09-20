@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-19 — Phase 45 (Offer Response Flow) complete |
+| **Last Updated** | 2026-09-20 — Phase 46 (RulesPage Schema & CMS API) complete |
 
 ---
 
@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M7 — Governance: Overrides, Audit, Offers |
-| **Current Phase** | Phase 46 — RulesPage Schema & CMS API (Not Started; next up) |
-| **Phases Complete** | 45 / 67 |
-| **Overall Completion** | ~67% |
+| **Current Milestone** | M8 — Policy, Announcements & Notifications |
+| **Current Phase** | Phase 47 — Rules Page UI + Acknowledgment Gate (Not Started; next up) |
+| **Phases Complete** | 46 / 67 |
+| **Overall Completion** | ~69% |
 | **Blockers** | None |
 
 ---
@@ -114,7 +114,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 ### Milestone 8 — Policy, Announcements & Notifications
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 46 | RulesPage Schema & CMS API | Not Started | — | — |
+| 46 | RulesPage Schema & CMS API | Complete | 2026-09-20 | RulesPage schema (DR-11) with content, version, editor; `GET /rules` public endpoint; `PUT /rules` TPO-only with auto-incrementing version; AuditLog entry on every edit (action: rules_edit). **12 integration tests pass**. Lint/format clean. |
 | 47 | Rules Page UI + Acknowledgment Gate | Not Started | — | — |
 | 48 | Announcement Schema & CRUD API | Not Started | — | — |
 | 49 | Announcement Board UI | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 45 complete; **Milestone 7 (Governance: Overrides, Audit, Offers) Phase 45 done**. Phase 46 (RulesPage Schema & CMS API, M8) is next.
-**File(s) touched in Phase 45:** _Created_ — `client/src/pages/OfferResponsePage.jsx`; _Modified_ — `client/src/App.jsx` (added OfferResponsePage route), `client/src/pages/MyApplicationsPage.jsx` (added View Offer button for offer_issued status), `client/src/api/offer.api.js` (already existed from Phase 44). Tests: 22 backend + 83 frontend tests pass, all lint/format clean, build passes.
-**Next action:** Begin Phase 46 — RulesPage Schema & CMS API (M8). Traces to **FR-RUL-01, FR-AUD-01**. Key tasks: RulesPage schema (DR-11), `GET /rules` (public), `PUT /rules` (Admin-only, auto-increments version), AuditLog entry on edit.
+**Active phase:** None active — Phase 46 complete; **Milestone 8 (Policy, Announcements & Notifications) Phase 46 done**. Phase 47 (Rules Page UI + Acknowledgment Gate, M8) is next.
+**File(s) touched in Phase 46:** _Created_ — `server/src/models/RulesPage.model.js`, `server/src/services/rulesPage.service.js`, `server/src/controllers/rulesPage.controller.js`, `server/src/routes/rulesPage.routes.js`, `server/src/routes/rulesPage.routes.test.js`; _Modified_ — `server/src/app.js` (registered /rules routes). Tests: **12 new backend integration tests pass** (public GET /rules, TPO-only PUT /rules with versioning, AuditLog creation on edit, RBAC enforcement). All lint/format clean, build passes.
+**Next action:** Begin Phase 47 — Rules Page UI + Acknowledgment Gate (M8). Traces to **FR-RUL-02**. Key tasks: Rules & Regulations page rendering content from API; acknowledgment checkbox writing to `StudentProfile.policyAcknowledgment`; Apply action blocked until acknowledgment recorded.
 
 ---
 
@@ -231,6 +231,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-13 (Ph.34) | Extended `ApiError` class to support optional `details` field; updated error handler to include `details` in response when present. | Needed for eligibility failure responses to include machine-readable reason codes and human-readable messages for frontend branching (FR-ELG-03). Maintains backward compatibility — existing error responses unchanged. |
 | 2026-09-18 (Ph.41) | Eligibility override endpoint restricted to **TPO only** (not coordinators). | FR-ELG-04 states "Admin shall be able to override"; in this system, TPO is the Super Admin with institute-wide scope, while coordinators are department-scoped. Override is a high-privilege action affecting eligibility rules, so restricted to TPO. Coordinators can still update round statuses. |
 | 2026-09-18 (Ph.41) | AuditLog model uses **pre-save and query middleware** to enforce immutability (NFR-AUD-01). Throws error on any modification/deletion attempt. | Per `srs.md` NFR-AUD-01: "Audit Log entries, once written, shall never be updated or deleted by application code." The middleware approach catches all write paths (save, findOneAndUpdate, updateOne, updateMany, deleteOne, deleteMany). |
+| 2026-09-20 (Ph.46) | RulesPage model uses a singleton pattern (single document with auto-incrementing version) rather than multiple documents. `GET /rules` is public (no auth); `PUT /rules` is TPO-only. AuditLog entry created on every edit with metadata capturing previous/new version and content lengths. | Matches FR-RUL-01 (versioned rules page) and FR-AUD-01 (audit log on policy edit). Singleton pattern avoids complexity of multiple versions while version field tracks changes. Public read access allows students to view rules before acknowledgment (Phase 47). TPO-only write matches FR-RUL-01 "Admin shall maintain" and existing RBAC pattern for high-privilege actions. |
 
 ---
 

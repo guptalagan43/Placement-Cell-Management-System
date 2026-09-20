@@ -30,9 +30,7 @@ const createTestUser = async (role, department = null) => {
 }
 
 const loginAndGetToken = async (email) => {
-  const res = await request(app)
-    .post('/auth/login')
-    .send({ email, password: 'TestPass123' })
+  const res = await request(app).post('/auth/login').send({ email, password: 'TestPass123' })
   return res.body.accessToken
 }
 
@@ -182,7 +180,9 @@ describe('AuditLog routes', () => {
 
       expect(res.body.success).toBe(true)
       expect(res.body.auditLogs).toHaveLength(2)
-      expect(new Date(res.body.auditLogs[0].timestamp) >= new Date('2024-01-16T00:00:00.000Z')).toBe(true)
+      expect(
+        new Date(res.body.auditLogs[0].timestamp) >= new Date('2024-01-16T00:00:00.000Z')
+      ).toBe(true)
     })
 
     it('filters by dateTo', async () => {
@@ -193,7 +193,9 @@ describe('AuditLog routes', () => {
 
       expect(res.body.success).toBe(true)
       expect(res.body.auditLogs).toHaveLength(2)
-      expect(new Date(res.body.auditLogs[0].timestamp) <= new Date('2024-01-16T23:59:59.999Z')).toBe(true)
+      expect(
+        new Date(res.body.auditLogs[0].timestamp) <= new Date('2024-01-16T23:59:59.999Z')
+      ).toBe(true)
     })
 
     it('filters by targetEntityType', async () => {

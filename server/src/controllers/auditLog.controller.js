@@ -12,7 +12,10 @@ const auditLogQuerySchema = z.object({
     limit: z.coerce.number().int().positive().max(100).default(20),
     sortBy: z.string().default('timestamp'),
     sortOrder: z.enum(['asc', 'desc']).default('desc'),
-    actor: z.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+    actor: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .optional(),
     action: z
       .enum([
         'eligibility_override',
@@ -45,7 +48,10 @@ const auditLogQuerySchema = z.object({
         'User',
       ])
       .optional(),
-    targetEntityId: z.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+    targetEntityId: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .optional(),
   }),
 })
 
@@ -119,7 +125,9 @@ export const getAuditLogById = [
   asyncHandler(async (req, res) => {
     const { params } = auditLogIdParamSchema.parse({ params: req.params })
 
-    const log = await AuditLog.findById(params.id).populate('actor', 'name email role').lean({ virtuals: true })
+    const log = await AuditLog.findById(params.id)
+      .populate('actor', 'name email role')
+      .lean({ virtuals: true })
 
     if (!log) {
       throw new ApiError(404, 'Audit log entry not found', 'AUDIT_LOG_NOT_FOUND')
