@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-26 — Phase 48 (Announcement Schema & CRUD API) complete |
+| **Last Updated** | 2026-09-26 — Phase 49 (Announcement Board UI) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M8 — Policy, Announcements & Notifications |
-| **Current Phase** | Phase 49 — Announcement Board UI (Not Started; next up) |
-| **Phases Complete** | 48 / 67 |
-| **Overall Completion** | ~72% |
+| **Current Phase** | Phase 50 — Notification Schema & In-App API (Not Started; next up) |
+| **Phases Complete** | 49 / 67 |
+| **Overall Completion** | ~73% |
 | **Blockers** | None |
 
 ---
@@ -117,7 +117,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 46 | RulesPage Schema & CMS API | Complete | 2026-09-20 | RulesPage schema (DR-11) with content, version, editor; `GET /rules` public endpoint; `PUT /rules` TPO-only with auto-incrementing version; AuditLog entry on every edit (action: rules_edit). **12 integration tests pass**. Lint/format clean. |
 | 47 | Rules Page UI + Acknowledgment Gate | Complete | 2026-09-20 | Rules & Regulations page at `/rules` rendering content from API; acknowledgment checkbox writing to `StudentProfile.policyAcknowledgment` with version check; Apply action blocked on DriveDetailPage until acknowledgment recorded. Backend: `PUT /students/me/policy-acknowledgment` endpoint, policy acknowledgment check in `createApplication`. **561 backend + 83 frontend tests pass**. Lint/format clean. |
 | 48 | Announcement Schema & CRUD API | Complete | 2026-09-26 | Announcement model (DR-09) with title, body, category (general/drive_specific/urgent), drive reference, department scope, pin flag, expiry. Service with student-facing (auto-excludes expired, department-scoped) and admin (full CRUD, filters, pagination, sorting) methods. Routes: GET /announcements (student), GET /announcements/admin (coordinator/TPO), GET /announcements/:id, POST/PUT/DELETE /announcements (coordinator/TPO). RBAC: students read, coordinators/TPO full CRUD with department scoping. **612 backend + 83 frontend tests pass**. Lint/format clean. |
-| 49 | Announcement Board UI | Not Started | — | — |
+| 49 | Announcement Board UI | Complete | 2026-09-26 | Announcement feed page at `/announcements` with category filter chips (All/General/Drive Specific/Urgent), pinned announcements surfaced first, department-scoped visibility, category badges, expiry dates, drive-specific badges, pagination. Client API for GET /announcements (with filters) and GET /announcements/:id. **612 backend + 83 frontend tests pass**. Lint/format clean. |
 | 50 | Notification Schema & In-App API | Not Started | — | — |
 | 51 | Notification Bell/Center UI | Not Started | — | — |
 | 52 | Email Notification Service + Wiring | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 48 complete; **Milestone 8 (Policy, Announcements & Notifications) Phase 48 done**. Phase 49 (Announcement Board UI, M8) is next.
-**File(s) touched in Phase 48:** _Created_ — `server/src/models/Announcement.model.js`, `server/src/services/announcement.service.js`, `server/src/controllers/announcement.controller.js`, `server/src/routes/announcement.routes.js`, `server/src/routes/announcement.routes.test.js`; _Modified_ — `server/src/middleware/scope.middleware.js` (added field parameter to `applyDepartmentScope`). Tests: **612 backend + 83 frontend tests pass**. All lint/format clean, build passes.
-**Next action:** Begin Phase 49 — Announcement Board UI (M8). Traces to **FR-ANN-01, FR-SEA-01**. Key tasks: Announcement feed page; category/department filters; pinned items surfaced first; department-scoped visibility.
+**Active phase:** None active — Phase 49 complete; **Milestone 8 (Policy, Announcements & Notifications) Phase 49 done**. Phase 50 (Notification Schema & In-App API, M8) is next.
+**File(s) touched in Phase 49:** _Created_ — `client/src/api/announcement.api.js`, `client/src/pages/AnnouncementBoardPage.jsx`; _Modified_ — `client/src/App.jsx`, `client/src/layouts/AppLayout.jsx`. Tests: **612 backend + 83 frontend tests pass**. All lint/format clean, build passes.
+**Next action:** Begin Phase 50 — Notification Schema & In-App API (M8). Traces to **FR-NOT-01, FR-NOT-02**. Key tasks: Notification schema (DR-10) with type, message, link, read flag, email-sent flag; `GET /notifications/me`, mark-read routes.
 
 ---
 
@@ -234,6 +234,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-20 (Ph.46) | RulesPage model uses a singleton pattern (single document with auto-incrementing version) rather than multiple documents. `GET /rules` is public (no auth); `PUT /rules` is TPO-only. AuditLog entry created on every edit with metadata capturing previous/new version and content lengths. | Matches FR-RUL-01 (versioned rules page) and FR-AUD-01 (audit log on policy edit). Singleton pattern avoids complexity of multiple versions while version field tracks changes. Public read access allows students to view rules before acknowledgment (Phase 47). TPO-only write matches FR-RUL-01 "Admin shall maintain" and existing RBAC pattern for high-privilege actions. |
 | 2026-09-20 (Ph.47) | Policy acknowledgment is enforced at **both** the API layer (createApplication service checks `policyAcknowledgment.version` against current RulesPage version) and the UI layer (DriveDetailPage shows acknowledgment gate, RulesPage has acknowledgment checkbox). Acknowledgment is per-version — if rules are updated, students must re-acknowledge. TPO can edit rules via `/admin/rules` (to be built in later admin UI phase). | Matches FR-RUL-02 (digital acknowledgment before first application, versioned and timestamped). Dual enforcement ensures server-side security even if client is bypassed. Version check uses string comparison to handle both number and string versions. |
 | 2026-09-26 (Ph.48) | Announcement `departmentScope` field uses the same department list as coordinator scoping and student profiles (`branch` field in StudentProfile). `applyDepartmentScope` helper generalized with optional `field` parameter (defaults to 'branch', overridden to 'departmentScope' for Announcements). Student-facing list auto-filters expired announcements and applies department scope based on student's branch. | Matches FR-ANN-01 (categorized announcements, department scope, pin, expiry). Reuses existing department list constant and scoping middleware. General announcements (null scope) visible to all; department-scoped visible only to that department's students + TPO. Expired excluded by default for students, included for admin. |
+| 2026-09-26 (Ph.49) | Announcement Board UI uses category filter chips for UX (All/General/Drive Specific/Urgent). Pinned announcements rendered first with visual indicator. Department-scoped visibility enforced by backend — students only see general + their department's announcements. Category badges use semantic colors (danger for urgent, info for drive_specific, neutral for general). Expired announcements auto-excluded by backend. Pagination with page/next controls. | Matches FR-ANN-01 (announcement feed), FR-SEA-01 (filter by category). Category chips pattern follows design.md §6 filter chips. Backend scoping ensures students never see other departments' announcements even if client filter is bypassed. |
 
 ---
 
