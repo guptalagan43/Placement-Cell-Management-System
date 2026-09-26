@@ -37,10 +37,10 @@ export function departmentScope(req, _res, next) {
 
 // Helper to apply department scope to a Mongoose query.
 // Usage: applyDepartmentScope(StudentProfile.find(), req.departmentScope)
-export function applyDepartmentScope(query, departmentScope) {
+// For Announcements, use field 'departmentScope' instead of 'branch'
+export function applyDepartmentScope(query, departmentScope, field = 'branch') {
   if (departmentScope) {
-    // StudentProfile uses 'branch' field for department
-    return query.where('branch').equals(departmentScope)
+    return query.where(field).equals(departmentScope)
   }
   // null/undefined scope means no filtering (TPO or non-scoped query)
   return query
