@@ -16,6 +16,7 @@ import AdminApplicantsPage from './pages/AdminApplicantsPage.jsx'
 import AuditLogPage from './pages/AuditLogPage.jsx'
 import OfferResponsePage from './pages/OfferResponsePage.jsx'
 import RulesPage from './pages/RulesPage.jsx'
+import AnnouncementBoardPage from './pages/AnnouncementBoardPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
@@ -92,6 +93,16 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <RulesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Announcement Board (all authenticated users) */}
+        <Route
+          path="/announcements"
+          element={
+            <ProtectedRoute>
+              <AnnouncementBoardPage />
             </ProtectedRoute>
           }
         />

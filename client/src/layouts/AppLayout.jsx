@@ -8,6 +8,7 @@ const navItems = [
   { to: '/', label: 'Home', end: true },
   { to: '/drives', label: 'Drives' },
   { to: '/applications/my', label: 'My Applications' },
+  { to: '/announcements', label: 'Announcements' },
   { to: '/rules', label: 'Rules' },
   { to: '/about', label: 'About' },
   { to: '/preview', label: 'Components' },
