@@ -1,5 +1,5 @@
 // Application service: handles application creation, retrieval, and management.
-// Traces to FR-APP-01, FR-APP-03, FR-ELG-04, FR-AUD-01.
+// Traces to FR-APP-01, FR-APP-03, FR-ELG-04, FR-AUD-01, FR-RUL-02.
 import mongoose from 'mongoose'
 import Application from '../models/Application.model.js'
 import StudentProfile from '../models/StudentProfile.model.js'
@@ -8,6 +8,7 @@ import AuditLog from '../models/AuditLog.model.js'
 import { ApiError } from '../utils/api-error.js'
 import eligibilitySvc from './eligibility.service.js'
 import SeasonConfig from '../models/SeasonConfig.model.js'
+import RulesPage from '../models/RulesPage.model.js'
 import { ROLES } from '../constants/roles.js'
 
 // Get active season configuration for eligibility business rules
@@ -51,6 +52,23 @@ export async function createApplication(studentId, driveId, resumeLabel, user) {
 
   if (!resume) {
     throw new ApiError(400, 'Selected resume not found', 'RESUME_NOT_FOUND')
+  }
+
+  // Check policy acknowledgment (FR-RUL-02)
+  const rulesPage = await RulesPage.findOne().lean()
+  if (rulesPage) {
+    const ack = studentProfile.policyAcknowledgment
+    if (!ack || !ack.version || String(ack.version) !== String(rulesPage.version)) {
+      throw new ApiError(
+        400,
+        'You must acknowledge the current Rules & Regulations before applying',
+        'POLICY_NOT_ACKNOWLEDGED',
+        {
+          currentVersion: rulesPage.version,
+          rulesUrl: '/rules',
+        }
+      )
+    }
   }
 
   // Run eligibility check

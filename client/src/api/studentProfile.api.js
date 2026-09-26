@@ -34,4 +34,15 @@ export async function updateSelfProfile(data) {
   return handleResponse(res)
 }
 
-export default { getSelfProfile, updateSelfProfile }
+// Acknowledge policy (student)
+export async function acknowledgePolicy(version) {
+  const res = await fetch(`${API_BASE}/students/me/policy-acknowledgment`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ version }),
+  })
+  return handleResponse(res)
+}
+
+export default { getSelfProfile, updateSelfProfile, acknowledgePolicy }

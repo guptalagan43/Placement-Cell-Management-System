@@ -4,6 +4,12 @@ import { asyncHandler } from '../utils/async-handler.js'
 import * as studentProfileSvc from '../services/studentProfile.service.js'
 
 // Validation schemas
+const policyAcknowledgmentSchema = z.object({
+  body: z.object({
+    version: z.string().min(1, 'Version is required'),
+  }),
+})
+
 const listQuerySchema = z.object({
   query: z.object({
     branch: z.string().optional(),
@@ -152,6 +158,15 @@ export const updateSelfProfile = [
   }),
 ]
 
+// PUT /students/me/policy-acknowledgment — student acknowledges current rules version
+export const acknowledgePolicy = [
+  asyncHandler(async (req, res) => {
+    const { body } = policyAcknowledgmentSchema.parse({ body: req.body })
+    const result = await studentProfileSvc.acknowledgePolicy(req.user._id, body.version)
+    res.json({ success: true, profile: result })
+  }),
+]
+
 // GET /students — list profiles (coordinator/TPO with department scoping)
 export const getProfilesList = [
   asyncHandler(async (req, res) => {
@@ -185,6 +200,7 @@ export const updateProfileById = [
 export default {
   getSelfProfile,
   updateSelfProfile,
+  acknowledgePolicy,
   getProfilesList,
   getProfileById,
   updateProfileById,

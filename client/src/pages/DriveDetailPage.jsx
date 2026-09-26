@@ -24,6 +24,8 @@ import * as driveApi from '../api/drive.api.js'
 import * as roundApi from '../api/round.api.js'
 import * as infoSessionApi from '../api/infoSession.api.js'
 import * as applicationApi from '../api/application.api.js'
+import * as rulesApi from '../api/rules.api.js'
+import * as studentProfileApi from '../api/studentProfile.api.js'
 import Button from '../components/ui/Button.jsx'
 import Card from '../components/ui/Card.jsx'
 import Badge from '../components/ui/Badge.jsx'
@@ -100,6 +102,9 @@ export default function DriveDetailPage() {
   const [applyError, setApplyError] = useState(null)
   const [applySuccess, setApplySuccess] = useState(false)
   const [selectedResumeLabel, setSelectedResumeLabel] = useState('')
+  const [policyAcknowledged, setPolicyAcknowledged] = useState(false)
+  const [policyLoading, setPolicyLoading] = useState(true)
+  const [currentRulesVersion, setCurrentRulesVersion] = useState(null)
 
   useEffect(() => {
     const fetchDriveDetails = async () => {
@@ -133,7 +138,28 @@ export default function DriveDetailPage() {
       }
     }
 
+    const fetchPolicyStatus = async () => {
+      setPolicyLoading(true)
+      try {
+        const [rulesRes, profileRes] = await Promise.all([
+          rulesApi.getRules(),
+          studentProfileApi.getSelfProfile(),
+        ])
+        const rulesVersion = rulesRes.rulesPage?.version
+        setCurrentRulesVersion(rulesVersion)
+        const ack = profileRes.profile?.policyAcknowledgment
+        if (rulesVersion && ack?.version && String(ack.version) === String(rulesVersion)) {
+          setPolicyAcknowledged(true)
+        }
+      } catch (err) {
+        console.debug('Could not fetch policy status:', err)
+      } finally {
+        setPolicyLoading(false)
+      }
+    }
+
     fetchDriveDetails()
+    fetchPolicyStatus()
   }, [id])
 
   const isEligible = drive?.eligibility?.eligible === true
@@ -629,6 +655,25 @@ export default function DriveDetailPage() {
               <p className="font-body text-sm text-ink-500">
                 Current status: {drive.status.replace('_', ' ')}
               </p>
+            </div>
+          ) : policyLoading ? (
+            <div className="space-y-3 text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary-700 mx-auto mb-2" />
+              <p className="font-body text-ink-600">Checking policy acknowledgment...</p>
+            </div>
+          ) : !policyAcknowledged && currentRulesVersion ? (
+            <div className="space-y-3 text-center">
+              <AlertCircle className="w-12 h-12 text-warning mx-auto mb-2" />
+              <h3 className="font-heading text-lg font-semibold text-ink-900">
+                Policy Acknowledgment Required
+              </h3>
+              <p className="font-body text-ink-600">
+                You must acknowledge the current Rules & Regulations (Version {currentRulesVersion})
+                before applying to any drive.
+              </p>
+              <Button variant="primary" onClick={() => navigate('/rules')}>
+                Acknowledge Rules & Regulations
+              </Button>
             </div>
           ) : applySuccess ? (
             <div className="space-y-3 text-center">

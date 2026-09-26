@@ -35,6 +35,41 @@ const STUDENT_UPDATABLE_FIELDS = [
   'guardianInfo',
 ]
 
+// Acknowledge policy (student)
+export async function acknowledgePolicy(userId, version) {
+  // Get current rules page to verify version
+  const RulesPage = (await import('../models/RulesPage.model.js')).default
+  const rulesPage = await RulesPage.findOne().lean()
+
+  if (!rulesPage) {
+    throw new ApiError(400, 'No rules page exists to acknowledge', 'NO_RULES_PAGE')
+  }
+
+  if (String(rulesPage.version) !== String(version)) {
+    throw new ApiError(
+      400,
+      `Version mismatch. Current version is ${rulesPage.version}`,
+      'VERSION_MISMATCH'
+    )
+  }
+
+  const profile = await StudentProfile.findOneAndUpdate(
+    { user: userId },
+    {
+      $set: {
+        'policyAcknowledgment.version': String(version),
+        'policyAcknowledgment.acceptedAt': new Date(),
+      },
+    },
+    { new: true, runValidators: true }
+  ).lean()
+
+  if (!profile) {
+    throw new ApiError(404, 'Profile not found', 'PROFILE_NOT_FOUND')
+  }
+  return profile
+}
+
 // Get profile by user ID (self)
 export async function getSelfProfile(userId) {
   const profile = await StudentProfile.findOne({ user: userId }).lean()
@@ -195,6 +230,7 @@ export async function updateProfileById(profileId, updateData, departmentScope) 
 export default {
   getSelfProfile,
   updateSelfProfile,
+  acknowledgePolicy,
   getProfilesList,
   getProfileById,
   updateProfileById,

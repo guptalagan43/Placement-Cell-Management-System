@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-20 — Phase 46 (RulesPage Schema & CMS API) complete |
+| **Last Updated** | 2026-09-20 — Phase 47 (Rules Page UI + Acknowledgment Gate) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M8 — Policy, Announcements & Notifications |
-| **Current Phase** | Phase 47 — Rules Page UI + Acknowledgment Gate (Not Started; next up) |
-| **Phases Complete** | 46 / 67 |
-| **Overall Completion** | ~69% |
+| **Current Phase** | Phase 48 — Announcement Schema & CRUD API (Not Started; next up) |
+| **Phases Complete** | 47 / 67 |
+| **Overall Completion** | ~70% |
 | **Blockers** | None |
 
 ---
@@ -115,7 +115,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 46 | RulesPage Schema & CMS API | Complete | 2026-09-20 | RulesPage schema (DR-11) with content, version, editor; `GET /rules` public endpoint; `PUT /rules` TPO-only with auto-incrementing version; AuditLog entry on every edit (action: rules_edit). **12 integration tests pass**. Lint/format clean. |
-| 47 | Rules Page UI + Acknowledgment Gate | Not Started | — | — |
+| 47 | Rules Page UI + Acknowledgment Gate | Complete | 2026-09-20 | Rules & Regulations page at `/rules` rendering content from API; acknowledgment checkbox writing to `StudentProfile.policyAcknowledgment` with version check; Apply action blocked on DriveDetailPage until acknowledgment recorded. Backend: `PUT /students/me/policy-acknowledgment` endpoint, policy acknowledgment check in `createApplication`. **561 backend + 83 frontend tests pass**. Lint/format clean. |
 | 48 | Announcement Schema & CRUD API | Not Started | — | — |
 | 49 | Announcement Board UI | Not Started | — | — |
 | 50 | Notification Schema & In-App API | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 46 complete; **Milestone 8 (Policy, Announcements & Notifications) Phase 46 done**. Phase 47 (Rules Page UI + Acknowledgment Gate, M8) is next.
-**File(s) touched in Phase 46:** _Created_ — `server/src/models/RulesPage.model.js`, `server/src/services/rulesPage.service.js`, `server/src/controllers/rulesPage.controller.js`, `server/src/routes/rulesPage.routes.js`, `server/src/routes/rulesPage.routes.test.js`; _Modified_ — `server/src/app.js` (registered /rules routes). Tests: **12 new backend integration tests pass** (public GET /rules, TPO-only PUT /rules with versioning, AuditLog creation on edit, RBAC enforcement). All lint/format clean, build passes.
-**Next action:** Begin Phase 47 — Rules Page UI + Acknowledgment Gate (M8). Traces to **FR-RUL-02**. Key tasks: Rules & Regulations page rendering content from API; acknowledgment checkbox writing to `StudentProfile.policyAcknowledgment`; Apply action blocked until acknowledgment recorded.
+**Active phase:** None active — Phase 47 complete; **Milestone 8 (Policy, Announcements & Notifications) Phase 47 done**. Phase 48 (Announcement Schema & CRUD API, M8) is next.
+**File(s) touched in Phase 47:** _Created_ — `client/src/api/rules.api.js`, `client/src/pages/RulesPage.jsx`; _Modified_ — `server/src/controllers/studentProfile.controller.js`, `server/src/routes/studentProfile.routes.js`, `server/src/services/studentProfile.service.js`, `server/src/services/application.service.js`, `client/src/api/studentProfile.api.js`, `client/src/App.jsx`, `client/src/layouts/AppLayout.jsx`, `client/src/pages/DriveDetailPage.jsx`. Tests: **561 backend + 83 frontend tests pass**. All lint/format clean, build passes.
+**Next action:** Begin Phase 48 — Announcement Schema & CRUD API (M8). Traces to **FR-ANN-01**. Key tasks: Announcement schema (DR-09) with category, department scope, pin, and expiry fields; CRUD routes with RBAC.
 
 ---
 
@@ -232,6 +232,7 @@ Append-only. Every entry below was settled during requirements/design review, be
 | 2026-09-18 (Ph.41) | Eligibility override endpoint restricted to **TPO only** (not coordinators). | FR-ELG-04 states "Admin shall be able to override"; in this system, TPO is the Super Admin with institute-wide scope, while coordinators are department-scoped. Override is a high-privilege action affecting eligibility rules, so restricted to TPO. Coordinators can still update round statuses. |
 | 2026-09-18 (Ph.41) | AuditLog model uses **pre-save and query middleware** to enforce immutability (NFR-AUD-01). Throws error on any modification/deletion attempt. | Per `srs.md` NFR-AUD-01: "Audit Log entries, once written, shall never be updated or deleted by application code." The middleware approach catches all write paths (save, findOneAndUpdate, updateOne, updateMany, deleteOne, deleteMany). |
 | 2026-09-20 (Ph.46) | RulesPage model uses a singleton pattern (single document with auto-incrementing version) rather than multiple documents. `GET /rules` is public (no auth); `PUT /rules` is TPO-only. AuditLog entry created on every edit with metadata capturing previous/new version and content lengths. | Matches FR-RUL-01 (versioned rules page) and FR-AUD-01 (audit log on policy edit). Singleton pattern avoids complexity of multiple versions while version field tracks changes. Public read access allows students to view rules before acknowledgment (Phase 47). TPO-only write matches FR-RUL-01 "Admin shall maintain" and existing RBAC pattern for high-privilege actions. |
+| 2026-09-20 (Ph.47) | Policy acknowledgment is enforced at **both** the API layer (createApplication service checks `policyAcknowledgment.version` against current RulesPage version) and the UI layer (DriveDetailPage shows acknowledgment gate, RulesPage has acknowledgment checkbox). Acknowledgment is per-version — if rules are updated, students must re-acknowledge. TPO can edit rules via `/admin/rules` (to be built in later admin UI phase). | Matches FR-RUL-02 (digital acknowledgment before first application, versioned and timestamped). Dual enforcement ensures server-side security even if client is bypassed. Version check uses string comparison to handle both number and string versions. |
 
 ---
 
