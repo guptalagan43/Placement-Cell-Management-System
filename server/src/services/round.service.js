@@ -1,11 +1,13 @@
 // Round service: CRUD operations for rounds with department scoping enforcement.
 // Handles create, read, update, delete with RBAC enforcement and department scoping.
-// Traces to FR-SCH-01.
+// Traces to FR-SCH-01, FR-NOT-01.
 import mongoose from 'mongoose'
 import Round from '../models/Round.model.js'
 import Drive from '../models/Drive.model.js'
+import Application from '../models/Application.model.js'
 import { ApiError } from '../utils/api-error.js'
 import { ROLES } from '../constants/roles.js'
+import { createNotification } from './notification.service.js'
 
 // Valid modes for a round
 const VALID_MODES = ['online', 'offline']
@@ -113,6 +115,11 @@ export async function updateRound(roundId, updateData, user) {
 
   const { roundNumber, name, dateTime, mode, venue, meetingLink, instructions } = updateData
 
+  // Store old values for notification
+  const oldDateTime = round.dateTime
+  const oldVenue = round.venue
+  const oldMeetingLink = round.meetingLink
+
   const updateFields = {}
 
   if (roundNumber !== undefined) {
@@ -168,6 +175,37 @@ export async function updateRound(roundId, updateData, user) {
     if (!updatedRound) {
       throw new ApiError(404, 'Round not found', 'ROUND_NOT_FOUND')
     }
+
+    // Send notification if dateTime, venue, or meetingLink changed (rescheduled)
+    const isRescheduled =
+      (dateTime !== undefined &&
+        new Date(dateTime).getTime() !== new Date(oldDateTime).getTime()) ||
+      (venue !== undefined && venue !== oldVenue) ||
+      (meetingLink !== undefined && meetingLink !== oldMeetingLink)
+
+    if (isRescheduled) {
+      const drive = await Drive.findById(round.drive).populate('company', 'name').lean()
+      if (drive) {
+        // Find all students who applied to this drive and are in this round
+        const applications = await Application.find({ drive: drive._id })
+          .populate('student', 'user')
+          .lean()
+
+        for (const app of applications) {
+          // Check if this round is in the application's roundStatuses
+          const hasRound = app.roundStatuses?.some((rs) => rs.round.toString() === roundId)
+          if (hasRound && app.student?.user) {
+            await createNotification({
+              user: app.student.user,
+              type: 'round_rescheduled',
+              message: `${round.name} for ${drive.title} at ${drive.company?.name ?? 'the company'} has been rescheduled.`,
+              link: `/applications/my`,
+            })
+          }
+        }
+      }
+    }
+
     return updatedRound
   } catch (err) {
     if (err instanceof mongoose.mongo.MongoServerError && err.code === 11000) {

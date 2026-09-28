@@ -1,15 +1,17 @@
 // Application service: handles application creation, retrieval, and management.
-// Traces to FR-APP-01, FR-APP-03, FR-ELG-04, FR-AUD-01, FR-RUL-02.
+// Traces to FR-APP-01, FR-APP-03, FR-ELG-04, FR-AUD-01, FR-RUL-02, FR-NOT-01.
 import mongoose from 'mongoose'
 import Application from '../models/Application.model.js'
 import StudentProfile from '../models/StudentProfile.model.js'
 import Drive from '../models/Drive.model.js'
 import AuditLog from '../models/AuditLog.model.js'
+import Round from '../models/Round.model.js'
 import { ApiError } from '../utils/api-error.js'
 import eligibilitySvc from './eligibility.service.js'
 import SeasonConfig from '../models/SeasonConfig.model.js'
 import RulesPage from '../models/RulesPage.model.js'
 import { ROLES } from '../constants/roles.js'
+import { createNotification } from './notification.service.js'
 
 // Get active season configuration for eligibility business rules
 async function getActiveSeasonConfig() {
@@ -134,9 +136,20 @@ export async function createApplication(studentId, driveId, resumeLabel, user) {
       overridden: !finalEligibility.eligible,
       reason: finalEligibility.eligible
         ? ''
-        : 'Auto-override: eligibility check failed but application allowed', // This shouldn't happen with the check above, but kept for completeness
+        : 'Auto-override: eligibility check failed but application allowed',
     },
   })
+
+  // Create notification for application confirmed
+  const driveForNotif = await Drive.findById(driveId).populate('company', 'name').lean()
+  if (driveForNotif) {
+    await createNotification({
+      user: user._id,
+      type: 'application_confirmed',
+      message: `Your application for ${driveForNotif.title} at ${driveForNotif.company?.name ?? 'the company'} has been confirmed.`,
+      link: `/applications/my`,
+    })
+  }
 
   return application.toObject({ virtuals: true })
 }
@@ -267,6 +280,8 @@ export async function updateRoundStatus(applicationId, roundId, status, updatedB
   }
 
   const application = await Application.findById(applicationId)
+    .populate('student', 'user')
+    .populate('drive')
   if (!application) {
     throw new ApiError(404, 'Application not found', 'APPLICATION_NOT_FOUND')
   }
@@ -278,6 +293,7 @@ export async function updateRoundStatus(applicationId, roundId, status, updatedB
     throw new ApiError(404, 'Round not found in this application', 'ROUND_NOT_FOUND')
   }
 
+  const previousStatus = application.roundStatuses[roundStatusIndex].status
   application.roundStatuses[roundStatusIndex].status = status
   application.roundStatuses[roundStatusIndex].updatedAt = new Date()
   application.roundStatuses[roundStatusIndex].updatedBy = updatedBy
@@ -298,6 +314,21 @@ export async function updateRoundStatus(applicationId, roundId, status, updatedB
   }
 
   await application.save()
+
+  // Create notification for shortlisted status
+  if (status === 'shortlisted' && previousStatus !== 'shortlisted') {
+    const round = await Round.findById(roundId).lean()
+    const drive = await Drive.findById(application.drive).populate('company', 'name').lean()
+    if (round && drive && application.student) {
+      await createNotification({
+        user: application.student.user,
+        type: 'shortlisted',
+        message: `You have been shortlisted for ${round.name} in ${drive.title} at ${drive.company?.name ?? 'the company'}.`,
+        link: `/applications/my`,
+      })
+    }
+  }
+
   return application.toObject({ virtuals: true })
 }
 

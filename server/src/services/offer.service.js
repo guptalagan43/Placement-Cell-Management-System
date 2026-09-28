@@ -1,5 +1,5 @@
 // Offer service: handles offer creation, retrieval, and management.
-// Traces to FR-OFR-01, FR-OFR-02, FR-OFR-03, FR-OFR-04.
+// Traces to FR-OFR-01, FR-OFR-02, FR-OFR-03, FR-OFR-04, FR-NOT-01.
 import OfferLetter from '../models/OfferLetter.model.js'
 import Application from '../models/Application.model.js'
 import StudentProfile from '../models/StudentProfile.model.js'
@@ -7,6 +7,7 @@ import Drive from '../models/Drive.model.js'
 import AuditLog from '../models/AuditLog.model.js'
 import { ApiError } from '../utils/api-error.js'
 import { ROLES } from '../constants/roles.js'
+import { createNotification } from './notification.service.js'
 
 // Issue an offer against an application (coordinator/TPO)
 export async function issueOffer(applicationId, documentData, responseDeadline, issuedBy, user) {
@@ -61,6 +62,17 @@ export async function issueOffer(applicationId, documentData, responseDeadline, 
   await Application.findByIdAndUpdate(applicationId, {
     $set: { overallStatus: 'offer_issued' },
   })
+
+  // Create notification for offer issued
+  if (application.student?.user && application.drive) {
+    const drive = await Drive.findById(application.drive._id).populate('company', 'name').lean()
+    await createNotification({
+      user: application.student.user,
+      type: 'offer_issued',
+      message: `You have received an offer from ${drive?.company?.name ?? drive?.title ?? 'the company'} for ${drive?.title ?? 'the position'}.`,
+      link: `/offers/${offer._id}/respond`,
+    })
+  }
 
   // Create AuditLog entry
   await AuditLog.create({

@@ -1,13 +1,16 @@
 // Drive service: CRUD operations for drives with department scoping enforcement.
 // Handles create, read, update, delete with RBAC enforcement and department scoping.
-// Traces to FR-DRV-02, FR-DRV-03, FR-DRV-04.
+// Traces to FR-DRV-02, FR-DRV-03, FR-DRV-04, FR-NOT-01.
 import Drive from '../models/Drive.model.js'
 import Company from '../models/Company.model.js'
 import SeasonConfig from '../models/SeasonConfig.model.js'
+import Application from '../models/Application.model.js'
+import StudentProfile from '../models/StudentProfile.model.js'
 import { ApiError } from '../utils/api-error.js'
 import mongoose from 'mongoose'
 import { ROLES } from '../constants/roles.js'
 import eligibilitySvc from './eligibility.service.js'
+import { createNotification } from './notification.service.js'
 
 // Fields allowed for create/update by coordinators/TPO
 const ALLOWED_FIELDS = [
@@ -426,6 +429,62 @@ export async function updateDriveStatus(driveId, newStatus, user) {
   if (!drive) {
     throw new ApiError(404, 'Drive not found or access denied', 'DRIVE_NOT_FOUND')
   }
+
+  // Create notifications for drive_published status
+  if (newStatus === 'published') {
+    const studentProfiles = await StudentProfile.find({
+      branch: { $in: drive.eligibilityCriteria?.branches ?? [] },
+      batch: { $in: drive.eligibilityCriteria?.batches ?? [] },
+    })
+      .populate('user')
+      .lean()
+
+    for (const profile of studentProfiles) {
+      if (profile.user) {
+        await createNotification({
+          user: profile.user._id,
+          type: 'drive_published',
+          message: `New drive published: ${drive.title} at ${drive.company?.name ?? 'the company'}.`,
+          link: `/drives/${drive._id}`,
+        })
+      }
+    }
+  }
+
+  // Create notifications for results_declared status
+  if (newStatus === 'results_declared') {
+    const applications = await Application.find({ drive: driveId })
+      .populate('student', 'user')
+      .lean()
+
+    for (const app of applications) {
+      if (app.student?.user) {
+        // Get the student's status in this drive
+        let status = 'Not Selected'
+        if (
+          app.overallStatus === 'selected' ||
+          app.overallStatus === 'offer_issued' ||
+          app.overallStatus === 'offer_accepted'
+        ) {
+          status = 'Selected'
+        } else if (app.overallStatus === 'rejected' || app.overallStatus === 'offer_declined') {
+          status = 'Not Selected'
+        } else if (app.overallStatus === 'shortlisted') {
+          status = 'Shortlisted'
+        } else if (app.overallStatus === 'withdrawn') {
+          status = 'Withdrawn'
+        }
+
+        await createNotification({
+          user: app.student.user,
+          type: 'results_declared',
+          message: `Results have been declared for ${drive.title} at ${drive.company?.name ?? 'the company'}. Your status: ${status}.`,
+          link: `/applications/my`,
+        })
+      }
+    }
+  }
+
   return drive
 }
 

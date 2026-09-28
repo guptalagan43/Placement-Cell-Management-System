@@ -2,6 +2,9 @@
 // Traces to FR-NOT-01, FR-NOT-02.
 import Notification from '../models/Notification.model.js'
 import { ApiError } from '../utils/api-error.js'
+import User from '../models/User.model.js'
+import StudentProfile from '../models/StudentProfile.model.js'
+import { sendNotificationEmail, isEmailConfigured } from './email.service.js'
 
 // Get user's notifications with pagination
 export async function getUserNotifications(userId, queryParams) {
@@ -79,13 +82,66 @@ export async function markAllAsRead(userId) {
 // Create notification (internal use by other services)
 export async function createNotification(data) {
   const notification = await Notification.create(data)
-  return notification.toObject()
+  const notifObj = notification.toObject()
+
+  // Send email if configured and not already sent
+  if (isEmailConfigured() && !notifObj.emailSent) {
+    const user = await User.findById(notifObj.user).lean()
+    if (user) {
+      const profile = await StudentProfile.findOne({ user: user._id }).lean()
+      const studentName = profile?.name ?? user.email
+      const emailResult = await sendNotificationEmail(user.email, studentName, notifObj.type, {
+        ...notifObj,
+        message: notifObj.message,
+        link: notifObj.link,
+      })
+
+      if (emailResult.sent) {
+        await Notification.findByIdAndUpdate(notifObj._id, { $set: { emailSent: true } })
+        notifObj.emailSent = true
+      }
+    }
+  }
+
+  return notifObj
 }
 
 // Create multiple notifications (bulk)
 export async function createNotifications(notifications) {
   if (!notifications.length) return { insertedCount: 0 }
   const result = await Notification.insertMany(notifications)
+
+  // Send emails for bulk notifications
+  if (isEmailConfigured()) {
+    const userIds = [...new Set(result.map((n) => n.user.toString()))]
+    const users = await User.find({ _id: { $in: userIds } }).lean()
+    const profiles = await StudentProfile.find({ user: { $in: userIds } }).lean()
+
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]))
+    const profileMap = new Map(profiles.map((p) => [p.user.toString(), p]))
+
+    for (const notif of result) {
+      const userId = notif.user.toString()
+      const user = userMap.get(userId)
+      if (!user) continue
+
+      const profile = profileMap.get(userId)
+      const studentName = profile?.name ?? user.email
+
+      if (!notif.emailSent) {
+        const emailResult = await sendNotificationEmail(user.email, studentName, notif.type, {
+          ...notif.toObject(),
+          message: notif.message,
+          link: notif.link,
+        })
+
+        if (emailResult.sent) {
+          await Notification.findByIdAndUpdate(notif._id, { $set: { emailSent: true } })
+        }
+      }
+    }
+  }
+
   return { insertedCount: result.length }
 }
 
