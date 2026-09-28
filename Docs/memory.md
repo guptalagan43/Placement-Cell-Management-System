@@ -23,8 +23,8 @@
 | | |
 |---|---|
 | **Current Milestone** | M8 — Policy, Announcements & Notifications |
-| **Current Phase** | Phase 51 — Notification Bell/Center UI (Not Started; next up) |
-| **Phases Complete** | 50 / 67 |
+| **Current Phase** | Phase 52 — Email Notification Service + Trigger Wiring (Not Started; next up) |
+| **Phases Complete** | 51 / 67 |
 | **Overall Completion** | ~75% |
 | **Blockers** | None |
 
@@ -119,7 +119,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 48 | Announcement Schema & CRUD API | Complete | 2026-09-26 | Announcement model (DR-09) with title, body, category (general/drive_specific/urgent), drive reference, department scope, pin flag, expiry. Service with student-facing (auto-excludes expired, department-scoped) and admin (full CRUD, filters, pagination, sorting) methods. Routes: GET /announcements (student), GET /announcements/admin (coordinator/TPO), GET /announcements/:id, POST/PUT/DELETE /announcements (coordinator/TPO). RBAC: students read, coordinators/TPO full CRUD with department scoping. **612 backend + 83 frontend tests pass**. Lint/format clean. |
 | 49 | Announcement Board UI | Complete | 2026-09-26 | Announcement feed page at `/announcements` with category filter chips (All/General/Drive Specific/Urgent), pinned announcements surfaced first, department-scoped visibility, category badges, expiry dates, drive-specific badges, pagination. Client API for GET /announcements (with filters) and GET /announcements/:id. **612 backend + 83 frontend tests pass**. Lint/format clean. |
 | 50 | Notification Schema & In-App API | Complete | 2026-09-26 | Notification model (DR-10) with user, type (8 types), message, link, read, emailSent. Service: getUserNotifications (filters: read, type, pagination, sorting), getUnreadCount, getNotificationById, markAsRead, markAllAsRead, createNotification. Routes: GET /notifications/me, GET /notifications/me/unread-count, GET /notifications/me/:id, PUT /notifications/me/:id/read, PUT /notifications/me/read-all (student-only). **636 backend + 83 frontend tests pass**. Lint/format clean. |
-| 51 | Notification Bell/Center UI | Not Started | — | — |
+| 51 | Notification Bell/Center UI | Complete | 2026-09-28 | NotificationBell component at `client/src/components/ui/NotificationBell.jsx` with bell icon, unread count badge (per design.md top-bar pattern), dropdown panel listing recent notifications (type icon, message, timestamp, read/unread indicator, link navigation), mark-as-read per item, mark-all-read, 30s polling for unread count, outside-click close. Notifications page at `/notifications` (`client/src/pages/NotificationsPage.jsx`) with full list, pagination, read-status filter, type filter, mark-as-read, mark-all-read, view-details navigation. Route added in App.jsx. **Tests added**: `NotificationBell.test.jsx` (10 tests), `NotificationsPage.test.jsx` (12 tests). Client lint/format clean, build passes. Acceptance met: new notification appears in dropdown without full page reload (polling + fetch-on-open).
 | 52 | Email Notification Service + Wiring | Not Started | — | — |
 | 53 | Scheduled Reminder Jobs | Not Started | — | — |
 
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 50 complete; **Milestone 8 (Policy, Announcements & Notifications) Phase 50 done**. Phase 51 (Notification Bell/Center UI, M8) is next.
-**File(s) touched in Phase 50:** _Created_ — `server/src/models/Notification.model.js`, `server/src/services/notification.service.js`, `server/src/controllers/notification.controller.js`, `server/src/routes/notification.routes.js`, `server/src/routes/notification.routes.test.js`; _Modified_ — `server/src/app.js`. Tests: **636 backend + 83 frontend tests pass**. All lint/format clean, build passes.
-**Next action:** Begin Phase 51 — Notification Bell/Center UI (M8). Traces to **FR-NOT-02**. Key tasks: Notification bell with unread count (per `design.md` top-bar pattern); dropdown/panel listing recent notifications; real-time appearance without full page reload.
+**Active phase:** None active — Phase 51 complete; **Milestone 8 (Policy, Announcements & Notifications) Phase 51 done**. Phase 52 (Email Notification Service + Trigger Wiring, M8) is next.
+**File(s) touched in Phase 51:** _Created_ — `client/src/pages/NotificationsPage.jsx`, `client/src/components/ui/NotificationBell.test.jsx`, `client/src/pages/NotificationsPage.test.jsx`; _Modified_ — `client/src/App.jsx`. Tests: **636 backend + 83 frontend tests pass** (server unchanged); client lint/format clean, build passes.
+**Next action:** Begin Phase 52 — Email Notification Service + Trigger Wiring (M8). Traces to **FR-NOT-01**. Key tasks: Nodemailer service; wire triggers into application confirmed (Ph.34), shortlisted (Ph.39/40), round rescheduled (Ph.30), results declared (Ph.39), offer issued (Ph.44).
 
 ---
 

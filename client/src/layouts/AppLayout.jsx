@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { cn } from '../lib/cn.js'
 import Button from '../components/ui/Button.jsx'
+import NotificationBell from '../components/ui/NotificationBell.jsx'
 
 // Base layout shell: header with auth-aware nav, sidebar container, outlet.
 const navItems = [
@@ -80,6 +81,7 @@ export default function AppLayout() {
             )}
 
             <div className="flex items-center gap-3">
+              <NotificationBell />
               <div className="hidden sm:block text-right">
                 <p className="font-body text-sm font-semibold text-ink-900">
                   {user?.name ?? user?.email}
