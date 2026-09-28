@@ -18,6 +18,10 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
   FRONTEND_BASE_URL: z.string().url().optional(),
+  // Cron job configuration (Phase 53)
+  CRON_SCHEDULE: z.string().default('0 8 * * *'),
+  CRON_TIMEZONE: z.string().default('Asia/Kolkata'),
+  REMINDER_ADVANCE_HOURS: z.coerce.number().int().positive().default(24),
 })
 
 // Validate an arbitrary source object and return the typed config, or throw a

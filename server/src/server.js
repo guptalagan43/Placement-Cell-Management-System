@@ -1,9 +1,10 @@
 // Runtime bootstrap: load + validate environment, connect to MongoDB (fail-fast),
-// then start the HTTP server. Kept separate from app.js so the Express app stays
+// then start the HTTP server and cron scheduler. Kept separate from app.js so the Express app stays
 // importable in tests without a live database or an open port.
 import { createApp } from './app.js'
 import { loadEnv } from './config/env.js'
 import { connectDB } from './db/connect.js'
+import { startScheduler } from './jobs/scheduler.js'
 
 // Load a local .env when present (development). In production the platform
 // injects real environment variables; a missing file is expected, not an error.
@@ -38,6 +39,9 @@ async function start() {
   app.listen(env.PORT, () => {
     console.log(`[server] listening on port ${env.PORT} (${env.NODE_ENV})`)
   })
+
+  // Start cron scheduler after DB is connected
+  startScheduler()
 }
 
 start()
