@@ -10,6 +10,7 @@ const navItems = [
   { to: '/drives', label: 'Drives' },
   { to: '/applications/my', label: 'My Applications' },
   { to: '/announcements', label: 'Announcements' },
+  { to: '/contacts', label: 'Contacts' },
   { to: '/rules', label: 'Rules' },
   { to: '/about', label: 'About' },
   { to: '/preview', label: 'Components' },

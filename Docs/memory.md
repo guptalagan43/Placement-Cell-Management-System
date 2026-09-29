@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M8 — Policy, Announcements & Notifications |
-| **Current Phase** | Phase 53 — Scheduled Reminder Jobs (Complete) |
-| **Phases Complete** | 53 / 67 |
-| **Overall Completion** | ~79% |
+| **Current Milestone** | M9 — Contacts, FAQ & Resume Checklist |
+| **Current Phase** | Phase 54 — Contacts Directory (Complete) |
+| **Phases Complete** | 54 / 67 |
+| **Overall Completion** | ~81% |
 | **Blockers** | None |
 
 ---
@@ -126,7 +126,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 ### Milestone 9 — Contacts, FAQ & Resume Checklist
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 54 | Contacts Directory | Not Started | — | — |
+| 54 | Contacts Directory | Complete | 2026-09-29 | Contact model (DR-12) with name, role, department, email, phone; CRUD API (TPO write, all read); searchable directory UI with filters (search, department, role), pagination, sorting; dummy seed data (3 TPO, 8 coordinators, 10 company reps). All lint/format clean. |
 | 55 | FAQ / Help Center | Not Started | — | — |
 | 56 | Resume Checklist Rule Engine | Not Started | — | — |
 | 57 | Resume Checklist UI | Not Started | — | — |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 53 complete; **Milestone 8 (Policy, Announcements & Notifications) fully complete**. Phase 54 (Contacts Directory, M9) is next.
-**File(s) touched in Phase 53:** _Created_ — `server/src/jobs/scheduler.js`, `server/src/jobs/registrationDeadlineJob.js`, `server/src/jobs/roundApproachingJob.js`, `server/src/jobs/offerExpiryJob.js`, `server/src/jobs/registrationDeadlineJob.test.js`, `server/src/jobs/roundApproachingJob.test.js`, `server/src/jobs/offerExpiryJob.test.js`; _Modified_ — `server/src/config/env.js`, `server/src/server.js`, `server/package.json`. Tests: **19 new backend tests pass**, all server lint/format clean.
-**Next action:** Begin Phase 54 — Contacts Directory (M9). Traces to **FR-CON-01, FR-SEA-01**. Key tasks: Contact schema (DR-12) + CRUD API (Admin-only write) + searchable directory UI.
+**Active phase:** None active — Phase 54 complete; **Milestone 9 (Contacts, FAQ & Resume Checklist) - Phase 54 complete**. Phase 55 (FAQ / Help Center, M9) is next.
+**File(s) touched in Phase 54:** _Created_ — `server/src/models/Contact.model.js`, `server/src/services/contact.service.js`, `server/src/controllers/contact.controller.js`, `server/src/routes/contact.routes.js`, `server/src/scripts/seed-contacts.js`, `client/src/api/contact.api.js`, `client/src/pages/ContactsDirectoryPage.jsx`; _Modified_ — `server/src/app.js`, `client/src/App.jsx`, `client/src/layouts/AppLayout.jsx`. Tests: Server lint/format clean, client lint/format clean, build successful. Dummy contacts seeded (21 entries).
+**Next action:** Begin Phase 55 — FAQ / Help Center (M9). Traces to **FR-FAQ-01, FR-SEA-01**. Key tasks: FAQ schema (DR-13, text-indexed) + CRUD API (Admin-only write) + searchable UI.
 
 ---
 

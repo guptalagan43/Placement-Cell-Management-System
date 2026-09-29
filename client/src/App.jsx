@@ -17,6 +17,7 @@ import AuditLogPage from './pages/AuditLogPage.jsx'
 import OfferResponsePage from './pages/OfferResponsePage.jsx'
 import RulesPage from './pages/RulesPage.jsx'
 import AnnouncementBoardPage from './pages/AnnouncementBoardPage.jsx'
+import ContactsDirectoryPage from './pages/ContactsDirectoryPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
@@ -104,6 +105,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <AnnouncementBoardPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Contacts Directory (all authenticated users) */}
+        <Route
+          path="/contacts"
+          element={
+            <ProtectedRoute>
+              <ContactsDirectoryPage />
             </ProtectedRoute>
           }
         />
