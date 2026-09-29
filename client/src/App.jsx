@@ -18,6 +18,7 @@ import OfferResponsePage from './pages/OfferResponsePage.jsx'
 import RulesPage from './pages/RulesPage.jsx'
 import AnnouncementBoardPage from './pages/AnnouncementBoardPage.jsx'
 import ContactsDirectoryPage from './pages/ContactsDirectoryPage.jsx'
+import FAQPage from './pages/FAQPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
@@ -114,6 +115,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ContactsDirectoryPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* FAQ / Help Center (all authenticated users) */}
+        <Route
+          path="/faq"
+          element={
+            <ProtectedRoute>
+              <FAQPage />
             </ProtectedRoute>
           }
         />

@@ -11,6 +11,7 @@ const navItems = [
   { to: '/applications/my', label: 'My Applications' },
   { to: '/announcements', label: 'Announcements' },
   { to: '/contacts', label: 'Contacts' },
+  { to: '/faq', label: 'FAQ' },
   { to: '/rules', label: 'Rules' },
   { to: '/about', label: 'About' },
   { to: '/preview', label: 'Components' },

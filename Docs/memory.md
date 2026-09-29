@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M9 — Contacts, FAQ & Resume Checklist |
-| **Current Phase** | Phase 54 — Contacts Directory (Complete) |
-| **Phases Complete** | 54 / 67 |
-| **Overall Completion** | ~81% |
+| **Current Phase** | Phase 55 — FAQ / Help Center (Complete) |
+| **Phases Complete** | 55 / 67 |
+| **Overall Completion** | ~82% |
 | **Blockers** | None |
 
 ---
@@ -127,7 +127,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 54 | Contacts Directory | Complete | 2026-09-29 | Contact model (DR-12) with name, role, department, email, phone; CRUD API (TPO write, all read); searchable directory UI with filters (search, department, role), pagination, sorting; dummy seed data (3 TPO, 8 coordinators, 10 company reps). All lint/format clean. |
-| 55 | FAQ / Help Center | Not Started | — | — |
+| 55 | FAQ / Help Center | Complete | 2026-09-29 | FAQ model (DR-13) with question, answer, category, tags + text search; CRUD API (TPO write, all read published); searchable UI with category filter, expandable Q&A, grouped by category; TPO admin UI with create/edit/delete modal, pagination. All lint/format clean, build successful. |
 | 56 | Resume Checklist Rule Engine | Not Started | — | — |
 | 57 | Resume Checklist UI | Not Started | — | — |
 
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 54 complete; **Milestone 9 (Contacts, FAQ & Resume Checklist) - Phase 54 complete**. Phase 55 (FAQ / Help Center, M9) is next.
-**File(s) touched in Phase 54:** _Created_ — `server/src/models/Contact.model.js`, `server/src/services/contact.service.js`, `server/src/controllers/contact.controller.js`, `server/src/routes/contact.routes.js`, `server/src/scripts/seed-contacts.js`, `client/src/api/contact.api.js`, `client/src/pages/ContactsDirectoryPage.jsx`; _Modified_ — `server/src/app.js`, `client/src/App.jsx`, `client/src/layouts/AppLayout.jsx`. Tests: Server lint/format clean, client lint/format clean, build successful. Dummy contacts seeded (21 entries).
-**Next action:** Begin Phase 55 — FAQ / Help Center (M9). Traces to **FR-FAQ-01, FR-SEA-01**. Key tasks: FAQ schema (DR-13, text-indexed) + CRUD API (Admin-only write) + searchable UI.
+**Active phase:** None active — Phase 55 complete; **Milestone 9 (Contacts, FAQ & Resume Checklist) - Phases 54-55 complete**. Phase 56 (Resume Checklist Rule Engine, M9) is next.
+**File(s) touched in Phase 55:** _Created_ — `server/src/models/FAQ.model.js`, `server/src/services/faq.service.js`, `server/src/controllers/faq.controller.js`, `server/src/routes/faq.routes.js`, `client/src/api/faq.api.js`, `client/src/pages/FAQPage.jsx`; _Modified_ — `server/src/app.js`, `client/src/App.jsx`, `client/src/layouts/AppLayout.jsx`. Tests: Server lint/format clean, client lint/format clean, build successful.
+**Next action:** Begin Phase 56 — Resume Checklist Rule Engine (M9). Traces to **FR-RES-01, FR-RES-02**. Key tasks: ResumeCheck schema (DR-14) + rule-based checks (contact info, key sections, page length) + history retention.
 
 ---
 
