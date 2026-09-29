@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M9 — Contacts, FAQ & Resume Checklist |
-| **Current Phase** | Phase 56 — Resume Checklist Rule Engine (Complete) |
-| **Phases Complete** | 56 / 67 |
-| **Overall Completion** | ~84% |
+| **Current Phase** | Phase 57 — Resume Checklist UI (Complete) |
+| **Phases Complete** | 57 / 67 |
+| **Overall Completion** | ~85% |
 | **Blockers** | None |
 
 ---
@@ -129,7 +129,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 54 | Contacts Directory | Complete | 2026-09-29 | Contact model (DR-12) with name, role, department, email, phone; CRUD API (TPO write, all read); searchable directory UI with filters (search, department, role), pagination, sorting; dummy seed data (3 TPO, 8 coordinators, 10 company reps). All lint/format clean. |
 | 55 | FAQ / Help Center | Complete | 2026-09-29 | FAQ model (DR-13) with question, answer, category, tags + text search; CRUD API (TPO write, all read published); searchable UI with category filter, expandable Q&A, grouped by category; TPO admin UI with create/edit/delete modal, pagination. All lint/format clean, build successful. |
 | 56 | Resume Checklist Rule Engine | Complete | 2026-09-29 | ResumeCheck model (DR-14) with history retention; rule-based service with 13 checks (contact info: email, phone, LinkedIn, GitHub; key sections: education, skills, experience, projects, certifications, achievements; formatting: PDF, length, filename); POST /resume-checks/run creates timestamped records; GET /resume-checks/history retrieves history. All lint/format clean, build successful. |
-| 57 | Resume Checklist UI | Not Started | — | — |
+| 57 | Resume Checklist UI | Complete | 2026-09-29 | Integrated into StudentProfilePage as "Resume Checklist" tab: resume selection cards, score display (0-100) with progress bar, detailed pass/fail items grouped by category (Contact Info, Key Sections, Formatting) with badges, history panel showing previous checks. Score and item breakdown match backend exactly. All lint/format clean, build successful. |
 
 ### Milestone 10 — Calendar & Statistics
 | # | Phase | Status | Completed | Notes |
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 56 complete; **Milestone 9 (Contacts, FAQ & Resume Checklist) - Phases 54-56 complete**. Phase 57 (Resume Checklist UI, M9) is next.
-**File(s) touched in Phase 56:** _Created_ — `server/src/models/ResumeCheck.model.js`, `server/src/services/resumeCheck.service.js`, `server/src/controllers/resumeCheck.controller.js`, `server/src/routes/resumeCheck.routes.js`, `client/src/api/resumeCheck.api.js`; _Modified_ — `server/src/app.js`, `client/src/pages/StudentProfilePage.jsx`. Tests: Server lint/format clean, client lint/format clean, build successful.
-**Next action:** Begin Phase 57 — Resume Checklist UI (M9). Traces to **FR-RES-01**. Key tasks: Checklist trigger action on profile page; score + pass/fail item display.
+**Active phase:** None active — Phase 57 complete; **Milestone 9 (Contacts, FAQ & Resume Checklist) fully complete**. Phase 58 (Calendar Aggregation API + Conflict Detection, M10) is next.
+**File(s) touched in Phase 57:** UI already implemented in Phase 56 (`client/src/pages/StudentProfilePage.jsx` — "Resume Checklist" tab with resume selection, score display, pass/fail items by category, history panel). No new files created; all acceptance criteria met via Phase 56 integration.
+**Next action:** Begin Phase 58 — Calendar Aggregation API + Conflict Detection (M10). Traces to **FR-SCH-03, FR-SCH-04**. Key tasks: `GET /students/me/calendar` aggregating Rounds + InfoSessions; overlap-detection logic.
 
 ---
 
