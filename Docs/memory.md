@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M9 — Contacts, FAQ & Resume Checklist |
-| **Current Phase** | Phase 55 — FAQ / Help Center (Complete) |
-| **Phases Complete** | 55 / 67 |
-| **Overall Completion** | ~82% |
+| **Current Phase** | Phase 56 — Resume Checklist Rule Engine (Complete) |
+| **Phases Complete** | 56 / 67 |
+| **Overall Completion** | ~84% |
 | **Blockers** | None |
 
 ---
@@ -128,7 +128,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 |---|---|---|---|---|
 | 54 | Contacts Directory | Complete | 2026-09-29 | Contact model (DR-12) with name, role, department, email, phone; CRUD API (TPO write, all read); searchable directory UI with filters (search, department, role), pagination, sorting; dummy seed data (3 TPO, 8 coordinators, 10 company reps). All lint/format clean. |
 | 55 | FAQ / Help Center | Complete | 2026-09-29 | FAQ model (DR-13) with question, answer, category, tags + text search; CRUD API (TPO write, all read published); searchable UI with category filter, expandable Q&A, grouped by category; TPO admin UI with create/edit/delete modal, pagination. All lint/format clean, build successful. |
-| 56 | Resume Checklist Rule Engine | Not Started | — | — |
+| 56 | Resume Checklist Rule Engine | Complete | 2026-09-29 | ResumeCheck model (DR-14) with history retention; rule-based service with 13 checks (contact info: email, phone, LinkedIn, GitHub; key sections: education, skills, experience, projects, certifications, achievements; formatting: PDF, length, filename); POST /resume-checks/run creates timestamped records; GET /resume-checks/history retrieves history. All lint/format clean, build successful. |
 | 57 | Resume Checklist UI | Not Started | — | — |
 
 ### Milestone 10 — Calendar & Statistics
@@ -153,9 +153,9 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 55 complete; **Milestone 9 (Contacts, FAQ & Resume Checklist) - Phases 54-55 complete**. Phase 56 (Resume Checklist Rule Engine, M9) is next.
-**File(s) touched in Phase 55:** _Created_ — `server/src/models/FAQ.model.js`, `server/src/services/faq.service.js`, `server/src/controllers/faq.controller.js`, `server/src/routes/faq.routes.js`, `client/src/api/faq.api.js`, `client/src/pages/FAQPage.jsx`; _Modified_ — `server/src/app.js`, `client/src/App.jsx`, `client/src/layouts/AppLayout.jsx`. Tests: Server lint/format clean, client lint/format clean, build successful.
-**Next action:** Begin Phase 56 — Resume Checklist Rule Engine (M9). Traces to **FR-RES-01, FR-RES-02**. Key tasks: ResumeCheck schema (DR-14) + rule-based checks (contact info, key sections, page length) + history retention.
+**Active phase:** None active — Phase 56 complete; **Milestone 9 (Contacts, FAQ & Resume Checklist) - Phases 54-56 complete**. Phase 57 (Resume Checklist UI, M9) is next.
+**File(s) touched in Phase 56:** _Created_ — `server/src/models/ResumeCheck.model.js`, `server/src/services/resumeCheck.service.js`, `server/src/controllers/resumeCheck.controller.js`, `server/src/routes/resumeCheck.routes.js`, `client/src/api/resumeCheck.api.js`; _Modified_ — `server/src/app.js`, `client/src/pages/StudentProfilePage.jsx`. Tests: Server lint/format clean, client lint/format clean, build successful.
+**Next action:** Begin Phase 57 — Resume Checklist UI (M9). Traces to **FR-RES-01**. Key tasks: Checklist trigger action on profile page; score + pass/fail item display.
 
 ---
 

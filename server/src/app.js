@@ -20,6 +20,7 @@ import announcementRoutes from './routes/announcement.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 import contactRoutes from './routes/contact.routes.js'
 import faqRoutes from './routes/faq.routes.js'
+import resumeCheckRoutes from './routes/resumeCheck.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -79,6 +80,9 @@ export function createApp() {
 
   // FAQ routes (student read published, TPO write)
   app.use('/faqs', faqRoutes)
+
+  // Resume Checklist routes (student only)
+  app.use('/resume-checks', resumeCheckRoutes)
 
   // Unmatched routes -> consistent 404 error contract.
   app.use(notFound)

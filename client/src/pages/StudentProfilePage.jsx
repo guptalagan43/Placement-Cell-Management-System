@@ -11,6 +11,7 @@ import {
   deleteResume,
   setDefaultResume,
 } from '../api/resume.api.js'
+import { runResumeCheck, getResumeCheckHistory } from '../api/resumeCheck.api.js'
 import Input from '../components/ui/Input.jsx'
 import Button from '../components/ui/Button.jsx'
 import Card from '../components/ui/Card.jsx'
@@ -183,6 +184,13 @@ export default function StudentProfilePage() {
   const [settingDefault, setSettingDefault] = useState(null)
   const [deleting, setDeleting] = useState(null)
 
+  // Resume Checklist state
+  const [checklistResults, setChecklistResults] = useState(null)
+  const [checklistHistory, setChecklistHistory] = useState([])
+  const [runningCheck, setRunningCheck] = useState(false)
+  const [selectedResumeForCheck, setSelectedResumeForCheck] = useState(null)
+  const [showHistory, setShowHistory] = useState(false)
+
   // Initialize form with nested field arrays
   const methods = useForm({
     resolver: zodResolver(profileSchema),
@@ -316,6 +324,35 @@ export default function StudentProfilePage() {
     }
   }
 
+  // Resume Checklist handlers
+  const handleRunChecklist = async (resumeId) => {
+    setRunningCheck(true)
+    setSelectedResumeForCheck(resumeId)
+    setMessage({ type: '', text: '' })
+    try {
+      const result = await runResumeCheck(resumeId)
+      setChecklistResults(result)
+      // Refresh history
+      const history = await getResumeCheckHistory(10)
+      setChecklistHistory(history.history)
+      setMessage({ type: 'success', text: 'Resume checklist completed!' })
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message ?? 'Failed to run checklist' })
+    } finally {
+      setRunningCheck(false)
+      setSelectedResumeForCheck(null)
+    }
+  }
+
+  const handleFetchHistory = useCallback(async () => {
+    try {
+      const history = await getResumeCheckHistory(20)
+      setChecklistHistory(history.history)
+    } catch (err) {
+      console.error('Failed to fetch checklist history:', err)
+    }
+  }, [])
+
   const fetchProfile = useCallback(async () => {
     try {
       const profileData = await getSelfProfile()
@@ -409,8 +446,11 @@ export default function StudentProfilePage() {
 
   // Fetch profile and resumes on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProfile()
-  }, [fetchProfile, methods])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    handleFetchHistory()
+  }, [fetchProfile, methods, handleFetchHistory])
 
   const onSubmit = async (formData) => {
     setSaving(true)
@@ -489,6 +529,7 @@ export default function StudentProfilePage() {
     { id: 'certifications', label: 'Certifications', icon: '📜' },
     { id: 'projects', label: 'Projects', icon: '💼' },
     { id: 'resumes', label: 'Resumes', icon: '📄' },
+    { id: 'resume-checklist', label: 'Resume Checklist', icon: '✅' },
   ]
 
   const completeness = profile ? computeCompleteness(profile) : 0
@@ -1219,6 +1260,213 @@ export default function StudentProfilePage() {
                 ))}
               </div>
             )}
+          </Card>
+        )}
+
+        {/* Resume Checklist Section */}
+        {activeSection === 'resume-checklist' && (
+          <Card className="space-y-6">
+            <h2 className="font-heading text-lg font-semibold text-ink-900">Resume Checklist</h2>
+            <p className="font-body text-sm text-ink-600">
+              Run a rule-based completeness check on your resume. The checklist evaluates contact
+              information, key sections, and formatting. History is retained for tracking
+              improvements.
+            </p>
+
+            {checklistResults && (
+              <div className="space-y-6">
+                {/* Score Summary */}
+                <div className="flex items-center gap-6 p-4 bg-primary-50 rounded-lg border border-primary-100">
+                  <div className="flex flex-col items-center w-24 h-24 bg-surface rounded-xl border border-primary-200">
+                    <span className="font-heading text-3xl font-bold text-primary-700">
+                      {checklistResults.score}
+                    </span>
+                    <span className="font-body text-xs text-ink-500">/100</span>
+                  </div>
+                  <div className="flex-1">
+                    <Progress value={checklistResults.score} max={100} className="h-3 mb-2" />
+                    <p className="font-body text-sm text-ink-600">
+                      {checklistResults.passedChecks} of {checklistResults.totalChecks} checks
+                      passed
+                    </p>
+                    <p className="font-body text-xs text-ink-400 mt-1">
+                      Completed: {new Date(checklistResults.completedAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Checklist Items by Category */}
+                <div className="space-y-4">
+                  {['contact_info', 'key_sections', 'formatting'].map((category) => {
+                    const items = checklistResults.checklistItems.filter(
+                      (item) => item.category === category
+                    )
+                    if (items.length === 0) return null
+                    const categoryLabels = {
+                      contact_info: 'Contact Information',
+                      key_sections: 'Key Sections',
+                      formatting: 'Formatting',
+                    }
+                    const passedCount = items.filter((i) => i.passed).length
+                    return (
+                      <div key={category} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-body text-sm font-semibold text-ink-900 capitalize">
+                            {categoryLabels[category]}
+                          </h4>
+                          <Badge
+                            tone={passedCount === items.length ? 'success' : 'warning'}
+                            size="sm"
+                          >
+                            {passedCount}/{items.length}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1.5">
+                          {items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-border"
+                            >
+                              <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  item.passed ? 'bg-success text-white' : 'bg-danger text-white'
+                                }`}
+                              >
+                                {item.passed ? '✓' : '✗'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-body text-sm font-medium text-ink-900">
+                                  {item.name}
+                                </p>
+                                <p className="font-body text-xs text-ink-500">{item.description}</p>
+                                {item.details && (
+                                  <p className="font-body text-xs text-ink-400 mt-0.5">
+                                    {item.details}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge
+                                tone={item.passed ? 'success' : 'danger'}
+                                size="sm"
+                                className="flex-shrink-0"
+                              >
+                                {item.passed ? 'Pass' : 'Fail'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Run Checklist Form */}
+            {!checklistResults && (
+              <div className="space-y-4">
+                {resumes.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="font-body text-ink-500 mb-4">No resumes available to check</p>
+                    <p className="font-body text-sm text-ink-400">
+                      Upload a resume first to run the checklist
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <h4 className="font-body text-sm font-semibold text-ink-900">
+                      Select a resume to check
+                    </h4>
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                      {resumes.map((resume) => (
+                        <div
+                          key={resume._id}
+                          className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                            runningCheck && selectedResumeForCheck === resume._id
+                              ? 'border-primary-700 bg-primary-50'
+                              : 'border-border hover:border-primary-300'
+                          }`}
+                          onClick={() => !runningCheck && handleRunChecklist(resume._id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary-100 rounded-lg text-primary-700">📄</div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-body font-semibold text-ink-900 truncate">
+                                {resume.label}
+                              </p>
+                              <p className="font-body text-xs text-ink-500 truncate">
+                                {resume.originalFilename}
+                              </p>
+                              <p className="font-body text-xs text-ink-400">
+                                {(resume.fileSize / 1024).toFixed(1)} KB • {resume.mimeType}
+                              </p>
+                            </div>
+                            {resume.isDefault && (
+                              <Badge variant="success" className="ml-2">
+                                Default
+                              </Badge>
+                            )}
+                          </div>
+                          {runningCheck && selectedResumeForCheck === resume._id && (
+                            <div className="mt-2 flex items-center gap-2 text-primary-700 text-sm">
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-700 border-t-transparent" />
+                              Running checklist...
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* History */}
+            <div className="border-t border-border pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-body text-sm font-semibold text-ink-900">Check History</h4>
+                <Button variant="outline" size="sm" onClick={() => setShowHistory(!showHistory)}>
+                  {showHistory ? 'Hide History' : 'Show History'}
+                </Button>
+              </div>
+
+              {showHistory && (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {checklistHistory.length === 0 ? (
+                    <p className="font-body text-sm text-ink-500 text-center py-4">
+                      No checklist history yet
+                    </p>
+                  ) : (
+                    checklistHistory.map((check) => (
+                      <div
+                        key={check._id}
+                        className="flex items-center justify-between p-3 bg-surface rounded-lg border border-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-primary-100 rounded-lg text-primary-700">📋</div>
+                          <div>
+                            <p className="font-body text-sm font-medium text-ink-900">
+                              {check.resume.label} — {check.score}% score
+                            </p>
+                            <p className="font-body text-xs text-ink-500">
+                              {check.passedChecks}/{check.totalChecks} passed •{' '}
+                              {new Date(check.completedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge
+                          tone={
+                            check.score >= 80 ? 'success' : check.score >= 60 ? 'warning' : 'danger'
+                          }
+                        >
+                          {check.score}%
+                        </Badge>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </Card>
         )}
 
