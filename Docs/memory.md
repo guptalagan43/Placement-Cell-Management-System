@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-26 — Phase 50 (Notification Schema & In-App API) complete |
+| **Last Updated** | 2026-09-30 — Phase 58 (Calendar Aggregation API + Conflict Detection) complete |
 
 ---
 
@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M9 — Contacts, FAQ & Resume Checklist |
-| **Current Phase** | Phase 57 — Resume Checklist UI (Complete) |
-| **Phases Complete** | 57 / 67 |
-| **Overall Completion** | ~85% |
+| **Current Milestone** | M10 — Calendar & Statistics |
+| **Current Phase** | Phase 58 — Calendar Aggregation API + Conflict Detection (Complete) |
+| **Phases Complete** | 58 / 67 |
+| **Overall Completion** | ~87% |
 | **Blockers** | None |
 
 ---
@@ -134,7 +134,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 ### Milestone 10 — Calendar & Statistics
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 58 | Calendar Aggregation API + Conflict Detection | Not Started | — | — |
+| 58 | Calendar Aggregation API + Conflict Detection | Complete | 2026-09-30 | Calendar service aggregating Rounds + InfoSessions across all student applications; conflict detection for overlapping events; `GET /students/me/calendar` with optional date range filtering; 15 integration tests pass. All lint/format clean. |
 | 59 | Calendar View UI + ICS Export | Not Started | — | — |
 | 60 | Statistics Aggregation API | Not Started | — | — |
 | 61 | Statistics Dashboard UI | Not Started | — | — |
@@ -153,9 +153,14 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 57 complete; **Milestone 9 (Contacts, FAQ & Resume Checklist) fully complete**. Phase 58 (Calendar Aggregation API + Conflict Detection, M10) is next.
-**File(s) touched in Phase 57:** UI already implemented in Phase 56 (`client/src/pages/StudentProfilePage.jsx` — "Resume Checklist" tab with resume selection, score display, pass/fail items by category, history panel). No new files created; all acceptance criteria met via Phase 56 integration.
-**Next action:** Begin Phase 58 — Calendar Aggregation API + Conflict Detection (M10). Traces to **FR-SCH-03, FR-SCH-04**. Key tasks: `GET /students/me/calendar` aggregating Rounds + InfoSessions; overlap-detection logic.
+**Active phase:** None active — Phase 58 complete; **Milestone 10 (Calendar & Statistics) started**. Phase 59 (Calendar View UI + ICS Export, M10) is next.
+**File(s) touched in Phase 58:**
+- `server/src/services/calendar.service.js` — Calendar aggregation + conflict detection logic
+- `server/src/controllers/calendar.controller.js` — Calendar endpoint with validation
+- `server/src/routes/calendar.routes.js` — Student-only calendar routes
+- `server/src/routes/calendar.routes.test.js` — 15 integration tests
+- `server/src/app.js` — Registered calendar routes
+**Next action:** Begin Phase 59 — Calendar View UI + ICS Export (M10). Traces to **FR-SCH-03, FR-SCH-05**. Key tasks: Calendar/agenda view component; conflict warning UI; `.ics` file export action.
 
 ---
 

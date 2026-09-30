@@ -21,6 +21,7 @@ import notificationRoutes from './routes/notification.routes.js'
 import contactRoutes from './routes/contact.routes.js'
 import faqRoutes from './routes/faq.routes.js'
 import resumeCheckRoutes from './routes/resumeCheck.routes.js'
+import calendarRoutes from './routes/calendar.routes.js'
 import { notFound } from './middleware/not-found.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -74,6 +75,9 @@ export function createApp() {
 
   // Notification routes (student only)
   app.use('/notifications', notificationRoutes)
+
+  // Calendar routes (student only)
+  app.use('/students', calendarRoutes)
 
   // Contact routes (all authenticated read, TPO write)
   app.use('/contacts', contactRoutes)
