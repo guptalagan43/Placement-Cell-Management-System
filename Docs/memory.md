@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-30 — Phase 58 (Calendar Aggregation API + Conflict Detection) complete |
+| **Last Updated** | 2026-09-30 — Phase 59 (Calendar View UI + ICS Export) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M10 — Calendar & Statistics |
-| **Current Phase** | Phase 58 — Calendar Aggregation API + Conflict Detection (Complete) |
-| **Phases Complete** | 58 / 67 |
-| **Overall Completion** | ~87% |
+| **Current Phase** | Phase 59 — Calendar View UI + ICS Export (Complete) |
+| **Phases Complete** | 59 / 67 |
+| **Overall Completion** | ~88% |
 | **Blockers** | None |
 
 ---
@@ -135,7 +135,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 58 | Calendar Aggregation API + Conflict Detection | Complete | 2026-09-30 | Calendar service aggregating Rounds + InfoSessions across all student applications; conflict detection for overlapping events; `GET /students/me/calendar` with optional date range filtering; 15 integration tests pass. All lint/format clean. |
-| 59 | Calendar View UI + ICS Export | Not Started | — | — |
+| 59 | Calendar View UI + ICS Export | Complete | 2026-09-30 | Agenda view component with date-grouped events; conflict warning badges; filter by type (Rounds/PPTs); date range filtering; `.ics` export generating valid iCalendar format; navigation link added. All lint/format clean, build successful. |
 | 60 | Statistics Aggregation API | Not Started | — | — |
 | 61 | Statistics Dashboard UI | Not Started | — | — |
 | 62 | Year-over-Year Comparison | Not Started | — | — |
@@ -153,14 +153,13 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 58 complete; **Milestone 10 (Calendar & Statistics) started**. Phase 59 (Calendar View UI + ICS Export, M10) is next.
-**File(s) touched in Phase 58:**
-- `server/src/services/calendar.service.js` — Calendar aggregation + conflict detection logic
-- `server/src/controllers/calendar.controller.js` — Calendar endpoint with validation
-- `server/src/routes/calendar.routes.js` — Student-only calendar routes
-- `server/src/routes/calendar.routes.test.js` — 15 integration tests
-- `server/src/app.js` — Registered calendar routes
-**Next action:** Begin Phase 59 — Calendar View UI + ICS Export (M10). Traces to **FR-SCH-03, FR-SCH-05**. Key tasks: Calendar/agenda view component; conflict warning UI; `.ics` file export action.
+**Active phase:** None active — Phase 59 complete; **Milestone 10 (Calendar & Statistics) in progress**. Phase 60 (Statistics Aggregation API, M10) is next.
+**File(s) touched in Phase 59:**
+- `client/src/api/calendar.api.js` — Calendar API client
+- `client/src/pages/CalendarPage.jsx` — Agenda view with conflict warnings, filters, date range, ICS export
+- `client/src/App.jsx` — Added `/calendar` route
+- `client/src/layouts/AppLayout.jsx` — Added Calendar navigation link
+**Next action:** Begin Phase 60 — Statistics Aggregation API (M10). Traces to **FR-STA-01, FR-STA-03**. Key tasks: `GET /stats/overview` database-level aggregation; `GET /stats/drive/:id/funnel`.
 
 ---
 

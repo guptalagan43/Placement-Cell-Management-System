@@ -23,6 +23,7 @@ import HomePage from './pages/HomePage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
 import NotificationsPage from './pages/NotificationsPage.jsx'
+import CalendarPage from './pages/CalendarPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
 // Inner routes with auth guards. Separated so AuthProvider wraps at the top level.
@@ -159,6 +160,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <MyApplicationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute>
+              <CalendarPage />
             </ProtectedRoute>
           }
         />
