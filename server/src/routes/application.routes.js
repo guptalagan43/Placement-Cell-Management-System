@@ -19,6 +19,7 @@ import {
   updateRoundStatus,
   withdrawApplication,
   overrideEligibility,
+  exportDriveApplications,
 } from '../controllers/application.controller.js'
 
 const router = Router()
@@ -45,5 +46,14 @@ router.put(
 
 // TPO-only: Eligibility override with audit logging
 router.post('/:applicationId/eligibility-override', authenticate, requireTPO, overrideEligibility)
+
+// Coordinator/TPO: Export drive applications as CSV
+router.get(
+  '/drives/:driveId/applications/export',
+  authenticate,
+  requireCoordinatorOrTPO,
+  departmentScope,
+  exportDriveApplications
+)
 
 export default router

@@ -2,6 +2,11 @@
 import { z } from 'zod'
 import { asyncHandler } from '../utils/async-handler.js'
 import * as studentProfileSvc from '../services/studentProfile.service.js'
+import {
+  toCSV,
+  STUDENT_EXPORT_COLUMNS,
+  STUDENT_EXPORT_LABELS,
+} from '../services/csvExport.service.js'
 
 // Validation schemas
 const policyAcknowledgmentSchema = z.object({
@@ -197,6 +202,26 @@ export const updateProfileById = [
   }),
 ]
 
+// GET /students/export — export student list as CSV (coordinator/TPO)
+export const exportStudents = [
+  asyncHandler(async (req, res) => {
+    const departmentScope = req.departmentScope ?? null
+
+    // Get all students (no pagination) with same filters as list
+    const queryParams = { ...req.query, page: 1, limit: 10000 }
+    const result = await studentProfileSvc.getProfilesList(queryParams, departmentScope)
+
+    const csv = toCSV(result.profiles, STUDENT_EXPORT_COLUMNS, STUDENT_EXPORT_LABELS)
+
+    res.setHeader('Content-Type', 'text/csv')
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="students-${new Date().toISOString().split('T')[0]}.csv"`
+    )
+    res.send(csv)
+  }),
+]
+
 export default {
   getSelfProfile,
   updateSelfProfile,
@@ -204,4 +229,5 @@ export default {
   getProfilesList,
   getProfileById,
   updateProfileById,
+  exportStudents,
 }

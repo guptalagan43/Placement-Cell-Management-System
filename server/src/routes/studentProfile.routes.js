@@ -10,6 +10,7 @@ import {
   getProfilesList,
   getProfileById,
   updateProfileById,
+  exportStudents,
 } from '../controllers/studentProfile.controller.js'
 
 const router = Router()
@@ -21,6 +22,7 @@ router.put('/me/policy-acknowledgment', authenticate, requireStudent, acknowledg
 
 // Coordinator/TPO scoped list and individual access
 router.get('/', authenticate, requireCoordinatorOrTPO, departmentScope, getProfilesList)
+router.get('/export', authenticate, requireCoordinatorOrTPO, departmentScope, exportStudents)
 router.get('/:id', authenticate, requireCoordinatorOrTPO, departmentScope, getProfileById)
 router.put('/:id', authenticate, requireCoordinatorOrTPO, departmentScope, updateProfileById)
 

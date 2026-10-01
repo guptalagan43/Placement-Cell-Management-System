@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-30 — Phase 63 (Search/Filter/Sort Consistency Audit) complete |
+| **Last Updated** | 2026-09-30 — Phase 64 (CSV Export Consistency Audit) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M11 — Cross-Cutting Hardening & Launch |
-| **Current Phase** | Phase 63 — Search/Filter/Sort Consistency Audit (Complete) |
-| **Phases Complete** | 63 / 67 |
-| **Overall Completion** | ~94% |
+| **Current Phase** | Phase 64 — CSV Export Consistency Audit (Complete) |
+| **Phases Complete** | 64 / 67 |
+| **Overall Completion** | ~96% |
 | **Blockers** | None |
 
 ---
@@ -144,7 +144,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
 | 63 | Search/Filter/Sort Consistency Audit | Complete | 2026-09-30 | Added sort UI to FAQ page (TPO view: sort by createdAt, category, question), Announcement Board (sort by createdAt, updatedAt, title), Statistics Dashboard department chart (sort by placement%, name, placedStudents, totalStudents). All list screens now have at least one filter and one sort. All lint/format clean, build successful. |
-| 64 | CSV Export Consistency Audit | Not Started | — | — |
+| 64 | CSV Export Consistency Audit | Complete | 2026-09-30 | Added CSV export endpoints: Students (`GET /students/export`), Applications (`GET /drives/:driveId/applications/export`), Statistics overview (`GET /stats/export`), Drive funnel (`GET /stats/drive/:driveId/funnel/export`). All exports include proper headers, department scoping for coordinators, and TPO-wide access. All lint/format clean, build successful. |
 | 65 | Dark Mode & Responsive/PWA Polish | Not Started | — | — |
 | 66 | Automated Testing Pass | Not Started | — | — |
 | 67 | Deployment, Demo Seed Data & Documentation | Not Started | — | — |
@@ -153,12 +153,16 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 63 complete; **Milestone 11 (Cross-Cutting Hardening & Launch) started**. Phase 64 (CSV Export Consistency Audit, M11) is next.
-**File(s) touched in Phase 63:**
-- `client/src/pages/FAQPage.jsx` — Added sort UI for TPO view (sort by createdAt, category, question; asc/desc)
-- `client/src/pages/AnnouncementBoardPage.jsx` — Added sort UI (sort by createdAt, updatedAt, title; asc/desc)
-- `client/src/pages/StatisticsDashboardPage.jsx` — Added sort for department chart (sort by placement%, name, placedStudents, totalStudents; asc/desc)
-**Next action:** Begin Phase 64 — CSV Export Consistency Audit (M11). Traces to **FR-SEA-03, FR-STA-04**. Key tasks: Verify/complete CSV export for Students, Applications, and Statistics reports.
+**Active phase:** None active — Phase 64 complete; **Milestone 11 (Cross-Cutting Hardening & Launch) in progress**. Phase 65 (Dark Mode & Responsive/PWA Polish, M11) is next.
+**File(s) touched in Phase 64:**
+- `server/src/services/csvExport.service.js` — CSV export utility with column definitions and labels
+- `server/src/controllers/studentProfile.controller.js` — Student list CSV export (`GET /students/export`)
+- `server/src/routes/studentProfile.routes.js` — Added export route
+- `server/src/controllers/application.controller.js` — Drive applications CSV export (`GET /drives/:driveId/applications/export`)
+- `server/src/routes/application.routes.js` — Added export route
+- `server/src/controllers/stats.controller.js` — Stats overview CSV export (`GET /stats/export`) and drive funnel CSV export (`GET /stats/drive/:driveId/funnel/export`)
+- `server/src/routes/stats.routes.js` — Added export routes
+**Next action:** Begin Phase 65 — Dark Mode & Responsive/PWA Polish (M11). Traces to **NFR-USE-01, NFR-USE-02**. Key tasks: Theme toggle wired to dark palette in `design.md` §10; responsive pass on every page down to 360px width; PWA manifest + installability.
 
 ---
 

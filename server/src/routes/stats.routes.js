@@ -4,7 +4,12 @@ import { Router } from 'express'
 import { authenticate } from '../middleware/auth.middleware.js'
 import { requireCoordinatorOrTPO } from '../middleware/rbac.middleware.js'
 import { departmentScope } from '../middleware/scope.middleware.js'
-import { getOverviewStats, getDriveFunnel } from '../controllers/stats.controller.js'
+import {
+  getOverviewStats,
+  getDriveFunnel,
+  exportStatsOverview,
+  exportDriveFunnel,
+} from '../controllers/stats.controller.js'
 
 const router = Router()
 
@@ -13,5 +18,7 @@ router.use(authenticate, requireCoordinatorOrTPO, departmentScope)
 
 router.get('/overview', getOverviewStats)
 router.get('/drive/:driveId/funnel', getDriveFunnel)
+router.get('/export', exportStatsOverview)
+router.get('/drive/:driveId/funnel/export', exportDriveFunnel)
 
 export default router

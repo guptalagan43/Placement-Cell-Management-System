@@ -3,7 +3,13 @@ import { z } from 'zod'
 import { asyncHandler } from '../utils/async-handler.js'
 import { ApiError } from '../utils/api-error.js'
 import StudentProfile from '../models/StudentProfile.model.js'
+import Round from '../models/Round.model.js'
 import * as applicationSvc from '../services/application.service.js'
+import {
+  toCSV,
+  APPLICATION_EXPORT_COLUMNS,
+  APPLICATION_EXPORT_LABELS,
+} from '../services/csvExport.service.js'
 
 // Validation schemas
 const createApplicationSchema = z.object({
@@ -224,6 +230,70 @@ export const overrideEligibility = [
       req.user._id
     )
     res.json({ success: true, application })
+  }),
+]
+
+// GET /drives/:driveId/applications/export — export applications for a drive as CSV (coordinator/TPO)
+export const exportDriveApplications = [
+  asyncHandler(async (req, res) => {
+    const { params } = driveApplicationsQuerySchema.parse({ params: req.params, query: req.query })
+
+    // Get all applications for this drive (no pagination)
+    const queryParams = { ...req.query, page: 1, limit: 10000, includeWithdrawn: true }
+    const result = await applicationSvc.getDriveApplications(params.driveId, queryParams, req.user)
+
+    // Get rounds for this drive to map round numbers
+    const rounds = await Round.find({ drive: params.driveId })
+      .select('_id roundNumber')
+      .sort({ roundNumber: 1 })
+      .lean()
+    const roundMap = {}
+    rounds.forEach((r) => {
+      roundMap[r._id.toString()] = r.roundNumber
+    })
+
+    // Transform applications for CSV export
+    const csvData = result.applications.map((app) => {
+      const row = {
+        rollNumber: app.student?.rollNumber || '',
+        studentName: app.student?.name || '',
+        branch: app.student?.branch || '',
+        batch: app.student?.batch || '',
+        driveTitle: app.drive?.title || '',
+        company: app.drive?.company?.name || '',
+        jobType: app.drive?.jobType || '',
+        ctcLpa: app.drive?.compensation?.ctcLpa || '',
+        tier: app.drive?.tier || '',
+        overallStatus: app.overallStatus,
+        appliedAt: app.appliedAt,
+        round1Status: 'pending',
+        round2Status: 'pending',
+        round3Status: 'pending',
+        round4Status: 'pending',
+        round5Status: 'pending',
+        withdrawnAt: app.withdrawnAt || '',
+      }
+
+      if (app.roundStatuses) {
+        app.roundStatuses.forEach((rs) => {
+          const roundNum = roundMap[rs.round.toString()]
+          if (roundNum && roundNum <= 5) {
+            row[`round${roundNum}Status`] = rs.status
+          }
+        })
+      }
+
+      return row
+    })
+
+    const csv = toCSV(csvData, APPLICATION_EXPORT_COLUMNS, APPLICATION_EXPORT_LABELS)
+
+    res.setHeader('Content-Type', 'text/csv')
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="applications-drive-${params.driveId}-${new Date().toISOString().split('T')[0]}.csv"`
+    )
+    res.send(csv)
   }),
 ]
 
