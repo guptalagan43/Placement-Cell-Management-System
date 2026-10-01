@@ -24,6 +24,7 @@ import AboutPage from './pages/AboutPage.jsx'
 import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
 import NotificationsPage from './pages/NotificationsPage.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
+import StatisticsDashboardPage from './pages/StatisticsDashboardPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
 // Inner routes with auth guards. Separated so AuthProvider wraps at the top level.
@@ -238,6 +239,18 @@ function AppRoutes() {
             <ProtectedRoute>
               <RoleRoute allowedRoles={['tpo']}>
                 <AuditLogPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Statistics Dashboard (Coordinator/TPO only) */}
+        <Route
+          path="/stats"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={['coordinator', 'tpo']}>
+                <StatisticsDashboardPage />
               </RoleRoute>
             </ProtectedRoute>
           }
