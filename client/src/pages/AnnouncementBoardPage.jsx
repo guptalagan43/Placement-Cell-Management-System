@@ -54,6 +54,7 @@ export default function AnnouncementBoardPage() {
   const [error, setError] = useState(null)
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
   const [filters, setFilters] = useState({ category: '' })
+  const [sort, setSort] = useState({ sortBy: 'createdAt', sortOrder: 'desc' })
 
   const fetchAnnouncements = useCallback(async () => {
     try {
@@ -61,6 +62,8 @@ export default function AnnouncementBoardPage() {
         category: filters.category || undefined,
         page: pagination.page,
         limit: 10,
+        sortBy: sort.sortBy,
+        sortOrder: sort.sortOrder,
       })
       setAnnouncements(res.announcements || [])
       setPagination((prev) => ({
@@ -73,7 +76,7 @@ export default function AnnouncementBoardPage() {
     } finally {
       setLoading(false)
     }
-  }, [filters.category, pagination.page])
+  }, [filters.category, pagination.page, sort])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -155,25 +158,48 @@ export default function AnnouncementBoardPage() {
           </div>
         </div>
 
-        {/* Category Filter Chips */}
-        <div className="flex flex-wrap gap-2">
-          {[
-            { value: '', label: 'All' },
-            { value: 'general', label: 'General' },
-            { value: 'drive_specific', label: 'Drive Specific' },
-            { value: 'urgent', label: 'Urgent' },
-          ].map((cat) => (
-            <Button
-              key={cat.value}
-              variant={filters.category === cat.value ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => handleCategoryChange(cat.value)}
-              className="flex items-center gap-2"
+        {/* Category Filter Chips & Sort */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: '', label: 'All' },
+              { value: 'general', label: 'General' },
+              { value: 'drive_specific', label: 'Drive Specific' },
+              { value: 'urgent', label: 'Urgent' },
+            ].map((cat) => (
+              <Button
+                key={cat.value}
+                variant={filters.category === cat.value ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => handleCategoryChange(cat.value)}
+                className="flex items-center gap-2"
+              >
+                {cat.label}
+                {filters.category === cat.value && <X className="w-3 h-3" />}
+              </Button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={sort.sortBy}
+              onChange={(e) =>
+                setSort((prev) => ({ ...prev, sortBy: e.target.value, sortOrder: 'desc' }))
+              }
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700"
             >
-              {cat.label}
-              {filters.category === cat.value && <X className="w-3 h-3" />}
-            </Button>
-          ))}
+              <option value="createdAt">Newest First</option>
+              <option value="updatedAt">Last Updated</option>
+              <option value="title">Title</option>
+            </select>
+            <select
+              value={sort.sortOrder}
+              onChange={(e) => setSort((prev) => ({ ...prev, sortOrder: e.target.value }))}
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700 w-28"
+            >
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </div>
         </div>
       </div>
 

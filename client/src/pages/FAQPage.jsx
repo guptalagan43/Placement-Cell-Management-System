@@ -259,6 +259,7 @@ export default function FAQPage() {
   // For TPO: pagination, sorting, etc.
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 })
   const [isPublishedFilter, setIsPublishedFilter] = useState('')
+  const [sort, setSort] = useState({ sortBy: 'createdAt', sortOrder: 'desc' })
 
   const fetchFAQs = useCallback(async () => {
     setLoading(true)
@@ -271,6 +272,8 @@ export default function FAQPage() {
           search,
           category: selectedCategory,
           isPublished: isPublishedFilter,
+          sortBy: sort.sortBy,
+          sortOrder: sort.sortOrder,
         }
         const res = await faqApi.getFAQs(params)
         setFaqs(res.faqs)
@@ -284,7 +287,7 @@ export default function FAQPage() {
     } finally {
       setLoading(false)
     }
-  }, [isTPO, pagination.page, pagination.limit, search, selectedCategory, isPublishedFilter])
+  }, [isTPO, pagination.page, pagination.limit, search, selectedCategory, isPublishedFilter, sort])
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -475,6 +478,29 @@ export default function FAQPage() {
                   <option value="true">Published</option>
                   <option value="false">Draft</option>
                 </select>
+              )}
+              {isTPO && (
+                <div className="flex gap-2">
+                  <select
+                    value={sort.sortBy}
+                    onChange={(e) =>
+                      setSort((prev) => ({ ...prev, sortBy: e.target.value, sortOrder: 'asc' }))
+                    }
+                    className="rounded-md border border-border bg-surface px-3 py-2 text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700"
+                  >
+                    <option value="createdAt">Created Date</option>
+                    <option value="category">Category</option>
+                    <option value="question">Question</option>
+                  </select>
+                  <select
+                    value={sort.sortOrder}
+                    onChange={(e) => setSort((prev) => ({ ...prev, sortOrder: e.target.value }))}
+                    className="rounded-md border border-border bg-surface px-3 py-2 text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700 w-24"
+                  >
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </div>
               )}
             </div>
           </div>

@@ -81,6 +81,19 @@ export default function AppLayout() {
                     {item.label}
                   </NavLink>
                 ))}
+                {user?.role === 'tpo' && (
+                  <NavLink
+                    to="/stats/compare"
+                    className={({ isActive }) =>
+                      cn(
+                        'font-body text-sm text-ink-600 transition-colors hover:text-ink-900',
+                        isActive && 'font-semibold text-primary-700'
+                      )
+                    }
+                  >
+                    Comparison
+                  </NavLink>
+                )}
               </nav>
             )}
 

@@ -94,6 +94,8 @@ export default function StatisticsDashboardPage() {
   const [loading, setLoading] = useState(false)
   const [funnelLoading, setFunnelLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [deptSortBy, setDeptSortBy] = useState('placementPercentage')
+  const [deptSortOrder, setDeptSortOrder] = useState('desc')
 
   const fetchOverview = useCallback(async () => {
     let mounted = true
@@ -168,7 +170,7 @@ export default function StatisticsDashboardPage() {
 
   const departmentData = useMemo(() => {
     if (!overview?.departmentBreakdown) return []
-    return overview.departmentBreakdown.map((dept) => ({
+    const data = overview.departmentBreakdown.map((dept) => ({
       name: DEPARTMENT_LABELS[dept.department] || dept.department,
       fullName: dept.department,
       totalStudents: dept.totalStudents,
@@ -181,7 +183,24 @@ export default function StatisticsDashboardPage() {
             ? COLORS.warning
             : COLORS.neutral,
     }))
-  }, [overview?.departmentBreakdown])
+
+    // Sort the data
+    const sortedData = [...data].sort((a, b) => {
+      let valA = a[deptSortBy]
+      let valB = b[deptSortBy]
+
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        valA = valA.toLowerCase()
+        valB = valB.toLowerCase()
+      }
+
+      if (valA < valB) return deptSortOrder === 'asc' ? -1 : 1
+      if (valA > valB) return deptSortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+
+    return sortedData
+  }, [overview?.departmentBreakdown, deptSortBy, deptSortOrder])
 
   const funnelData = useMemo(() => {
     if (!funnel?.funnel) return []
@@ -335,13 +354,35 @@ export default function StatisticsDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Department-wise Placement Bar Chart */}
         <Card>
-          <div className="p-4 border-b border-border">
-            <h3 className="font-heading text-lg font-semibold text-ink-900">
-              Department-wise Placement Percentage
-            </h3>
-            <p className="font-body text-xs text-ink-500 mt-1">
-              {isTPO ? 'Institute-wide view' : `Department: ${user?.department}`}
-            </p>
+          <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-ink-900">
+                Department-wise Placement Percentage
+              </h3>
+              <p className="font-body text-xs text-ink-500 mt-1">
+                {isTPO ? 'Institute-wide view' : `Department: ${user?.department}`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={deptSortBy}
+                onChange={(e) => setDeptSortBy(e.target.value)}
+                className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700"
+              >
+                <option value="placementPercentage">Sort by Placement %</option>
+                <option value="name">Sort by Department Name</option>
+                <option value="placedStudents">Sort by Placed Students</option>
+                <option value="totalStudents">Sort by Total Students</option>
+              </select>
+              <select
+                value={deptSortOrder}
+                onChange={(e) => setDeptSortOrder(e.target.value)}
+                className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-ink-900 focus:border-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-700 w-28"
+              >
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
           </div>
           <div className="p-4 h-80">
             {departmentData.length > 0 ? (

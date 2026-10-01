@@ -25,6 +25,7 @@ import ComponentPreviewPage from './pages/ComponentPreviewPage.jsx'
 import NotificationsPage from './pages/NotificationsPage.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
 import StatisticsDashboardPage from './pages/StatisticsDashboardPage.jsx'
+import StatisticsComparisonPage from './pages/StatisticsComparisonPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 
 // Inner routes with auth guards. Separated so AuthProvider wraps at the top level.
@@ -251,6 +252,17 @@ function AppRoutes() {
             <ProtectedRoute>
               <RoleRoute allowedRoles={['coordinator', 'tpo']}>
                 <StatisticsDashboardPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+        {/* Statistics Comparison (TPO only) */}
+        <Route
+          path="/stats/compare"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={['tpo']}>
+                <StatisticsComparisonPage />
               </RoleRoute>
             </ProtectedRoute>
           }

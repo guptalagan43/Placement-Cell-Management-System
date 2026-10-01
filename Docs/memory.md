@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-30 — Phase 62 (Year-over-Year Comparison) complete |
+| **Last Updated** | 2026-09-30 — Phase 63 (Search/Filter/Sort Consistency Audit) complete |
 
 ---
 
@@ -22,10 +22,10 @@
 
 | | |
 |---|---|
-| **Current Milestone** | M10 — Calendar & Statistics |
-| **Current Phase** | Phase 62 — Year-over-Year Comparison (Complete) |
-| **Phases Complete** | 62 / 67 |
-| **Overall Completion** | ~93% |
+| **Current Milestone** | M11 — Cross-Cutting Hardening & Launch |
+| **Current Phase** | Phase 63 — Search/Filter/Sort Consistency Audit (Complete) |
+| **Phases Complete** | 63 / 67 |
+| **Overall Completion** | ~94% |
 | **Blockers** | None |
 
 ---
@@ -138,12 +138,12 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 59 | Calendar View UI + ICS Export | Complete | 2026-09-30 | Agenda view component with date-grouped events; conflict warning badges; filter by type (Rounds/PPTs); date range filtering; `.ics` export generating valid iCalendar format; navigation link added. All lint/format clean, build successful. |
 | 60 | Statistics Aggregation API | Complete | 2026-09-30 | Database-level aggregations for placement %, avg/median/highest CTC, department-wise breakdown; per-drive funnel (Applied → Shortlisted → Selected); coordinator department scoping; 14 integration tests pass. All lint/format clean. |
 | 61 | Statistics Dashboard UI | Complete | 2026-09-30 | Dashboard page with Recharts: department-wise placement bar chart; per-drive funnel visualization with conversion rates; CTC summary cards; coordinator view department-scoped, TPO view institute-wide; drive selector dropdown. All lint/format clean, build successful. Added `recharts` dependency. |
-| 62 | Year-over-Year Comparison | Complete | 2026-09-30 | Backend: `GET /stats/seasons` and `GET /stats/compare?years=...` APIs with season tracking on drives; TPO-only comparison across multiple seasons; trend data for charts; handles zero prior-year data gracefully. 12 integration tests pass. All lint/format clean. |
+| 62 | Year-over-Year Comparison | Complete | 2026-09-30 | Backend: `GET /stats/seasons` and `GET /stats/compare?years=...` APIs with season tracking on drives; TPO-only comparison across multiple seasons; trend data for charts; handles zero prior-year data gracefully. Frontend: Statistics Comparison page with Recharts trend lines, season multi-select dropdown, metric selector (Placement %, CTC, etc.), comparison table, department breakdown grouped bar chart. 12 backend integration tests pass. All lint/format clean, build successful. |
 
 ### Milestone 11 — Cross-Cutting Hardening & Launch
 | # | Phase | Status | Completed | Notes |
 |---|---|---|---|---|
-| 63 | Search/Filter/Sort Consistency Audit | Not Started | — | — |
+| 63 | Search/Filter/Sort Consistency Audit | Complete | 2026-09-30 | Added sort UI to FAQ page (TPO view: sort by createdAt, category, question), Announcement Board (sort by createdAt, updatedAt, title), Statistics Dashboard department chart (sort by placement%, name, placedStudents, totalStudents). All list screens now have at least one filter and one sort. All lint/format clean, build successful. |
 | 64 | CSV Export Consistency Audit | Not Started | — | — |
 | 65 | Dark Mode & Responsive/PWA Polish | Not Started | — | — |
 | 66 | Automated Testing Pass | Not Started | — | — |
@@ -153,15 +153,12 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 62 complete; **Milestone 10 (Calendar & Statistics) fully complete**. Phase 63 (Search/Filter/Sort Consistency Audit, M11) is next.
-**File(s) touched in Phase 62:**
-- `server/src/models/Drive.model.js` — Added `season` field for placement season tracking
-- `server/src/services/statsCompare.service.js` — Year-over-year comparison logic with trend data
-- `server/src/controllers/statsCompare.controller.js` — Comparison endpoints with validation
-- `server/src/routes/statsCompare.routes.js` — TPO-only routes for season listing and comparison
-- `server/src/routes/statsCompare.routes.test.js` — 12 integration tests
-- `server/src/app.js` — Registered stats compare routes
-**Next action:** Begin Phase 63 — Search/Filter/Sort Consistency Audit (M11). Traces to **FR-SEA-01**. Key tasks: Review all list screens against filter/sort matrix; close any gaps.
+**Active phase:** None active — Phase 63 complete; **Milestone 11 (Cross-Cutting Hardening & Launch) started**. Phase 64 (CSV Export Consistency Audit, M11) is next.
+**File(s) touched in Phase 63:**
+- `client/src/pages/FAQPage.jsx` — Added sort UI for TPO view (sort by createdAt, category, question; asc/desc)
+- `client/src/pages/AnnouncementBoardPage.jsx` — Added sort UI (sort by createdAt, updatedAt, title; asc/desc)
+- `client/src/pages/StatisticsDashboardPage.jsx` — Added sort for department chart (sort by placement%, name, placedStudents, totalStudents; asc/desc)
+**Next action:** Begin Phase 64 — CSV Export Consistency Audit (M11). Traces to **FR-SEA-03, FR-STA-04**. Key tasks: Verify/complete CSV export for Students, Applications, and Statistics reports.
 
 ---
 
