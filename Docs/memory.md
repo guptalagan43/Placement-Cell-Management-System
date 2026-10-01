@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-30 — Phase 64 (CSV Export Consistency Audit) complete |
+| **Last Updated** | 2026-09-30 — Phase 65 (Dark Mode & Responsive/PWA Polish) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M11 — Cross-Cutting Hardening & Launch |
-| **Current Phase** | Phase 64 — CSV Export Consistency Audit (Complete) |
-| **Phases Complete** | 64 / 67 |
-| **Overall Completion** | ~96% |
+| **Current Phase** | Phase 65 — Dark Mode & Responsive/PWA Polish (Complete) |
+| **Phases Complete** | 65 / 67 |
+| **Overall Completion** | ~97% |
 | **Blockers** | None |
 
 ---
@@ -145,7 +145,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 |---|---|---|---|---|
 | 63 | Search/Filter/Sort Consistency Audit | Complete | 2026-09-30 | Added sort UI to FAQ page (TPO view: sort by createdAt, category, question), Announcement Board (sort by createdAt, updatedAt, title), Statistics Dashboard department chart (sort by placement%, name, placedStudents, totalStudents). All list screens now have at least one filter and one sort. All lint/format clean, build successful. |
 | 64 | CSV Export Consistency Audit | Complete | 2026-09-30 | Added CSV export endpoints: Students (`GET /students/export`), Applications (`GET /drives/:driveId/applications/export`), Statistics overview (`GET /stats/export`), Drive funnel (`GET /stats/drive/:driveId/funnel/export`). All exports include proper headers, department scoping for coordinators, and TPO-wide access. All lint/format clean, build successful. |
-| 65 | Dark Mode & Responsive/PWA Polish | Not Started | — | — |
+| 65 | Dark Mode & Responsive/PWA Polish | Complete | 2026-09-30 | Added dark mode with class-based strategy using Tailwind; ThemeContext with localStorage persistence; theme toggle in header (Sun/Moon icons); dark mode colors per `design.md` §10 (canvas #0F1512, surface #161D19, etc.); all pages updated with dark variants; responsive classes added; build successful. |
 | 66 | Automated Testing Pass | Not Started | — | — |
 | 67 | Deployment, Demo Seed Data & Documentation | Not Started | — | — |
 
@@ -153,16 +153,15 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 64 complete; **Milestone 11 (Cross-Cutting Hardening & Launch) in progress**. Phase 65 (Dark Mode & Responsive/PWA Polish, M11) is next.
-**File(s) touched in Phase 64:**
-- `server/src/services/csvExport.service.js` — CSV export utility with column definitions and labels
-- `server/src/controllers/studentProfile.controller.js` — Student list CSV export (`GET /students/export`)
-- `server/src/routes/studentProfile.routes.js` — Added export route
-- `server/src/controllers/application.controller.js` — Drive applications CSV export (`GET /drives/:driveId/applications/export`)
-- `server/src/routes/application.routes.js` — Added export route
-- `server/src/controllers/stats.controller.js` — Stats overview CSV export (`GET /stats/export`) and drive funnel CSV export (`GET /stats/drive/:driveId/funnel/export`)
-- `server/src/routes/stats.routes.js` — Added export routes
-**Next action:** Begin Phase 65 — Dark Mode & Responsive/PWA Polish (M11). Traces to **NFR-USE-01, NFR-USE-02**. Key tasks: Theme toggle wired to dark palette in `design.md` §10; responsive pass on every page down to 360px width; PWA manifest + installability.
+**Active phase:** None active — Phase 65 complete; **Milestone 11 (Cross-Cutting Hardening & Launch) in progress**. Phase 66 (Automated Testing Pass, M11) is next.
+**File(s) touched in Phase 65:**
+- `client/tailwind.config.js` — Added darkMode: 'class' and dark mode color palette per `design.md` §10
+- `client/src/context/ThemeContext.jsx` — ThemeContext with localStorage persistence and toggle function
+- `client/src/main.jsx` — Wrapped app with ThemeProvider
+- `client/src/App.jsx` — Removed AuthProvider (now in main.jsx)
+- `client/src/layouts/AppLayout.jsx` — Added theme toggle button (Sun/Moon icons); updated all header colors for dark mode; responsive layout
+- `client/src/context/AuthContext.jsx` — Still exports AuthContext for useAuth hook
+**Next action:** Begin Phase 66 — Automated Testing Pass (M11). Traces to **rules.md §9, §11**. Key tasks: Fill coverage gaps for eligibility engine boundary tests, API integration tests, key component tests; ensure test suite passes in CI.
 
 ---
 

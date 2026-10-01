@@ -1,8 +1,10 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 import { cn } from '../lib/cn.js'
 import Button from '../components/ui/Button.jsx'
 import NotificationBell from '../components/ui/NotificationBell.jsx'
+import { Sun, Moon } from 'lucide-react'
 
 // Base layout shell: header with auth-aware nav, sidebar container, outlet.
 const navItems = [
@@ -28,6 +30,7 @@ const adminNavItems = [
 
 export default function AppLayout() {
   const { user, logout, isAuthenticated } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -38,10 +41,10 @@ export default function AppLayout() {
   const isAdmin = user && ['tpo', 'coordinator'].includes(user.role)
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between gap-6 border-b border-border bg-surface px-6 py-3">
+    <div className="flex min-h-screen flex-col bg-canvas dark:bg-dark-canvas">
+      <header className="flex items-center justify-between gap-6 border-b border-border dark:border-dark-border bg-surface dark:bg-dark-surface px-6 py-3">
         <div className="flex items-center gap-6">
-          <span className="font-heading text-base font-bold tracking-tight text-primary-700">
+          <span className="font-heading text-base font-bold tracking-tight text-primary-700 dark:text-dark-primary-700">
             PCMS
           </span>
           <nav className="flex gap-4" aria-label="Primary">
@@ -52,8 +55,8 @@ export default function AppLayout() {
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    'font-body text-sm text-ink-600 transition-colors hover:text-ink-900',
-                    isActive && 'font-semibold text-primary-700'
+                    'font-body text-sm text-ink-600 dark:text-dark-ink-600 transition-colors hover:text-ink-900 dark:hover:text-dark-ink-900',
+                    isActive && 'font-semibold text-primary-700 dark:text-dark-primary-700'
                   )
                 }
               >
@@ -73,8 +76,8 @@ export default function AppLayout() {
                     to={item.to}
                     className={({ isActive }) =>
                       cn(
-                        'font-body text-sm text-ink-600 transition-colors hover:text-ink-900',
-                        isActive && 'font-semibold text-primary-700'
+                        'font-body text-sm text-ink-600 dark:text-dark-ink-600 transition-colors hover:text-ink-900 dark:hover:text-dark-ink-900',
+                        isActive && 'font-semibold text-primary-700 dark:text-dark-primary-700'
                       )
                     }
                   >
@@ -86,8 +89,8 @@ export default function AppLayout() {
                     to="/stats/compare"
                     className={({ isActive }) =>
                       cn(
-                        'font-body text-sm text-ink-600 transition-colors hover:text-ink-900',
-                        isActive && 'font-semibold text-primary-700'
+                        'font-body text-sm text-ink-600 dark:text-dark-ink-600 transition-colors hover:text-ink-900 dark:hover:text-dark-ink-900',
+                        isActive && 'font-semibold text-primary-700 dark:text-dark-primary-700'
                       )
                     }
                   >
@@ -99,11 +102,26 @@ export default function AppLayout() {
 
             <div className="flex items-center gap-3">
               <NotificationBell />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                className="p-2 rounded-lg hover:bg-primary-100 dark:hover:bg-dark-primary-100"
+              >
+                {theme === 'light' ? (
+                  <Moon className="w-5 h-5 text-ink-600" />
+                ) : (
+                  <Sun className="w-5 h-5 text-ink-600" />
+                )}
+              </Button>
               <div className="hidden sm:block text-right">
-                <p className="font-body text-sm font-semibold text-ink-900">
+                <p className="font-body text-sm font-semibold text-ink-900 dark:text-dark-ink-900">
                   {user?.name ?? user?.email}
                 </p>
-                <p className="font-body text-xs text-primary-700 capitalize">{user?.role}</p>
+                <p className="font-body text-xs text-primary-700 dark:text-dark-primary-700 capitalize">
+                  {user?.role}
+                </p>
               </div>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 Logout
@@ -113,7 +131,10 @@ export default function AppLayout() {
         )}
       </header>
       <div className="flex flex-1">
-        <aside className="w-60 border-r border-border" aria-label="Sidebar" />
+        <aside
+          className="w-60 border-r border-border dark:border-dark-border"
+          aria-label="Sidebar"
+        />
         <main className="flex-1 p-6">
           <Outlet />
         </main>

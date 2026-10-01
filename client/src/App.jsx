@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+import { useAuth } from './context/AuthContext.jsx'
 import { ProtectedRoute, RoleRoute } from './components/auth/RouteGuards.jsx'
 import AppLayout from './layouts/AppLayout.jsx'
 import LoginPage from './pages/LoginPage.jsx'
@@ -277,11 +277,6 @@ function AppRoutes() {
   )
 }
 
-// Top-level App wraps everything in AuthProvider.
 export default function App() {
-  return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
-  )
+  return <AppRoutes />
 }

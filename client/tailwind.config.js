@@ -6,6 +6,7 @@
 // two `boxShadow` tokens come straight from the §5 elevation table.
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -29,6 +30,16 @@ export default {
         warning: { DEFAULT: '#D97706', text: '#D97706', bg: '#FEF3C7' },
         neutral: { DEFAULT: '#6B7280', text: '#6B7280', bg: '#F3F4F6' },
         info: { DEFAULT: '#2563EB', text: '#2563EB', bg: '#DBEAFE' },
+        // Dark mode colors (per design.md §10)
+        dark: {
+          canvas: '#0F1512',
+          surface: '#161D19',
+          border: '#263029',
+          'ink-900': '#F2F4F2',
+          'ink-600': '#B6BDB9',
+          'primary-700': '#22A855',
+          'primary-100': '#173324',
+        },
       },
       fontFamily: {
         heading: ['"Plus Jakarta Sans"', 'sans-serif'],
@@ -41,8 +52,8 @@ export default {
         xl: '20px',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(17, 24, 39, 0.04)',
-        raised: '0 8px 24px rgba(17, 24, 39, 0.08)',
+        card: '0 1px 2px rgba(17,24,39,0.04)',
+        raised: '0 8px 24px rgba(17,24,39,0.08)',
       },
     },
   },
