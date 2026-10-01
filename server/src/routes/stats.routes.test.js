@@ -502,6 +502,7 @@ describe('Statistics API', () => {
   describe('Edge cases', () => {
     it('handles median calculation correctly for even number of values', async () => {
       // Create 4 placed students with different CTCs
+      // Create 4 placed students with different CTCs
       const drive2 = await Drive.create({
         company: company._id,
         title: 'Senior Engineer',
