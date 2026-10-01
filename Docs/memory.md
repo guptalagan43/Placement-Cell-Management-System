@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-30 — Phase 59 (Calendar View UI + ICS Export) complete |
+| **Last Updated** | 2026-09-30 — Phase 60 (Statistics Aggregation API) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M10 — Calendar & Statistics |
-| **Current Phase** | Phase 59 — Calendar View UI + ICS Export (Complete) |
-| **Phases Complete** | 59 / 67 |
-| **Overall Completion** | ~88% |
+| **Current Phase** | Phase 60 — Statistics Aggregation API (Complete) |
+| **Phases Complete** | 60 / 67 |
+| **Overall Completion** | ~90% |
 | **Blockers** | None |
 
 ---
@@ -136,7 +136,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 |---|---|---|---|---|
 | 58 | Calendar Aggregation API + Conflict Detection | Complete | 2026-09-30 | Calendar service aggregating Rounds + InfoSessions across all student applications; conflict detection for overlapping events; `GET /students/me/calendar` with optional date range filtering; 15 integration tests pass. All lint/format clean. |
 | 59 | Calendar View UI + ICS Export | Complete | 2026-09-30 | Agenda view component with date-grouped events; conflict warning badges; filter by type (Rounds/PPTs); date range filtering; `.ics` export generating valid iCalendar format; navigation link added. All lint/format clean, build successful. |
-| 60 | Statistics Aggregation API | Not Started | — | — |
+| 60 | Statistics Aggregation API | Complete | 2026-09-30 | Database-level aggregations for placement %, avg/median/highest CTC, department-wise breakdown; per-drive funnel (Applied → Shortlisted → Selected); coordinator department scoping; 14 integration tests pass. All lint/format clean. |
 | 61 | Statistics Dashboard UI | Not Started | — | — |
 | 62 | Year-over-Year Comparison | Not Started | — | — |
 
@@ -153,13 +153,14 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 59 complete; **Milestone 10 (Calendar & Statistics) in progress**. Phase 60 (Statistics Aggregation API, M10) is next.
-**File(s) touched in Phase 59:**
-- `client/src/api/calendar.api.js` — Calendar API client
-- `client/src/pages/CalendarPage.jsx` — Agenda view with conflict warnings, filters, date range, ICS export
-- `client/src/App.jsx` — Added `/calendar` route
-- `client/src/layouts/AppLayout.jsx` — Added Calendar navigation link
-**Next action:** Begin Phase 60 — Statistics Aggregation API (M10). Traces to **FR-STA-01, FR-STA-03**. Key tasks: `GET /stats/overview` database-level aggregation; `GET /stats/drive/:id/funnel`.
+**Active phase:** None active — Phase 60 complete; **Milestone 10 (Calendar & Statistics) in progress**. Phase 61 (Statistics Dashboard UI, M10) is next.
+**File(s) touched in Phase 60:**
+- `server/src/services/stats.service.js` — Database-level aggregation logic (overview + funnel)
+- `server/src/controllers/stats.controller.js` — Statistics endpoints with validation
+- `server/src/routes/stats.routes.js` — Coordinator/TPO routes with department scoping
+- `server/src/routes/stats.routes.test.js` — 14 integration tests
+- `server/src/app.js` — Registered stats routes
+**Next action:** Begin Phase 61 — Statistics Dashboard UI (M10). Traces to **FR-STA-01, FR-STA-03**. Key tasks: Dashboard page using Recharts; department-wise bar chart; per-drive funnel visualization; coordinator view department-scoped, admin view institute-wide.
 
 ---
 
