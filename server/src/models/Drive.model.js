@@ -148,6 +148,14 @@ const driveSchema = new mongoose.Schema(
       maxlength: 5000,
       default: '',
     },
+    // Placement season this drive belongs to (e.g., "2024-25", "2025-26")
+    // Used for year-over-year comparison (FR-STA-02)
+    season: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+      index: true,
+    },
   },
   {
     timestamps: true,

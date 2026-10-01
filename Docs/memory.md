@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Purpose** | The single persistent record of project state — what's done, what's active, what's been decided. This file is read *first*, before `srs.md`/`phases.md`, at the start of every work session. |
-| **Last Updated** | 2026-09-30 — Phase 61 (Statistics Dashboard UI) complete |
+| **Last Updated** | 2026-09-30 — Phase 62 (Year-over-Year Comparison) complete |
 
 ---
 
@@ -23,9 +23,9 @@
 | | |
 |---|---|
 | **Current Milestone** | M10 — Calendar & Statistics |
-| **Current Phase** | Phase 61 — Statistics Dashboard UI (Complete) |
-| **Phases Complete** | 61 / 67 |
-| **Overall Completion** | ~91% |
+| **Current Phase** | Phase 62 — Year-over-Year Comparison (Complete) |
+| **Phases Complete** | 62 / 67 |
+| **Overall Completion** | ~93% |
 | **Blockers** | None |
 
 ---
@@ -138,7 +138,7 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 | 59 | Calendar View UI + ICS Export | Complete | 2026-09-30 | Agenda view component with date-grouped events; conflict warning badges; filter by type (Rounds/PPTs); date range filtering; `.ics` export generating valid iCalendar format; navigation link added. All lint/format clean, build successful. |
 | 60 | Statistics Aggregation API | Complete | 2026-09-30 | Database-level aggregations for placement %, avg/median/highest CTC, department-wise breakdown; per-drive funnel (Applied → Shortlisted → Selected); coordinator department scoping; 14 integration tests pass. All lint/format clean. |
 | 61 | Statistics Dashboard UI | Complete | 2026-09-30 | Dashboard page with Recharts: department-wise placement bar chart; per-drive funnel visualization with conversion rates; CTC summary cards; coordinator view department-scoped, TPO view institute-wide; drive selector dropdown. All lint/format clean, build successful. Added `recharts` dependency. |
-| 62 | Year-over-Year Comparison | Not Started | — | — |
+| 62 | Year-over-Year Comparison | Complete | 2026-09-30 | Backend: `GET /stats/seasons` and `GET /stats/compare?years=...` APIs with season tracking on drives; TPO-only comparison across multiple seasons; trend data for charts; handles zero prior-year data gracefully. 12 integration tests pass. All lint/format clean. |
 
 ### Milestone 11 — Cross-Cutting Hardening & Launch
 | # | Phase | Status | Completed | Notes |
@@ -153,14 +153,15 @@ Status values: `Not Started` · `In Progress` · `Blocked` · `Complete`
 
 ## 3. Currently Active Work
 
-**Active phase:** None active — Phase 61 complete; **Milestone 10 (Calendar & Statistics) fully complete**. Phase 62 (Year-over-Year Comparison, M10) is next.
-**File(s) touched in Phase 61:**
-- `client/src/api/stats.api.js` — Statistics API client
-- `client/src/pages/StatisticsDashboardPage.jsx` — Dashboard with Recharts (bar chart + funnel), CTC cards, drive selector
-- `client/src/App.jsx` — Added `/stats` route with RoleRoute
-- `client/src/layouts/AppLayout.jsx` — Added Statistics navigation link for coordinator/TPO
-- `client/package.json` — Added `recharts` dependency
-**Next action:** Begin Phase 62 — Year-over-Year Comparison (M10). Traces to **FR-STA-02**. Key tasks: `GET /stats/compare?years=...` API; trend-line UI overlaying current vs. prior seasons; handle zero prior-year data gracefully.
+**Active phase:** None active — Phase 62 complete; **Milestone 10 (Calendar & Statistics) fully complete**. Phase 63 (Search/Filter/Sort Consistency Audit, M11) is next.
+**File(s) touched in Phase 62:**
+- `server/src/models/Drive.model.js` — Added `season` field for placement season tracking
+- `server/src/services/statsCompare.service.js` — Year-over-year comparison logic with trend data
+- `server/src/controllers/statsCompare.controller.js` — Comparison endpoints with validation
+- `server/src/routes/statsCompare.routes.js` — TPO-only routes for season listing and comparison
+- `server/src/routes/statsCompare.routes.test.js` — 12 integration tests
+- `server/src/app.js` — Registered stats compare routes
+**Next action:** Begin Phase 63 — Search/Filter/Sort Consistency Audit (M11). Traces to **FR-SEA-01**. Key tasks: Review all list screens against filter/sort matrix; close any gaps.
 
 ---
 
