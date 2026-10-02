@@ -3,7 +3,6 @@
 // All email inputs are validated to @skit.ac.in domain.
 import { z } from 'zod'
 import crypto from 'crypto'
-import bcrypt from 'bcryptjs'
 import User from '../models/User.model.js'
 import { asyncHandler } from '../utils/async-handler.js'
 import { ApiError } from '../utils/api-error.js'
@@ -122,6 +121,10 @@ export const login = [
       otp: code,
     })
 
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[DEV] Login OTP for ${email}: ${code}`)
+    }
+
     res.json({
       success: true,
       requiresOtp: true,
@@ -164,6 +167,9 @@ export const forgotPassword = [
         studentName: user.email.split('@')[0],
         otp: code,
       })
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[DEV] Forgot-password OTP for ${email}: ${code}`)
+      }
     }
 
     // Generic response — no user enumeration
@@ -245,6 +251,9 @@ export const requestActivation = [
         studentName: user.email.split('@')[0],
         tempPassword,
       })
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[DEV] Activation temp password for ${email}: ${tempPassword}`)
+      }
     }
 
     // Generic response — no user enumeration
