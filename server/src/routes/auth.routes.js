@@ -1,30 +1,36 @@
-// Auth routes: login, forgot password, reset password, activation.
+// Auth routes: login (2-step OTP), forgot-password (OTP), reset, activation.
 import { Router } from 'express'
 import {
-  login,
-  validateLogin,
-  forgotPassword,
-  validateForgotPassword,
-  resetPassword,
-  validateResetPassword,
-  activate,
-  validateActivate,
+  login, validateLogin,
+  verifyLoginOtp, validateVerifyLoginOtp,
+  forgotPassword, validateForgotPassword,
+  verifyForgotOtp, validateVerifyForgotOtp,
+  resetPassword, validateResetPassword,
+  requestActivation, validateRequestActivation,
+  activate, validateActivate,
 } from '../controllers/auth.controller.js'
 
 const router = Router()
 
-// POST /auth/login — validate input, then handle login.
+// Step 1: verify credentials → send OTP to college email
 router.post('/login', validateLogin, login)
 
-// POST /auth/forgot-password — send reset email (generic response, no enumeration).
+// Step 2: verify OTP → issue token pair
+router.post('/verify-login-otp', validateVerifyLoginOtp, verifyLoginOtp)
+
+// Forgot password — Step 1: send OTP
 router.post('/forgot-password', validateForgotPassword, forgotPassword)
 
-// POST /auth/reset-password — verify token and set new password.
+// Forgot password — Step 2: verify OTP → get reset token
+router.post('/verify-forgot-otp', validateVerifyForgotOtp, verifyForgotOtp)
+
+// Forgot password — Step 3: reset token + new password
 router.post('/reset-password', validateResetPassword, resetPassword)
 
-// POST /auth/activate — bulk-imported student sets initial password, clears mustResetPassword, auto-login.
-router.post('/activate', validateActivate, activate)
+// New account — Step 1: request temp password (sent to college email)
+router.post('/request-activation', validateRequestActivation, requestActivation)
 
-// Placeholder for future: POST /auth/refresh, POST /auth/logout
+// New account — Step 2: temp password + new password → activate
+router.post('/activate', validateActivate, activate)
 
 export default router

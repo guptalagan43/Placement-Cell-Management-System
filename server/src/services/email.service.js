@@ -203,6 +203,91 @@ const EMAIL_TEMPLATES = {
     `,
     text: `${data.title ?? 'Notification'}\n\nDear ${data.studentName},\n\n${data.message}\n${data.link ? `\nView details: ${data.link}` : ''}`,
   }),
+  // ── Auth / OTP templates ────────────────────────────────────────────────
+  login_otp: (data) => ({
+    subject: 'Your PCMS sign-in verification code',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #146B34; margin-bottom: 4px;">Sign-In Verification</h2>
+        <p style="color: #374151;">Dear ${data.studentName},</p>
+        <p style="color: #374151;">Use the code below to complete your sign-in. It expires in <strong>10 minutes</strong>.</p>
+        <div style="background: #F0FDF4; border: 2px solid #146B34; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+          <div style="font-size: 40px; font-weight: 700; letter-spacing: 12px; color: #146B34;">${data.otp}</div>
+          <p style="color: #6B7280; font-size: 13px; margin: 8px 0 0;">One-time password — do not share</p>
+        </div>
+        <p style="color: #6B7280; font-size: 13px;">If you did not attempt to sign in, please ignore this email. Your account is safe.</p>
+        <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 24px 0;">
+        <p style="color: #9CA3AF; font-size: 12px;">SKIT T&P Cell — Placement Cell Management System. Do not reply to this email.</p>
+      </div>
+    `,
+    text: `Your PCMS sign-in OTP is: ${data.otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.`,
+  }),
+
+  forgot_password_otp: (data) => ({
+    subject: 'Your PCMS password reset code',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #146B34; margin-bottom: 4px;">Password Reset</h2>
+        <p style="color: #374151;">Dear ${data.studentName},</p>
+        <p style="color: #374151;">Use the code below to reset your PCMS password. It expires in <strong>10 minutes</strong>.</p>
+        <div style="background: #FFF7ED; border: 2px solid #EA580C; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+          <div style="font-size: 40px; font-weight: 700; letter-spacing: 12px; color: #EA580C;">${data.otp}</div>
+          <p style="color: #6B7280; font-size: 13px; margin: 8px 0 0;">One-time password — do not share</p>
+        </div>
+        <p style="color: #6B7280; font-size: 13px;">If you did not request a password reset, please ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 24px 0;">
+        <p style="color: #9CA3AF; font-size: 12px;">SKIT T&P Cell — Placement Cell Management System. Do not reply to this email.</p>
+      </div>
+    `,
+    text: `Your PCMS password reset OTP is: ${data.otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.`,
+  }),
+
+  account_activation: (data) => ({
+    subject: 'Activate your PCMS account',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #146B34; margin-bottom: 4px;">Welcome to PCMS!</h2>
+        <p style="color: #374151;">Dear ${data.studentName},</p>
+        <p style="color: #374151;">Your account has been created by the T&P Cell. Use the temporary password below to activate your account and set a permanent password.</p>
+        <div style="background: #EFF6FF; border: 2px solid #2563EB; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+          <p style="color: #6B7280; font-size: 13px; margin: 0 0 8px;">Temporary Password</p>
+          <div style="font-size: 24px; font-weight: 700; letter-spacing: 6px; color: #1D4ED8; font-family: monospace;">${data.tempPassword}</div>
+          <p style="color: #6B7280; font-size: 12px; margin: 8px 0 0;">Use this on the "New Account?" page — do not share</p>
+        </div>
+        <p style="color: #374151;">Steps:</p>
+        <ol style="color: #374151; padding-left: 20px;">
+          <li>Go to the PCMS sign-in page and click <strong>"New Account?"</strong></li>
+          <li>Enter your college email and this temporary password</li>
+          <li>Set your permanent password</li>
+          <li>Sign in normally</li>
+        </ol>
+        <p style="text-align: center; margin: 24px 0;">
+          <a href="${FRONTEND_URL}/activate" style="background: #146B34; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Activate My Account</a>
+        </p>
+        <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 24px 0;">
+        <p style="color: #9CA3AF; font-size: 12px;">SKIT T&P Cell — Placement Cell Management System. Do not reply to this email.</p>
+      </div>
+    `,
+    text: `Welcome to PCMS!\n\nYour temporary password is: ${data.tempPassword}\n\nGo to ${FRONTEND_URL}/activate, enter your college email and this temporary password, then set a permanent password.`,
+  }),
+}
+
+// Generic sendEmail used by auth flows (login OTP, forgot-password OTP, activation)
+export async function sendEmail(userEmail, type, data = {}) {
+  const template = EMAIL_TEMPLATES[type]
+  if (!template) {
+    console.warn(`[email] No template for type: ${type}`)
+    return { sent: false, reason: 'NO_TEMPLATE' }
+  }
+  try {
+    const transporter = getTransporter()
+    const { subject, html, text } = template(data)
+    await transporter.sendMail({ from: FROM_EMAIL, to: userEmail, subject, html, text })
+    return { sent: true }
+  } catch (err) {
+    console.warn(`[email] Failed to send ${type} to ${userEmail}:`, err.message)
+    return { sent: false, reason: err.message }
+  }
 }
 
 export async function sendNotificationEmail(userEmail, userName, type, data) {
@@ -236,6 +321,7 @@ export function isEmailConfigured() {
 }
 
 export default {
+  sendEmail,
   sendNotificationEmail,
   isEmailConfigured,
 }

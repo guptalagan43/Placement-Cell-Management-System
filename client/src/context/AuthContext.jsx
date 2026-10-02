@@ -2,22 +2,19 @@
 // Access token is NOT persisted to localStorage/sessionStorage (rules.md §3).
 // Refresh token lives in httpOnly cookie managed by the server.
 import { createContext, useContext, useState, useCallback } from 'react'
-import { login as loginApi, logout as logoutApi } from '../api/auth.api.js'
+import { logout as logoutApi } from '../api/auth.api.js'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [accessToken, setAccessToken] = useState(null)
-  // Start with loading=false since we don't have a /auth/me endpoint yet.
-  // When one is added, initialize to true and fetch on mount.
   const [loading] = useState(false)
 
-  const login = useCallback(async (email, password) => {
-    const data = await loginApi(email, password)
-    setAccessToken(data.accessToken)
-    setUser(data.user)
-    return data
+  // Called by LoginPage step 2 (after OTP verified) with the token + user from the server
+  const loginWithToken = useCallback((token, userData) => {
+    setAccessToken(token)
+    setUser(userData)
   }, [])
 
   const logout = useCallback(async () => {
@@ -31,7 +28,7 @@ export function AuthProvider({ children }) {
     accessToken,
     isAuthenticated: !!user,
     loading,
-    login,
+    loginWithToken,
     logout,
   }
 
@@ -40,9 +37,7 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext)
-  if (!ctx) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
   return ctx
 }
 
