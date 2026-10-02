@@ -1,7 +1,7 @@
 // Cron job scheduler. Initializes and manages all scheduled jobs.
 // Traces to FR-NOT-01, FR-OFR-03, NFR-REL-01.
 import cron from 'node-cron'
-import { config } from '../config/env.js'
+import { loadEnv } from '../config/env.js'
 import { runRegistrationDeadlineJob } from './registrationDeadlineJob.js'
 import { runRoundApproachingJob } from './roundApproachingJob.js'
 import { runOfferExpiryJob } from './offerExpiryJob.js'
@@ -14,6 +14,8 @@ export function startScheduler() {
     return
   }
 
+  // Load config here (after dotenv has populated process.env in server.js)
+  const config = loadEnv()
   const { CRON_SCHEDULE, CRON_TIMEZONE } = config
   // Per-job overrides — fall back to shared CRON_SCHEDULE when not set
   const registrationSchedule = CRON_SCHEDULE
