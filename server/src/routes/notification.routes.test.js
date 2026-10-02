@@ -171,14 +171,17 @@ describe('Notification routes', () => {
       await request(app).get('/notifications/me').expect(401)
     })
 
-    it('rejects coordinator access (student only)', async () => {
+    it('allows coordinator access (all roles can read their own notifications)', async () => {
       const _coordinator = await createTestUser(ROLES.COORDINATOR, 'Computer Science & Engineering')
       const token = await loginAndGetToken('coordinator@test.com')
 
-      await request(app)
+      // Coordinators can now access their own notifications (FR-NOT-01 covers all roles)
+      const res = await request(app)
         .get('/notifications/me')
         .set('Authorization', `Bearer ${token}`)
-        .expect(403)
+        .expect(200)
+
+      expect(res.body.success).toBe(true)
     })
   })
 

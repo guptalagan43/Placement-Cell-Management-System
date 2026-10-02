@@ -329,6 +329,21 @@ export async function updateRoundStatus(applicationId, roundId, status, updatedB
     }
   }
 
+  // Create notification for results declared (cleared or not_cleared)
+  if ((status === 'cleared' || status === 'not_cleared') && previousStatus !== status) {
+    const round = await Round.findById(roundId).lean()
+    const drive = await Drive.findById(application.drive).populate('company', 'name').lean()
+    if (round && drive && application.student) {
+      const resultLabel = status === 'cleared' ? 'cleared ✅' : 'not cleared ❌'
+      await createNotification({
+        user: application.student.user,
+        type: 'results_declared',
+        message: `Results for ${round.name} in ${drive.title} at ${drive.company?.name ?? 'the company'}: you were ${resultLabel}.`,
+        link: `/applications/my`,
+      })
+    }
+  }
+
   return application.toObject({ virtuals: true })
 }
 
@@ -427,6 +442,7 @@ export async function bulkUpdateRoundStatus(driveId, roundId, updates, user) {
       continue
     }
 
+    const previousBulkStatus = application.roundStatuses[roundStatusIndex].status
     application.roundStatuses[roundStatusIndex].status = status
     application.roundStatuses[roundStatusIndex].updatedAt = new Date()
     application.roundStatuses[roundStatusIndex].updatedBy = user._id
@@ -447,6 +463,21 @@ export async function bulkUpdateRoundStatus(driveId, roundId, updates, user) {
     }
 
     await application.save()
+
+    // Send shortlisted notification (mirrors single-row updateRoundStatus behaviour)
+    if (status === 'shortlisted' && previousBulkStatus !== 'shortlisted') {
+      const round = await Round.findById(roundId).lean()
+      const drive = await Drive.findById(driveId).populate('company', 'name').lean()
+      const populatedApp = await Application.findById(application._id).populate('student', 'user').lean()
+      if (round && drive && populatedApp?.student?.user) {
+        await createNotification({
+          user: populatedApp.student.user,
+          type: 'shortlisted',
+          message: `You have been shortlisted for ${round.name} in ${drive.title} at ${drive.company?.name ?? 'the company'}.`,
+          link: `/applications/my`,
+        })
+      }
+    }
     results.updated++
   }
 

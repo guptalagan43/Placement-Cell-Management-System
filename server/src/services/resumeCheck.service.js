@@ -160,8 +160,9 @@ async function runCheck(item, profile, user, resume) {
     }
 
     case 'contact_phone': {
-      // Check student profile phone or user phone
+      // Prefer dedicated phone field; fall back to guardian mobiles
       const phone =
+        profile.phone ||
         profile.phone2 ||
         profile.guardianInfo?.father?.mobile ||
         profile.guardianInfo?.mother?.mobile
@@ -172,28 +173,34 @@ async function runCheck(item, profile, user, resume) {
     }
 
     case 'contact_linkedin': {
-      // Check if LinkedIn URL is in any social links (could be in certifications/projects or a dedicated field)
-      // For now, check if any project/certification has a LinkedIn-like URL
+      // Use dedicated linkedinUrl field; fall back to heuristic on project/cert links
       const hasLinkedIn =
+        !!profile.linkedinUrl ||
         profile.projects?.some((p) => p.link?.includes('linkedin.com')) ||
         profile.certifications?.some((c) => c.proofUrl?.includes('linkedin.com'))
       return {
         passed: hasLinkedIn,
-        details: hasLinkedIn
-          ? 'LinkedIn profile found in projects/certifications'
-          : 'No LinkedIn profile URL found',
+        details: profile.linkedinUrl
+          ? `LinkedIn: ${profile.linkedinUrl}`
+          : hasLinkedIn
+            ? 'LinkedIn profile found in projects/certifications'
+            : 'No LinkedIn profile URL found — add it to your profile',
       }
     }
 
     case 'contact_github': {
+      // Use dedicated githubUrl field; fall back to heuristic on project links
       const hasGithub =
+        !!profile.githubUrl ||
         profile.projects?.some((p) => p.link?.includes('github.com')) ||
         profile.certifications?.some((c) => c.proofUrl?.includes('github.com'))
       return {
         passed: hasGithub,
-        details: hasGithub
-          ? 'GitHub profile found in projects/certifications'
-          : 'No GitHub/portfolio URL found',
+        details: profile.githubUrl
+          ? `GitHub: ${profile.githubUrl}`
+          : hasGithub
+            ? 'GitHub profile found in project links'
+            : 'No GitHub/portfolio URL found — add it to your profile',
       }
     }
 

@@ -151,7 +151,12 @@ const studentProfileSchema = new mongoose.Schema(
       enum: ['male', 'female', 'other'],
       default: null,
     },
+    // Primary contact phone (used by resume checklist)
+    phone: { type: String, trim: true, default: '' },
     phone2: { type: String, trim: true, default: '' },
+    // Social / professional links (used by resume checklist)
+    linkedinUrl: { type: String, trim: true, default: '' },
+    githubUrl: { type: String, trim: true, default: '' },
     address: { type: addressSchema, default: () => ({}) },
     country: { type: String, trim: true, default: 'India' },
     // Admission details

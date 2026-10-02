@@ -1,5 +1,5 @@
 // CSV Export utility: converts data arrays to CSV format.
-import { stringify } from 'csv-parse/sync'
+import { stringify } from 'csv-stringify/sync'
 
 /**
  * Converts an array of objects to CSV string
@@ -10,9 +10,9 @@ import { stringify } from 'csv-parse/sync'
  */
 export function toCSV(data, columns, columnLabels = {}) {
   if (!data || data.length === 0) {
-    // Return header only
+    // Return header-only CSV using correct csv-stringify API
     const headers = columns.map((col) => columnLabels[col] || col)
-    return stringify([headers], { header: true })
+    return stringify([], { header: true, columns: headers })
   }
 
   // Prepare rows with selected columns

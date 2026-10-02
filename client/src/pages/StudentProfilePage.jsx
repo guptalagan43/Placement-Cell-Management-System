@@ -30,7 +30,10 @@ const addressSchema = z.object({
 const personalSchema = z.object({
   dateOfBirth: z.string().optional().or(z.literal('')),
   gender: z.enum(['male', 'female', 'other', '']).optional(),
+  phone: z.string().optional(),
   phone2: z.string().optional(),
+  linkedinUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  githubUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   address: addressSchema.optional(),
   country: z.string().optional(),
 })
@@ -134,10 +137,12 @@ function computeCompleteness(profile) {
   let score = 0
 
   // Personal (10%)
-  if (profile.dateOfBirth) score += weights.personal * 0.3
-  if (profile.gender) score += weights.personal * 0.2
-  if (profile.address?.city) score += weights.personal * 0.3
-  if (profile.phone2) score += weights.personal * 0.2
+  if (profile.dateOfBirth) score += weights.personal * 0.25
+  if (profile.gender) score += weights.personal * 0.15
+  if (profile.address?.city) score += weights.personal * 0.2
+  if (profile.phone || profile.phone2) score += weights.personal * 0.2
+  if (profile.linkedinUrl) score += weights.personal * 0.1
+  if (profile.githubUrl) score += weights.personal * 0.1
 
   // Academic (25%)
   if (profile.cgpaOverall != null) score += weights.academic * 0.25
@@ -198,7 +203,10 @@ export default function StudentProfilePage() {
       personal: {
         dateOfBirth: '',
         gender: '',
+        phone: '',
         phone2: '',
+        linkedinUrl: '',
+        githubUrl: '',
         address: { street: '', city: '', state: '', pincode: '' },
         country: 'India',
       },
@@ -365,7 +373,10 @@ export default function StudentProfilePage() {
         personal: {
           dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().slice(0, 10) : '',
           gender: p.gender ?? '',
+          phone: p.phone ?? '',
           phone2: p.phone2 ?? '',
+          linkedinUrl: p.linkedinUrl ?? '',
+          githubUrl: p.githubUrl ?? '',
           address: {
             street: p.address?.street ?? '',
             city: p.address?.city ?? '',
@@ -463,7 +474,10 @@ export default function StudentProfilePage() {
         // Personal (top-level API keys)
         dateOfBirth: personal?.dateOfBirth ? new Date(personal.dateOfBirth).toISOString() : null,
         gender: personal?.gender || null,
+        phone: personal?.phone ?? '',
         phone2: personal?.phone2 ?? '',
+        linkedinUrl: personal?.linkedinUrl ?? '',
+        githubUrl: personal?.githubUrl ?? '',
         address: personal?.address,
         country: personal?.country ?? 'India',
         // Academic (top-level API keys)
@@ -647,10 +661,31 @@ export default function StudentProfilePage() {
               </div>
 
               <Input
-                label="Alternate Phone"
+                label="Phone"
                 placeholder="e.g., +91 98765 43210"
+                error={errors.personal?.phone?.message}
+                {...register('personal.phone')}
+              />
+
+              <Input
+                label="Alternate Phone"
+                placeholder="e.g., +91 91234 56789"
                 error={errors.personal?.phone2?.message}
                 {...register('personal.phone2')}
+              />
+
+              <Input
+                label="LinkedIn Profile URL"
+                placeholder="https://linkedin.com/in/your-profile"
+                error={errors.personal?.linkedinUrl?.message}
+                {...register('personal.linkedinUrl')}
+              />
+
+              <Input
+                label="GitHub / Portfolio URL"
+                placeholder="https://github.com/your-username"
+                error={errors.personal?.githubUrl?.message}
+                {...register('personal.githubUrl')}
               />
 
               <Input

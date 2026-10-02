@@ -8,6 +8,7 @@ import AuditLog from '../models/AuditLog.model.js'
 import { ApiError } from '../utils/api-error.js'
 import { ROLES } from '../constants/roles.js'
 import { createNotification } from './notification.service.js'
+import { generateSignedUploadParams } from './cloudinary.service.js'
 
 // Issue an offer against an application (coordinator/TPO)
 export async function issueOffer(applicationId, documentData, responseDeadline, issuedBy, user) {
@@ -320,36 +321,9 @@ export async function expireOffers() {
 }
 
 // Get signed upload parameters for Cloudinary (for offer documents)
+// Delegates to the shared cloudinary.service.js to avoid duplicating signing logic
 export function getUploadParams() {
-  const { v2: cloudinary } = require('cloudinary')
-
-  if (
-    !process.env.CLOUDINARY_CLOUD_NAME ||
-    !process.env.CLOUDINARY_API_KEY ||
-    !process.env.CLOUDINARY_API_SECRET
-  ) {
-    throw new ApiError(503, 'Upload service not configured', 'UPLOAD_SERVICE_UNAVAILABLE')
-  }
-
-  const timestamp = Math.floor(Date.now() / 1000)
-  const paramsToSign = {
-    timestamp,
-    folder: 'pcms/offers',
-    resource_type: 'raw',
-    public_id: `pcms/offers/${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
-  }
-
-  const signature = cloudinary.utils.api_sign_request(
-    paramsToSign,
-    process.env.CLOUDINARY_API_SECRET
-  )
-
-  return {
-    ...paramsToSign,
-    signature,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  }
+  return generateSignedUploadParams('pcms/offers')
 }
 
 export default {

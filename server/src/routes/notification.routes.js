@@ -1,7 +1,7 @@
 // Notification routes: user-facing notification management.
 import { Router } from 'express'
 import { authenticate } from '../middleware/auth.middleware.js'
-import { requireStudent } from '../middleware/rbac.middleware.js'
+import { requireAnyRole } from '../middleware/rbac.middleware.js'
 import {
   getMyNotifications,
   getUnreadCount,
@@ -12,8 +12,8 @@ import {
 
 const router = Router()
 
-// All routes require student authentication
-router.use(authenticate, requireStudent)
+// All routes require any authenticated role (students, coordinators, and TPO all get notifications)
+router.use(authenticate, requireAnyRole)
 
 // GET /notifications/me — user's notifications
 router.get('/me', getMyNotifications)

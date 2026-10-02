@@ -20,7 +20,7 @@ export function authenticate(req, _res, next) {
     payload = verifyAccessToken(token)
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      throw new ApiError(401, 'Access token expired', 'TOKEN_EXPIRED')
+      throw new ApiError(401, 'Access token expired', 'UNAUTHORIZED')
     }
     if (err.name === 'JsonWebTokenError') {
       throw new ApiError(401, 'Invalid access token', 'UNAUTHORIZED')

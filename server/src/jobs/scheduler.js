@@ -15,12 +15,19 @@ export function startScheduler() {
   }
 
   const { CRON_SCHEDULE, CRON_TIMEZONE } = config
+  // Per-job overrides — fall back to shared CRON_SCHEDULE when not set
+  const registrationSchedule = CRON_SCHEDULE
+  const roundSchedule = config.CRON_SCHEDULE_ROUND || CRON_SCHEDULE
+  const offerExpirySchedule = config.CRON_SCHEDULE_OFFER_EXPIRY || CRON_SCHEDULE
 
-  console.log(`Starting cron scheduler with schedule: ${CRON_SCHEDULE}, timezone: ${CRON_TIMEZONE}`)
+  console.log(`Starting cron scheduler (timezone: ${CRON_TIMEZONE})`)
+  console.log(`  registration deadline: ${registrationSchedule}`)
+  console.log(`  round approaching:     ${roundSchedule}`)
+  console.log(`  offer expiry sweep:    ${offerExpirySchedule}`)
 
   // Job 1: Registration deadline approaching reminders
   const registrationTask = cron.schedule(
-    CRON_SCHEDULE,
+    registrationSchedule,
     async () => {
       console.log('[CRON] Running registration deadline approaching job...')
       try {
@@ -38,7 +45,7 @@ export function startScheduler() {
 
   // Job 2: Round approaching reminders
   const roundTask = cron.schedule(
-    CRON_SCHEDULE,
+    roundSchedule,
     async () => {
       console.log('[CRON] Running round approaching job...')
       try {
@@ -54,9 +61,9 @@ export function startScheduler() {
     }
   )
 
-  // Job 3: Offer expiry sweep
+  // Job 3: Offer expiry sweep (can run more frequently than daily, e.g. hourly)
   const offerTask = cron.schedule(
-    CRON_SCHEDULE,
+    offerExpirySchedule,
     async () => {
       console.log('[CRON] Running offer expiry sweep job...')
       try {

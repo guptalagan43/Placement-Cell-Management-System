@@ -73,6 +73,14 @@ export async function getOverviewStats({ departmentScope } = {}) {
         student: 1,
       },
     },
+    // Deduplicate: keep only the highest CTC per student so that tier-upgrade
+    // scenarios (multiple accepted applications) don't inflate the averages.
+    {
+      $group: {
+        _id: '$student',
+        ctcLpa: { $max: '$ctcLpa' },
+      },
+    },
   ])
 
   const ctcValues = successfulApplications

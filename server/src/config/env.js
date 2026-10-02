@@ -19,7 +19,11 @@ const envSchema = z.object({
   SMTP_FROM: z.string().optional(),
   FRONTEND_BASE_URL: z.string().url().optional(),
   // Cron job configuration (Phase 53)
+  // CRON_SCHEDULE is the default schedule for all jobs.
+  // Individual jobs can be overridden via their own schedule var (falls back to CRON_SCHEDULE).
   CRON_SCHEDULE: z.string().default('0 8 * * *'),
+  CRON_SCHEDULE_ROUND: z.string().optional(),       // round approaching reminders
+  CRON_SCHEDULE_OFFER_EXPIRY: z.string().optional(), // offer expiry sweep (run more frequently)
   CRON_TIMEZONE: z.string().default('Asia/Kolkata'),
   REMINDER_ADVANCE_HOURS: z.coerce.number().int().positive().default(24),
 })
