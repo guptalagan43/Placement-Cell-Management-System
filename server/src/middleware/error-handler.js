@@ -5,6 +5,7 @@
 import { ApiError } from '../utils/api-error.js'
 import { ZodError } from 'zod'
 import mongoose from 'mongoose'
+import multer from 'multer'
 
 export function errorHandler(err, req, res, _next) {
   // Handle multer errors (file upload validation)
@@ -75,14 +76,6 @@ export function errorHandler(err, req, res, _next) {
     response.details = details
   }
   res.status(statusCode).json(response)
-}
-
-// Lazy import multer to avoid circular dependency
-let multer
-try {
-  multer = require('multer')
-} catch {
-  multer = { MulterError: class MulterError extends Error {} }
 }
 
 export default errorHandler

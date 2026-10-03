@@ -1,5 +1,5 @@
 // OTP service: generate, send, verify, and invalidate one-time passwords.
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 import crypto from 'crypto'
 import Otp from '../models/Otp.model.js'
 import { ApiError } from '../utils/api-error.js'

@@ -38,3 +38,7 @@ Thumbs.db
 # Vite / cache
 .vite/
 *.local
+
+# Documentation (untracked from git repo)
+Docs/
+docs/

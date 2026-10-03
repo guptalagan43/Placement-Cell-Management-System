@@ -31,7 +31,6 @@ export function authenticate(req, _res, next) {
   // Re-derive user from DB to ensure fresh data (role, department, active status)
   // Do NOT trust token claims for authorization decisions.
   User.findById(payload.sub)
-    .select('+passwordHash') // Not needed here but kept for consistency
     .then((user) => {
       if (!user) {
         throw new ApiError(401, 'User no longer exists', 'UNAUTHORIZED')
@@ -49,32 +48,4 @@ export function authenticate(req, _res, next) {
         next(new ApiError(500, 'Authentication error', 'AUTH_ERROR'))
       }
     })
-}
-
-// Optional: version that doesn't throw on missing token (for optional auth)
-// Not needed for current phases but kept for future extensibility.
-export function optionalAuthenticate(req, _res, next) {
-  const authHeader = req.headers.authorization
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next()
-  }
-
-  const token = authHeader.slice(7)
-
-  try {
-    const payload = verifyAccessToken(token)
-    User.findById(payload.sub)
-      .then((user) => {
-        if (user && user.active) {
-          req.user = user
-        }
-        next()
-      })
-      .catch(() => next())
-  } catch {
-    next()
-  }
-}
-
-export default { authenticate, optionalAuthenticate }
+export default authenticate

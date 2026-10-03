@@ -216,22 +216,6 @@ function AppRoutes() {
           }
         />
 
-        {/* Example admin-only route (cosmetic guard) */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['coordinator', 'tpo']}>
-                <div className="text-center py-12">
-                  <h2 className="font-heading text-xl font-bold text-ink-900">Admin Dashboard</h2>
-                  <p className="mt-2 font-body text-ink-600">
-                    Coordinator/TPO only area (Phase 11 demo)
-                  </p>
-                </div>
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
 
         {/* Audit Log (TPO only) */}
         <Route

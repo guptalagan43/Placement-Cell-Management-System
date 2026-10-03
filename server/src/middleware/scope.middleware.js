@@ -46,4 +46,4 @@ export function applyDepartmentScope(query, departmentScope, field = 'branch') {
   return query
 }
 
-export default { departmentScope, applyDepartmentScope }
+

@@ -9,7 +9,6 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [accessToken, setAccessToken] = useState(null)
-  const [loading] = useState(false)
 
   // Called by LoginPage step 2 (after OTP verified) with the token + user from the server
   const loginWithToken = useCallback((token, userData) => {
@@ -27,7 +26,6 @@ export function AuthProvider({ children }) {
     user,
     accessToken,
     isAuthenticated: !!user,
-    loading,
     loginWithToken,
     logout,
   }

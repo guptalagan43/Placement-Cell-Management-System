@@ -35,11 +35,4 @@ export const requireTPO = authorize(ROLES.TPO)
 export const requireCoordinatorOrTPO = authorize(ROLES.COORDINATOR, ROLES.TPO)
 export const requireAnyRole = authorize(...ROLE_VALUES) // Any authenticated user
 
-export default {
-  authorize,
-  requireStudent,
-  requireCoordinator,
-  requireTPO,
-  requireCoordinatorOrTPO,
-  requireAnyRole,
-}
+

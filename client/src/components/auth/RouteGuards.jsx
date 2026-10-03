@@ -4,16 +4,8 @@ import { useAuth } from '../../context/AuthContext.jsx'
 // ProtectedRoute: redirects unauthenticated users to /login with the
 // attempted destination preserved in location.state (so we can redirect back).
 export function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated } = useAuth()
   const location = useLocation()
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-700 border-t-transparent" />
-      </div>
-    )
-  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
@@ -38,4 +30,3 @@ export function RoleRoute({ allowedRoles, children, fallback = null }) {
   return children
 }
 
-export default { ProtectedRoute, RoleRoute }

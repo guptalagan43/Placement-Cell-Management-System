@@ -16,12 +16,14 @@ const variants = {
   outline:
     'border border-primary-700 bg-transparent text-primary-700 hover:bg-primary-50 disabled:opacity-50',
   danger: 'bg-danger text-white hover:opacity-90 disabled:opacity-50',
+  ghost: 'bg-transparent text-ink-600 hover:bg-primary-50 dark:hover:bg-dark-primary-100 disabled:opacity-50',
 }
 
 const sizes = {
   sm: 'px-3 py-1.5 text-xs',
   md: 'px-4 py-2 text-sm', // default
   lg: 'px-6 py-3 text-base',
+  icon: 'p-2',
 }
 
 const Button = forwardRef(function Button(
