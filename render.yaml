@@ -1,0 +1,70 @@
+# render.yaml — Render.com deployment configuration for SKIT PCMS backend
+# Deploy: connect repo to Render, use this file for "Blueprint" auto-deploy.
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: pcms-api
+    runtime: node
+    region: singapore  # Closest to India on Render free/starter tier
+    plan: starter      # Change to "standard" for production traffic
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    autoDeploy: true
+
+    envVars:
+      # These must be set manually in the Render dashboard (never committed to repo)
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 10000        # Render assigns $PORT automatically; keep this as fallback
+
+      # ── MongoDB Atlas ─────────────────────────────────────────────
+      - key: MONGODB_URI
+        sync: false         # Set manually in Render dashboard
+
+      # ── JWT Secrets ───────────────────────────────────────────────
+      - key: JWT_SECRET
+        generateValue: true # Render auto-generates a random value
+
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+
+      - key: JWT_ACCESS_EXPIRY
+        value: 15m
+
+      - key: JWT_REFRESH_EXPIRY
+        value: 7d
+
+      # ── Cloudinary ────────────────────────────────────────────────
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+
+      - key: CLOUDINARY_API_KEY
+        sync: false
+
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # ── SMTP / Email ──────────────────────────────────────────────
+      - key: SMTP_HOST
+        sync: false
+
+      - key: SMTP_PORT
+        value: 587
+
+      - key: SMTP_USER
+        sync: false
+
+      - key: SMTP_PASS
+        sync: false
+
+      - key: EMAIL_FROM
+        value: noreply@pcms.skit.ac.in
+
+      # ── CORS origin (your Vercel frontend URL) ────────────────────
+      - key: CLIENT_ORIGIN
+        sync: false         # Set to: https://pcms-skit.vercel.app (your actual URL)

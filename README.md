@@ -84,7 +84,7 @@ Built for three primary stakeholder roles: **Students**, **Department Placement 
 │   │   ├── services/        # Business logic, OTP, email, Cloudinary
 │   │   ├── jobs/            # Scheduled cron jobs (deadlines, reminders)
 │   │   └── server.js        # Express app entry point
-│   ├── seed.mjs             # Test database seeder script
+│   ├── demo-seed.mjs        # Demo/production database seeder script
 │   └── .env.example         # Sample environment variable template
 │
 └── README.md
@@ -143,22 +143,22 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 ```
 
-### 3. Seed Test Users
+### 3. Seed Demo Data
 
-Run the database seeder to populate test accounts for each role:
+Run the demo seed script to populate the database with realistic demo accounts and placement data:
 
 ```bash
 cd server
-node seed.mjs
+node demo-seed.mjs
 ```
 
-**Pre-configured Seed Accounts:**
+**Pre-configured Demo Accounts:**
 
-| Role            | Email                    | Password                | Status                           |
-| --------------- | ------------------------ | ----------------------- | -------------------------------- |
-| **TPO / Admin** | `admin@skit.ac.in`       | `Admin@1234`            | Active                           |
-| **Coordinator** | `coordinator@skit.ac.in` | `Coord@1234`            | Active (CSE Department)          |
-| **Student**     | `b241218@skit.ac.in`     | _Set during activation_ | Pending Activation (`/activate`) |
+| Role            | Email                      | Password       | Notes                              |
+| --------------- | -------------------------- | -------------- | ---------------------------------- |
+| **TPO / Admin** | `tpo@skit.ac.in`           | `Tpo@1234`     | Active, full access                |
+| **Coordinator** | `coord.cse@skit.ac.in`     | `Coord@1234`   | Active, CSE Department             |
+| **Student**     | `b221001@skit.ac.in`       | `Student@1234` | Active (8 dept × 5 students = 40)  |
 
 > **Development Note**: When signing in or activating, OTPs and temporary passwords are logged directly to the server terminal console in development mode.
 
@@ -206,6 +206,66 @@ To build the client for production:
 cd client
 npm run build
 ```
+
+---
+
+## 🚀 Deployment
+
+The system deploys as two independent services:
+
+| Layer        | Platform        | Config file           |
+| ------------ | --------------- | --------------------- |
+| **Frontend** | Vercel          | `client/vercel.json`  |
+| **Backend**  | Render          | `render.yaml`         |
+| **Database** | MongoDB Atlas   | —                     |
+| **Media**    | Cloudinary      | —                     |
+
+### Backend — Render
+
+1. Connect your repository to [Render](https://render.com) and select **Blueprint** deploy — Render auto-detects `render.yaml` and creates the `pcms-api` web service.
+2. In the Render dashboard, set the following environment variables manually (marked `sync: false` in `render.yaml`):
+
+   | Variable                  | Description                                    |
+   | ------------------------- | ---------------------------------------------- |
+   | `MONGODB_URI`             | MongoDB Atlas connection string                |
+   | `JWT_SECRET`              | JWT access-token secret (≥32 chars)            |
+   | `JWT_REFRESH_SECRET`      | JWT refresh-token secret (≥32 chars)           |
+   | `CLOUDINARY_CLOUD_NAME`   | Cloudinary cloud name                          |
+   | `CLOUDINARY_API_KEY`      | Cloudinary API key                             |
+   | `CLOUDINARY_API_SECRET`   | Cloudinary API secret                          |
+   | `SMTP_HOST`               | SMTP server hostname                           |
+   | `SMTP_PORT`               | SMTP server port (e.g. `587`)                  |
+   | `SMTP_USER`               | SMTP username / address                        |
+   | `SMTP_PASS`               | SMTP password                                  |
+   | `CLIENT_ORIGIN`           | Your Vercel frontend URL (e.g. `https://pcms-skit.vercel.app`) |
+
+3. Deploy — Render runs `npm install` then `node src/server.js` from the `server/` root directory.
+
+### Frontend — Vercel
+
+1. Connect your repository to [Vercel](https://vercel.com) and set the **Root Directory** to `client/`.
+2. Vercel auto-detects the Vite framework; `client/vercel.json` provides SPA rewrites and security headers.
+3. Set the following environment variable in the Vercel dashboard:
+
+   | Variable            | Value                                          |
+   | ------------------- | ---------------------------------------------- |
+   | `VITE_API_BASE_URL` | Your Render service URL (e.g. `https://pcms-api.onrender.com`) |
+
+4. Deploy — Vercel runs `npm run build` and serves the `dist/` output.
+
+### Demo Data
+
+After deployment, populate the database with realistic demo data by running the seed script against your production MongoDB Atlas database:
+
+```bash
+cd server
+# Edit .env or set MONGODB_URI to your Atlas URI, then:
+node demo-seed.mjs
+```
+
+This creates 1 TPO, 8 department coordinators, 40 students across SKIT's 8 departments, 12 companies, 11 drives at various lifecycle stages, and all supporting data (announcements, FAQs, contacts, placement rules).
+
+> **Warning**: `demo-seed.mjs` clears all existing data before seeding. Do **not** run it against a database with real student data.
 
 ---
 
