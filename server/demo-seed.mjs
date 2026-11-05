@@ -450,7 +450,8 @@ const driveDefs = [
 
 const drives = {}
 for (const d of driveDefs) {
-  const drive = await Drive.create({
+  // Use validateBeforeSave:false so historical past-deadline drives pass schema validation
+  const drive = new Drive({
     company: companies[d.co]._id,
     title: d.title,
     jobType: d.jobType,
@@ -463,6 +464,7 @@ for (const d of driveDefs) {
     registrationDeadline: d.deadline,
     description: d.description,
   })
+  await drive.save({ validateBeforeSave: false })
   drives[d.title] = drive
 }
 console.log(driveDefs.length + ' drives created')
