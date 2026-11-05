@@ -48,4 +48,6 @@ export function authenticate(req, _res, next) {
         next(new ApiError(500, 'Authentication error', 'AUTH_ERROR'))
       }
     })
+}
+
 export default authenticate
